@@ -1,0 +1,300 @@
+<script setup lang="ts">
+import { Head, Link, router } from '@inertiajs/vue3';
+
+const props = defineProps<{
+    title: string;
+    service: any;
+}>();
+
+defineOptions({
+    layout: {
+        breadcrumbs: [
+            {
+                title: 'Services Management',
+                href: '/client/services',
+            },
+            {
+                title: 'Service Detail',
+                href: '#',
+            },
+        ],
+    },
+});
+</script>
+
+<template>
+
+    <Head :title="title" />
+
+    <div class="flex flex-col gap-4 p-4">
+
+        <!-- Header -->
+        <div class="grid grid-cols-1 gap-4">
+
+            <div>
+                <div class="flex items-center gap-3">
+
+                    <h1 class="text-2xl font-bold">
+                        {{ service.name }}
+                    </h1>
+
+                    <span class="inline-flex rounded-full px-3 py-1 text-xs font-medium" :class="{
+                        'bg-green-100 text-green-700':
+                            service.status === 'active',
+
+                        'bg-yellow-100 text-yellow-700':
+                            service.status === 'pending',
+
+                        'bg-orange-100 text-orange-700':
+                            service.status === 'suspended',
+
+                        'bg-red-100 text-red-700':
+                            service.status === 'terminated',
+                    }">
+                        {{ service.status }}
+                    </span>
+                </div>
+
+                <p class="mt-1 text-sm text-muted-foreground">
+                    {{ service.code }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Grid -->
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+
+            <!-- Left -->
+            <div class="flex flex-col gap-4 lg:col-span-2">
+
+                <!-- Basic Information -->
+                <div class="rounded-2xl border p-5">
+
+                    <h2 class="mb-4 text-lg font-semibold">
+                        Basic Information
+                    </h2>
+
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+
+                        <div>
+                            <p class="text-sm text-muted-foreground">
+                                Client
+                            </p>
+
+                            <p class="font-medium">
+                                {{ service.client?.company_name }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <p class="text-sm text-muted-foreground">
+                                Billing Cycle
+                            </p>
+
+                            <p class="font-medium capitalize">
+                                {{ service.billing_cycle }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <p class="text-sm text-muted-foreground">
+                                Start Date
+                            </p>
+
+                            <p class="font-medium">
+                                {{ service.start_date }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <p class="text-sm text-muted-foreground">
+                                End Date
+                            </p>
+
+                            <p class="font-medium">
+                                {{ service.end_date || '-' }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <p class="text-sm text-muted-foreground">
+                                Next Due Date
+                            </p>
+
+                            <p class="font-medium">
+                                {{ service.next_due_date }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rack Information -->
+                <div class="rounded-2xl border p-5">
+
+                    <h2 class="mb-4 text-lg font-semibold">
+                        Rack Information
+                    </h2>
+
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+
+                        <div>
+                            <p class="text-sm text-muted-foreground">
+                                Location
+                            </p>
+
+                            <p class="font-medium">
+                                {{
+                                    service.rack?.room
+                                        ?.location_data_center?.name || '-'
+                                }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <p class="text-sm text-muted-foreground">
+                                Room
+                            </p>
+
+                            <p class="font-medium">
+                                {{ service.rack?.room?.name || '-' }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <p class="text-sm text-muted-foreground">
+                                Rack
+                            </p>
+
+                            <p class="font-medium">
+                                {{ service.rack?.name || '-' }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service Items -->
+                <div class="rounded-2xl border p-5">
+
+                    <div class="mb-4 flex items-center justify-between">
+
+                        <div>
+                            <h2 class="text-lg font-semibold">
+                                Service Items
+                            </h2>
+
+                            <p class="text-sm text-muted-foreground">
+                                Products included in this service
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+
+                        <table class="min-w-full divide-y divide-gray-200">
+
+                            <thead>
+                                <tr class="text-left text-sm font-semibold text-muted-foreground">
+                                    <th class="px-4 py-3">
+                                        Product
+                                    </th>
+
+                                    <th class="px-4 py-3">
+                                        Qty
+                                    </th>
+
+                                    <th class="px-4 py-3">
+                                        Unit Price
+                                    </th>
+
+                                    <th class="px-4 py-3">
+                                        Subtotal
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                <tr v-for="item in service.service_items" :key="item.id" class="border-t">
+                                    <td class="px-4 py-3">
+                                        {{ item.product?.name }}
+                                    </td>
+
+                                    <td class="px-4 py-3">
+                                        {{ item.quantity }}
+                                    </td>
+
+                                    <td class="px-4 py-3">
+                                        Rp {{ Number(item.price).toLocaleString('id-ID') }}
+                                    </td>
+
+                                    <td class="px-4 py-3 font-medium">
+                                        Rp {{ Number(item.subtotal).toLocaleString('id-ID') }}
+                                    </td>
+                                </tr>
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="rounded-2xl border p-5">
+
+                    <h2 class="mb-4 text-lg font-semibold">
+                        Description
+                    </h2>
+
+                    <p class="text-sm leading-relaxed text-muted-foreground">
+                        {{ service.description || '-' }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Right -->
+            <div class="flex flex-col gap-4">
+
+                <!-- Summary -->
+                <div class="rounded-2xl border p-5">
+
+                    <h2 class="mb-4 text-lg font-semibold">
+                        Billing Summary
+                    </h2>
+
+                    <div class="flex flex-col gap-4">
+
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-muted-foreground">
+                                Monthly Total
+                            </span>
+
+                            <span class="font-semibold">
+                                Rp {{ Number(service.monthly_total).toLocaleString('id-ID') }}
+                            </span>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-muted-foreground">
+                                Billing Cycle
+                            </span>
+
+                            <span class="font-semibold capitalize">
+                                {{ service.billing_cycle }}
+                            </span>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-muted-foreground">
+                                Status
+                            </span>
+
+                            <span class="font-semibold capitalize">
+                                {{ service.status }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</template>
