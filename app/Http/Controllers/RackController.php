@@ -8,6 +8,7 @@ use App\Models\Rack;
 use App\Models\RackDivice;
 use App\Models\RackUnit;
 use App\Models\Room;
+use App\Models\DevicePort;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -140,6 +141,148 @@ class RackController extends Controller
         }
     }
 
+    public function storeDevicePort(
+        Request $request,
+        RackDivice $device
+    ) {
+        $validated = $request->validate([
+            'port_name' => [
+                'required',
+                'string',
+                'max:100',
+            ],
+
+            'port_number' => [
+                'nullable',
+                'string',
+                'max:50',
+            ],
+
+            'port_type' => [
+                'required',
+                'in:ethernet,fiber,management,power,console,other',
+            ],
+
+            'connector_type' => [
+                'nullable',
+                'string',
+                'max:50',
+            ],
+
+            'status' => [
+                'required',
+                'in:available,connected,disabled,maintenance',
+            ],
+
+            'description' => [
+                'nullable',
+                'string',
+            ],
+        ]);
+
+        $exists = DevicePort::query()
+            ->where('rack_divice_id', $device->id)
+            ->where('port_name', $validated['port_name'])
+            ->exists();
+
+        if ($exists) {
+            return back()->withErrors([
+                'message' => 'This port already exists on the device.',
+            ]);
+        }
+
+        DevicePort::create([
+            'rack_divice_id' => $device->id,
+            'port_name' => $validated['port_name'],
+            'port_number' => $validated['port_number'] ?? null,
+            'port_type' => $validated['port_type'],
+            'connector_type' => $validated['connector_type'] ?? null,
+            'status' => $validated['status'],
+            'description' => $validated['description'] ?? null,
+        ]);
+
+        return back()->with(
+            'success',
+            'Device port added successfully.'
+        );
+    }
+
+    public function generateDevicePorts(
+        Request $request,
+        RackDivice $device
+    ) {
+        $validated = $request->validate([
+            'total_ports' => [
+                'required',
+                'integer',
+                'min:1',
+                'max:1024',
+            ],
+
+            'port_type' => [
+                'required',
+                'in:ethernet,fiber,management,power,console,other',
+            ],
+
+            'connector_type' => [
+                'nullable',
+                'string',
+                'max:50',
+            ],
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+
+            $existingPorts = DevicePort::query()
+                ->where('rack_divice_id', $device->id)
+                ->pluck('port_name')
+                ->toArray();
+
+            $ports = [];
+
+            for ($i = 1; $i <= $validated['total_ports']; $i++) {
+
+                $portName = 'Port ' . $i;
+
+                if (in_array($portName, $existingPorts)) {
+                    continue;
+                }
+
+                $ports[] = [
+                    'rack_divice_id' => $device->id,
+                    'port_name' => $portName,
+                    'port_number' => (string) $i,
+                    'port_type' => $validated['port_type'],
+                    'connector_type' => $validated['connector_type'] ?? null,
+                    'status' => 'available',
+                    'description' => null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+
+            if (!empty($ports)) {
+                DevicePort::insert($ports);
+            }
+
+            DB::commit();
+
+            return back()->with(
+                'success',
+                count($ports) . ' device ports generated successfully.'
+            );
+        } catch (\Throwable $th) {
+
+            DB::rollBack();
+
+            return back()->withErrors([
+                'message' => $th->getMessage(),
+            ]);
+        }
+    }
+
     public function assignOwner(Request $request, Rack $rack)
     {
         $validated = $request->validate([
@@ -196,7 +339,7 @@ class RackController extends Controller
              * =========================
              * ASSIGN EMPTY UNITS
              * =========================
-             */ 
+             */
 
             $units = RackUnit::query()->where('rack_id', $rack->id)
                 ->where('status', 'empty')
@@ -232,7 +375,6 @@ class RackController extends Controller
             DB::commit();
 
             return back()->with('success', 'Rack owner assigned successfully.');
-
         } catch (\Throwable $th) {
 
             DB::rollBack();
@@ -312,7 +454,6 @@ class RackController extends Controller
                             $matchedUnits = $currentGroup;
                             break 2;
                         }
-
                     } else {
 
                         break;
@@ -407,7 +548,6 @@ class RackController extends Controller
                 'success',
                 'Device added successfully.'
             );
-
         } catch (\Throwable $th) {
 
             DB::rollBack();
@@ -424,11 +564,12 @@ class RackController extends Controller
     public function show(string $id)
     {
         $rack = Rack::with([
-                'room.locationDataCenter',
-                'clientRacks.client',
-                'rackDivices.client',
-                'rackDivices.rackUnits',
-            ])
+            'room.locationDataCenter',
+            'clientRacks.client',
+            'rackDivices.client',
+            'rackDivices.ports',
+            'rackDivices.rackUnits',
+        ])
             ->withSum('clientRacks', 'rented_units')
             ->withSum('rackDivices', 'power_usage')
             ->withSum('rackDivices', 'weight_usage')
@@ -743,7 +884,6 @@ class RackController extends Controller
                 'success',
                 'Rack owner updated successfully.'
             );
-
         } catch (\Throwable $th) {
 
             DB::rollBack();
@@ -755,8 +895,7 @@ class RackController extends Controller
     public function updateDevice(
         Request $request,
         RackDivice $device
-    )
-    {
+    ) {
         $validated = $request->validate([
             'divice_name' => ['required', 'string'],
             'divice_type' => ['nullable', 'string'],
@@ -779,6 +918,96 @@ class RackController extends Controller
         return back()->with(
             'success',
             'Device updated successfully.'
+        );
+    }
+
+    public function updateDevicePort(
+        Request $request,
+        DevicePort $port
+    ) {
+        $validated = $request->validate([
+            'port_name' => [
+                'required',
+                'string',
+                'max:100',
+            ],
+
+            'port_number' => [
+                'nullable',
+                'string',
+                'max:50',
+            ],
+
+            'port_type' => [
+                'required',
+                'in:ethernet,fiber,management,power,console,other',
+            ],
+
+            'connector_type' => [
+                'nullable',
+                'string',
+                'max:50',
+            ],
+
+            'status' => [
+                'required',
+                'in:available,connected,disabled,maintenance',
+            ],
+
+            'description' => [
+                'nullable',
+                'string',
+            ],
+        ]);
+
+        /*
+    |--------------------------------------------------------------------------
+    | Prevent duplicate port
+    |--------------------------------------------------------------------------
+    */
+
+        $exists = DevicePort::query()
+            ->where('rack_divice_id', $port->rack_divice_id)
+            ->where('port_name', $validated['port_name'])
+            ->where('id', '!=', $port->id)
+            ->exists();
+
+        if ($exists) {
+            return back()->withErrors([
+                'message' => 'This port name already exists on the device.',
+            ]);
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | Connected port cannot be disabled
+    |--------------------------------------------------------------------------
+    */
+
+        if (
+            $validated['status'] !== 'connected' &&
+            (
+                $port->activeSourceCrossConnect()->exists() ||
+                $port->activeDestinationCrossConnect()->exists()
+            )
+        ) {
+            return back()->withErrors([
+                'message' => 'This port is currently used by an active cross connect.',
+            ]);
+        }
+
+        $port->update([
+            'port_name' => $validated['port_name'],
+            'port_number' => $validated['port_number'] ?? null,
+            'port_type' => $validated['port_type'],
+            'connector_type' => $validated['connector_type'] ?? null,
+            'status' => $validated['status'],
+            'description' => $validated['description'] ?? null,
+        ]);
+
+        return back()->with(
+            'success',
+            'Device port updated successfully.'
         );
     }
 
@@ -854,7 +1083,6 @@ class RackController extends Controller
                 'success',
                 'Rack owner removed successfully.'
             );
-
         } catch (\Throwable $th) {
 
             DB::rollBack();
@@ -905,7 +1133,6 @@ class RackController extends Controller
                 'success',
                 'Device deleted successfully.'
             );
-
         } catch (\Throwable $th) {
 
             DB::rollBack();
@@ -914,5 +1141,24 @@ class RackController extends Controller
                 'message' => $th->getMessage(),
             ]);
         }
+    }
+
+    public function destroyDevicePort(DevicePort $port)
+    {
+        if (
+            $port->activeSourceCrossConnect()->exists() ||
+            $port->activeDestinationCrossConnect()->exists()
+        ) {
+            return back()->withErrors([
+                'message' => 'This port cannot be deleted because it is used by an active cross connect.',
+            ]);
+        }
+
+        $port->delete();
+
+        return back()->with(
+            'success',
+            'Device port deleted successfully.'
+        );
     }
 }

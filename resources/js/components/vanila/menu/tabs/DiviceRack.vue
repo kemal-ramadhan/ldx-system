@@ -6,10 +6,14 @@ import {
     Search,
     Trash2,
     Pencil,
-    X
+    X,
+    Network,
+    Settings2,
+    Cable,
+    MoreHorizontal,
 } from 'lucide-vue-next'
 import { route } from 'ziggy-js'
-
+import { Input } from '@/components/ui/input';
 import { toast } from 'vue-sonner'
 
 const page = usePage()
@@ -46,6 +50,15 @@ const filteredDevices = computed(() => {
  */
 const openAddDevice = ref(false)
 
+const openPorts = ref(false)
+
+const selectedDevice = ref<any>(null)
+
+const openManagePorts = (device: any) => {
+    selectedDevice.value = device
+    openPorts.value = true
+}
+
 /**
  * FORM
  */
@@ -62,6 +75,112 @@ const deviceForm = useForm({
     total_unit: '',
     status: 'active',
 })
+
+const openGeneratePorts = ref(false)
+
+const generatePortForm = useForm({
+    total_ports: '',
+    port_type: 'ethernet',
+    connector_type: '',
+})
+
+const openAddPort = ref(false)
+
+const portForm = useForm({
+    port_name: '',
+    port_number: '',
+    port_type: 'ethernet',
+    connector_type: '',
+    status: 'available',
+    description: '',
+})
+
+const openEditPort = ref(false)
+
+const editPortForm = useForm({
+    id: null as number | null,
+    port_name: '',
+    port_number: '',
+    port_type: 'ethernet',
+    connector_type: '',
+    status: 'available',
+    description: '',
+})
+
+const editPort = (port: any) => {
+    editPortForm.id = port.id
+    editPortForm.port_name = port.port_name
+    editPortForm.port_number = port.port_number ?? ''
+    editPortForm.port_type = port.port_type
+    editPortForm.connector_type = port.connector_type ?? ''
+    editPortForm.status = port.status
+    editPortForm.description = port.description ?? ''
+
+    openEditPort.value = true
+}
+
+const openGenerateModal = () => {
+    generatePortForm.reset()
+
+    generatePortForm.port_type = 'ethernet'
+    generatePortForm.connector_type = ''
+
+    openGeneratePorts.value = true
+}
+
+const submitGeneratePorts = () => {
+    if (!selectedDevice.value) return
+
+    generatePortForm.post(
+        `/admin/racks/devices/${selectedDevice.value.id}/ports/generate`,
+        {
+            preserveScroll: true,
+
+            onSuccess: () => {
+                toast.success('Device ports generated successfully.')
+                openGeneratePorts.value = false
+                generatePortForm.reset()
+
+                router.reload({
+                    only: ['rack'],
+                })
+            },
+
+            onError: (errors) => {
+                Object.values(errors).forEach((message: any) => {
+                    toast.error(String(message))
+                })
+            },
+        }
+    )
+}
+
+const submitPort = () => {
+    if (!selectedDevice.value) return
+
+    portForm.post(
+        `/admin/racks/devices/${selectedDevice.value.id}/ports`,
+        {
+            preserveScroll: true,
+
+            onSuccess: () => {
+                toast.success('Device port added successfully.')
+                openAddPort.value = false
+                portForm.reset()
+
+                router.reload({
+                    only: ['rack'],
+                })
+            },
+
+            onError: (errors) => {
+                Object.values(errors).forEach((message: any) => {
+                    toast.error(String(message))
+                })
+            },
+        }
+    )
+}
 
 /**
  * SUBMIT
@@ -149,6 +268,64 @@ const submitEdit = () => {
     )
 }
 
+const submitEditPort = () => {
+    if (!editPortForm.id) return
+
+    editPortForm.put(
+        `/admin/racks/devices/ports/${editPortForm.id}`,
+        {
+            preserveScroll: true,
+
+            onSuccess: () => {
+                toast.success('Device port updated successfully.')
+                openEditPort.value = false
+
+                router.reload({
+                    only: ['rack'],
+
+                    onSuccess: () => {
+                        refreshSelectedDevice()
+                    },
+                })
+            },
+
+            onError: (errors) => {
+                Object.values(errors).forEach((message: any) => {
+                    toast.error(String(message))
+                })
+            },
+        }
+    )
+}
+
+const deletePort = (port: any) => {
+    if (!confirm(`Delete ${port.port_name}?`)) return
+
+    router.delete(
+        `/admin/racks/devices/ports/${port.id}`,
+        {
+            preserveScroll: true,
+
+            onSuccess: () => {
+                toast.success('Device port deleted successfully.')
+
+                router.reload({
+                    only: ['rack'],
+                    onSuccess: () => {
+                        refreshSelectedDevice()
+                    },
+                })
+            },
+
+            onError: (errors) => {
+                Object.values(errors).forEach((message: any) => {
+                    toast.error(String(message))
+                })
+            },
+        }
+    )
+}
+
 const form = useForm<{ user_id: number | null }>({
     user_id: null
 })
@@ -167,6 +344,17 @@ const deleteDevice = (id: number) => {
     })
 }
 
+const refreshSelectedDevice = () => {
+    if (!selectedDevice.value) return
+
+    const updatedDevice = props.rack?.rack_divices?.find(
+        (device: any) => device.id === selectedDevice.value.id
+    )
+
+    if (updatedDevice) {
+        selectedDevice.value = updatedDevice
+    }
+}
 </script>
 
 <template>
@@ -342,17 +530,20 @@ const deleteDevice = (id: number) => {
 
                             <div class="flex justify-end gap-2">
 
+                                <button type="button" @click="openManagePorts(device)"
+                                    class="rounded-lg p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                                    title="Manage Ports">
+                                    <Network class="w-4 h-4" />
+                                </button>
+
                                 <button @click="openEditModal(device)" class="rounded-lg p-2 hover:bg-gray-100">
                                     <Pencil class="w-4 h-4" />
                                 </button>
 
-                                <button
-    type="button"
-    @click="deleteDevice(device.id)"
-    class="rounded-lg p-2 text-red-500 hover:bg-red-50"
->
-    <Trash2 class="w-4 h-4" />
-</button>
+                                <button type="button" @click="deleteDevice(device.id)"
+                                    class="rounded-lg p-2 text-red-500 hover:bg-red-50">
+                                    <Trash2 class="w-4 h-4" />
+                                </button>
 
                             </div>
 
@@ -686,4 +877,658 @@ const deleteDevice = (id: number) => {
         </div>
 
     </div>
+
+    <!-- =========================================================
+     MANAGE DEVICE PORTS
+========================================================= -->
+
+    <div v-if="openPorts && selectedDevice" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="openPorts = false"></div>
+
+        <!-- Modal -->
+        <div class="relative w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900">
+
+            <!-- Header -->
+            <div class="flex items-center justify-between border-b px-6 py-5">
+                <div>
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/40">
+                            <Network class="h-5 w-5" />
+                        </div>
+
+                        <div>
+                            <h2 class="text-base font-semibold">
+                                Manage Device Ports
+                            </h2>
+
+                            <p class="mt-0.5 text-xs text-muted-foreground">
+                                {{ selectedDevice.divice_name }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" @click="openPorts = false"
+                    class="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800">
+                    <X class="h-5 w-5" />
+                </button>
+            </div>
+
+            <!-- Summary -->
+            <div class="border-b bg-gray-50/70 px-6 py-4 dark:bg-gray-800/40">
+                <div class="flex items-center justify-between">
+
+                    <div class="flex items-center gap-6">
+
+                        <div>
+                            <p class="text-xs text-muted-foreground">
+                                Total Ports
+                            </p>
+
+                            <p class="mt-1 text-lg font-semibold">
+                                {{ selectedDevice.ports?.length || 0 }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <p class="text-xs text-muted-foreground">
+                                Available
+                            </p>
+
+                            <p class="mt-1 text-lg font-semibold text-green-600">
+                                {{
+                                    selectedDevice.ports?.filter(
+                                        (port: any) =>
+                                            port.status === 'available'
+                                    ).length || 0
+                                }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <p class="text-xs text-muted-foreground">
+                                Connected
+                            </p>
+
+                            <p class="mt-1 text-lg font-semibold text-blue-600">
+                                {{
+                                    selectedDevice.ports?.filter(
+                                        (port: any) =>
+                                            port.status === 'connected'
+                                    ).length || 0
+                                }}
+                            </p>
+                        </div>
+
+                    </div>
+
+                    <div class="flex items-center gap-2">
+
+                        <button type="button" @click="openGenerateModal"
+                            class="inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium hover:bg-white dark:hover:bg-gray-800">
+                            <Settings2 class="h-4 w-4" />
+
+                            Generate
+                        </button>
+
+                        <button type="button" @click="openAddPort = true"
+                            class="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary/90">
+                            <Plus class="h-4 w-4" />
+
+                            Add Port
+                        </button>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Port List -->
+            <div class="max-h-[60vh] overflow-y-auto px-6 py-5">
+
+                <!-- Empty -->
+                <div v-if="!selectedDevice.ports?.length"
+                    class="flex flex-col items-center justify-center rounded-2xl border border-dashed py-16 text-center">
+                    <div
+                        class="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+                        <Network class="h-6 w-6 text-gray-400" />
+                    </div>
+
+                    <h3 class="text-sm font-semibold">
+                        No ports configured
+                    </h3>
+
+                    <p class="mt-1 max-w-sm text-xs text-muted-foreground">
+                        Add ports manually or generate ports automatically
+                        for this device.
+                    </p>
+
+                    <button type="button" @click="openGenerateModal"
+                        class="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white">
+                        <Settings2 class="h-4 w-4" />
+                        Generate Ports
+                    </button>
+                </div>
+
+                <!-- Table -->
+                <div v-else class="overflow-hidden rounded-xl border">
+                    <table class="w-full text-sm">
+
+                        <thead class="bg-gray-50 dark:bg-gray-800">
+                            <tr>
+                                <th class="px-4 py-3 text-left font-medium">
+                                    Port
+                                </th>
+
+                                <th class="px-4 py-3 text-left font-medium">
+                                    Type
+                                </th>
+
+                                <th class="px-4 py-3 text-left font-medium">
+                                    Connector
+                                </th>
+
+                                <th class="px-4 py-3 text-left font-medium">
+                                    Status
+                                </th>
+
+                                <th class="px-4 py-3 text-right font-medium">
+                                    Action
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody class="divide-y">
+
+                            <tr v-for="port in selectedDevice.ports" :key="port.id"
+                                class="hover:bg-gray-50/70 dark:hover:bg-gray-800/50">
+
+                                <!-- Port -->
+                                <td class="px-4 py-3">
+
+                                    <div class="flex items-center gap-3">
+
+                                        <div
+                                            class="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                                            <Cable class="h-4 w-4" />
+                                        </div>
+
+                                        <div>
+                                            <p class="font-medium">
+                                                {{ port.port_name }}
+                                            </p>
+
+                                            <p v-if="port.port_number" class="text-xs text-muted-foreground">
+                                                #{{ port.port_number }}
+                                            </p>
+                                        </div>
+
+                                    </div>
+
+                                </td>
+
+                                <!-- Type -->
+                                <td class="px-4 py-3">
+                                    <span class="capitalize">
+                                        {{ port.port_type?.replace('_', ' ') }}
+                                    </span>
+                                </td>
+
+                                <!-- Connector -->
+                                <td class="px-4 py-3 text-muted-foreground">
+                                    {{ port.connector_type || '-' }}
+                                </td>
+
+                                <!-- Status -->
+                                <td class="px-4 py-3">
+
+                                    <span v-if="port.status === 'available'"
+                                        class="inline-flex rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700 dark:bg-green-950/30 dark:text-green-400">
+                                        Available
+                                    </span>
+
+                                    <span v-else-if="port.status === 'connected'"
+                                        class="inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-950/30 dark:text-blue-400">
+                                        Connected
+                                    </span>
+
+                                    <span v-else-if="port.status === 'maintenance'"
+                                        class="inline-flex rounded-full bg-yellow-50 px-2.5 py-1 text-xs font-medium text-yellow-700 dark:bg-yellow-950/30 dark:text-yellow-400">
+                                        Maintenance
+                                    </span>
+
+                                    <span v-else
+                                        class="inline-flex rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                                        Disabled
+                                    </span>
+
+                                </td>
+
+                                <!-- Actions -->
+                                <td class="px-4 py-3">
+
+                                    <div class="flex justify-end gap-1">
+
+                                        <button type="button" @click="editPort(port)"
+                                            class="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800">
+                                            <Pencil class="h-4 w-4" />
+                                        </button>
+
+                                        <button type="button" @click="deletePort(port)"
+                                            class="rounded-lg p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30">
+                                            <Trash2 class="h-4 w-4" />
+                                        </button>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- =========================================================
+     GENERATE PORTS
+========================================================= -->
+
+    <div v-if="openGeneratePorts" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="openGeneratePorts = false"></div>
+
+        <div class="relative w-full max-w-md rounded-2xl bg-white shadow-2xl dark:bg-gray-900">
+
+            <div class="flex items-center justify-between border-b px-6 py-5">
+
+                <div>
+                    <h2 class="text-base font-semibold">
+                        Generate Ports
+                    </h2>
+
+                    <p class="mt-1 text-xs text-muted-foreground">
+                        Automatically create ports for this device.
+                    </p>
+                </div>
+
+                <button type="button" @click="openGeneratePorts = false"
+                    class="rounded-lg p-2 text-gray-400 hover:bg-gray-100">
+                    <X class="h-5 w-5" />
+                </button>
+
+            </div>
+
+            <form @submit.prevent="submitGeneratePorts" class="space-y-5 p-6">
+
+                <!-- Total -->
+                <div class="space-y-2">
+
+                    <Label>
+                        Number of Ports
+                    </Label>
+
+                    <Input v-model="generatePortForm.total_ports" class="" type="number" min="1" max="1024"
+                        placeholder="Example: 48" />
+
+                    <p v-if="generatePortForm.errors.total_ports" class="text-xs text-red-500">
+                        {{ generatePortForm.errors.total_ports }}
+                    </p>
+
+                </div>
+
+                <!-- Type -->
+                <div class="space-y-2">
+
+                    <Label>
+                        Port Type
+                    </Label>
+
+                    <select v-model="generatePortForm.port_type"
+                        class="w-full rounded-xl border bg-background px-4 py-3 text-sm">
+                        <option value="ethernet">
+                            Ethernet
+                        </option>
+
+                        <option value="fiber">
+                            Fiber
+                        </option>
+
+                        <option value="management">
+                            Management
+                        </option>
+
+                        <option value="power">
+                            Power
+                        </option>
+
+                        <option value="console">
+                            Console
+                        </option>
+
+                        <option value="other">
+                            Other
+                        </option>
+                    </select>
+
+                </div>
+
+                <!-- Connector -->
+                <div class="space-y-2">
+
+                    <Label>
+                        Connector Type
+                    </Label>
+
+                    <Input v-model="generatePortForm.connector_type" placeholder="Example: LC, RJ45, SC" />
+
+                </div>
+
+                <!-- Actions -->
+                <div class="flex justify-end gap-2 pt-2">
+
+                    <button type="button" @click="openGeneratePorts = false"
+                        class="rounded-xl border px-4 py-2 text-sm">
+                        Cancel
+                    </button>
+
+                    <button type="submit" :disabled="generatePortForm.processing"
+                        class="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
+                        <Spinner v-if="generatePortForm.processing" class="h-4 w-4" />
+
+                        Generate
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+    <!-- =========================================================
+     ADD PORT
+========================================================= -->
+
+    <div v-if="openAddPort" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="openAddPort = false"></div>
+
+        <div class="relative w-full max-w-md rounded-2xl bg-white shadow-2xl dark:bg-gray-900">
+
+            <div class="flex items-center justify-between border-b px-6 py-5">
+
+                <div>
+                    <h2 class="text-base font-semibold">
+                        Add Device Port
+                    </h2>
+
+                    <p class="mt-1 text-xs text-muted-foreground">
+                        Add a port manually.
+                    </p>
+                </div>
+
+                <button type="button" @click="openAddPort = false"
+                    class="rounded-lg p-2 text-gray-400 hover:bg-gray-100">
+                    <X class="h-5 w-5" />
+                </button>
+
+            </div>
+
+            <form @submit.prevent="submitPort" class="space-y-5 p-6">
+
+                <!-- Port Name -->
+                <div class="space-y-2">
+
+                    <Label>
+                        Port Name
+                    </Label>
+
+                    <Input v-model="portForm.port_name" placeholder="Example: Port 1" />
+
+                    <p v-if="portForm.errors.port_name" class="text-xs text-red-500">
+                        {{ portForm.errors.port_name }}
+                    </p>
+
+                </div>
+
+                <!-- Port Number -->
+                <div class="space-y-2">
+
+                    <Label>
+                        Port Number
+                    </Label>
+
+                    <Input v-model="portForm.port_number" placeholder="Example: 1" />
+
+                </div>
+
+                <!-- Type -->
+                <div class="space-y-2">
+
+                    <Label>
+                        Port Type
+                    </Label>
+
+                    <select v-model="portForm.port_type"
+                        class="w-full rounded-xl border bg-background px-4 py-3 text-sm">
+                        <option value="ethernet">
+                            Ethernet
+                        </option>
+
+                        <option value="fiber">
+                            Fiber
+                        </option>
+
+                        <option value="management">
+                            Management
+                        </option>
+
+                        <option value="power">
+                            Power
+                        </option>
+
+                        <option value="console">
+                            Console
+                        </option>
+
+                        <option value="other">
+                            Other
+                        </option>
+                    </select>
+
+                </div>
+
+                <!-- Connector -->
+                <div class="space-y-2">
+
+                    <Label>
+                        Connector Type
+                    </Label>
+
+                    <Input v-model="portForm.connector_type" placeholder="Example: LC / RJ45" />
+
+                </div>
+
+                <!-- Description -->
+                <div class="space-y-2">
+
+                    <Label>
+                        Description
+                    </Label>
+
+                    <textarea v-model="portForm.description" rows="3"
+                        class="w-full rounded-xl border bg-background px-4 py-3 text-sm"
+                        placeholder="Optional description..."></textarea>
+
+                </div>
+
+                <!-- Actions -->
+                <div class="flex justify-end gap-2 pt-2">
+
+                    <button type="button" @click="openAddPort = false" class="rounded-xl border px-4 py-2 text-sm">
+                        Cancel
+                    </button>
+
+                    <button type="submit" :disabled="portForm.processing"
+                        class="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
+                        <Spinner v-if="portForm.processing" class="h-4 w-4" />
+
+                        Save Port
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+    <!-- =========================================================
+     EDIT PORT
+========================================================= -->
+
+    <div v-if="openEditPort" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="openEditPort = false"></div>
+
+        <div class="relative w-full max-w-md rounded-2xl bg-white shadow-2xl dark:bg-gray-900">
+
+            <div class="flex items-center justify-between border-b px-6 py-5">
+
+                <div>
+                    <h2 class="text-base font-semibold">
+                        Edit Device Port
+                    </h2>
+
+                    <p class="mt-1 text-xs text-muted-foreground">
+                        Update port information.
+                    </p>
+                </div>
+
+                <button type="button" @click="openEditPort = false"
+                    class="rounded-lg p-2 text-gray-400 hover:bg-gray-100">
+                    <X class="h-5 w-5" />
+                </button>
+
+            </div>
+
+            <form @submit.prevent="submitEditPort" class="space-y-5 p-6">
+
+                <div class="space-y-2">
+
+                    <Label>
+                        Port Name
+                    </Label>
+
+                    <Input v-model="editPortForm.port_name" />
+
+                </div>
+
+                <div class="space-y-2">
+
+                    <Label>
+                        Port Number
+                    </Label>
+
+                    <Input v-model="editPortForm.port_number" />
+
+                </div>
+
+                <div class="space-y-2">
+
+                    <Label>
+                        Port Type
+                    </Label>
+
+                    <select v-model="editPortForm.port_type"
+                        class="w-full rounded-xl border bg-background px-4 py-3 text-sm">
+                        <option value="ethernet">
+                            Ethernet
+                        </option>
+
+                        <option value="fiber">
+                            Fiber
+                        </option>
+
+                        <option value="management">
+                            Management
+                        </option>
+
+                        <option value="power">
+                            Power
+                        </option>
+
+                        <option value="console">
+                            Console
+                        </option>
+
+                        <option value="other">
+                            Other
+                        </option>
+                    </select>
+
+                </div>
+
+                <div class="space-y-2">
+
+                    <Label>
+                        Connector Type
+                    </Label>
+
+                    <Input v-model="editPortForm.connector_type" />
+
+                </div>
+
+                <div class="space-y-2">
+
+                    <Label>
+                        Status
+                    </Label>
+
+                    <select v-model="editPortForm.status"
+                        class="w-full rounded-xl border bg-background px-4 py-3 text-sm">
+                        <option value="available">
+                            Available
+                        </option>
+
+                        <option value="connected">
+                            Connected
+                        </option>
+
+                        <option value="disabled">
+                            Disabled
+                        </option>
+
+                        <option value="maintenance">
+                            Maintenance
+                        </option>
+                    </select>
+
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+
+                    <button type="button" @click="openEditPort = false" class="rounded-xl border px-4 py-2 text-sm">
+                        Cancel
+                    </button>
+
+                    <button type="submit" :disabled="editPortForm.processing"
+                        class="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
+                        <Spinner v-if="editPortForm.processing" class="h-4 w-4" />
+
+                        Update Port
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+
 </template>

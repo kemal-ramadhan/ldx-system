@@ -17,6 +17,9 @@ use App\Http\Controllers\TicketCategoryController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\TicketPriorityController;
 use App\Http\Controllers\VisitorController;
+use App\Http\Controllers\InterconnectionRequestController;
+use App\Http\Controllers\CrossConnectController;
+use App\Http\Controllers\DevicePortController;
 use App\Models\Invoice;
 use App\Models\TicketPriority;
 use App\Models\Visitor;
@@ -104,4 +107,123 @@ Route::middleware(['auth', 'verified', 'role:super-admin'])->group(function () {
         '/admin/tickets-priority/{ticketPriority}/toggle-active',
         [TicketPriorityController::class, 'toggleActive']
     );
+
+    Route::prefix('admin')->group(function () {
+        // Device Ports
+        Route::post(
+            'racks/devices/{device}/ports',
+            [RackController::class, 'storeDevicePort']
+        )->name('admin.racks.devices.ports.store');
+
+        Route::post(
+            'racks/devices/{device}/ports/generate',
+            [RackController::class, 'generateDevicePorts']
+        )->name('admin.racks.devices.ports.generate');
+
+        Route::put(
+            'racks/devices/ports/{port}',
+            [RackController::class, 'updateDevicePort']
+        )->name('admin.racks.devices.ports.update');
+
+        Route::delete(
+            'racks/devices/ports/{port}',
+            [RackController::class, 'destroyDevicePort']
+        )->name('admin.racks.devices.ports.destroy');
+
+        Route::get(
+            'interconnections',
+            [InterconnectionRequestController::class, 'index']
+        )->name('admin.interconnections.index');
+
+        Route::get(
+            'interconnections/create',
+            [InterconnectionRequestController::class, 'create']
+        )->name('admin.interconnections.create');
+
+        Route::post(
+            'interconnections',
+            [InterconnectionRequestController::class, 'store']
+        )->name('admin.interconnections.store');
+
+        Route::get(
+            'interconnections/{interconnection}',
+            [InterconnectionRequestController::class, 'show']
+        )->name('admin.interconnections.show');
+
+        Route::patch(
+            'interconnections/{interconnection}/approve-destination',
+            [InterconnectionRequestController::class, 'approveDestination']
+        )->name(
+            'admin.interconnections.approve-destination'
+        );
+
+        Route::patch(
+            'interconnections/{interconnection}/reject-destination',
+            [InterconnectionRequestController::class, 'rejectDestination']
+        )->name(
+            'admin.interconnections.reject-destination'
+        );
+
+        Route::patch(
+            'interconnections/{interconnection}/approve-dc',
+            [InterconnectionRequestController::class, 'approveDc']
+        )->name(
+            'admin.interconnections.approve-dc'
+        );
+
+        Route::patch(
+            'interconnections/{interconnection}/reject-dc',
+            [InterconnectionRequestController::class, 'rejectDc']
+        )->name(
+            'admin.interconnections.reject-dc'
+        );
+
+        Route::patch(
+            'interconnections/{interconnection}/start-installation',
+            [InterconnectionRequestController::class, 'startInstallation']
+        )->name(
+            'admin.interconnections.start-installation'
+        );
+
+        Route::patch(
+            'interconnections/{interconnection}/start-testing',
+            [InterconnectionRequestController::class, 'startTesting']
+        )->name(
+            'admin.interconnections.start-testing'
+        );
+
+        Route::patch(
+            'interconnections/{interconnection}/complete',
+            [InterconnectionRequestController::class, 'complete']
+        )->name(
+            'admin.interconnections.complete'
+        );
+
+        Route::patch(
+            'interconnections/{interconnection}/cancel',
+            [InterconnectionRequestController::class, 'cancel']
+        )->name(
+            'admin.interconnections.cancel'
+        );
+
+        Route::get(
+            'cross-connects',
+            [CrossConnectController::class, 'index']
+        )->name('admin.cross-connects.index');
+
+        Route::get(
+            'cross-connects/{crossConnect}',
+            [CrossConnectController::class, 'show']
+        )->name('admin.cross-connects.show');
+
+        Route::patch(
+            'cross-connects/{crossConnect}/terminate',
+            [CrossConnectController::class, 'terminate']
+        )->name('admin.cross-connects.terminate');
+
+        Route::get(
+            'device-ports/{devicePort}',
+            [DevicePortController::class, 'show']
+        )->name('admin.device-ports.show');
+    });
 });

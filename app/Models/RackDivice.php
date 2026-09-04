@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class RackDivice extends Model
 {
@@ -50,5 +51,13 @@ class RackDivice extends Model
     public function rackUnits()
     {
         return $this->hasMany(RackUnit::class, 'rack_divice_id');
+    }
+
+    public function ports(): HasMany
+    {
+        return $this->hasMany(
+            DevicePort::class,
+            'rack_divice_id'
+        );
     }
 }

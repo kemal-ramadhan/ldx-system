@@ -49,6 +49,16 @@ export const navigation = {
             ],
         },
         {
+            title: 'Interconnection',
+            href: '/admin/interconnections',
+            icon: Package,
+        },
+        {
+            title: 'Cross Connect',
+            href: '/admin/cross-connects',
+            icon: Package,
+        },
+        {
             title: 'Service Management',
             icon: Package,
 
@@ -134,6 +144,11 @@ export const navigation = {
                     href: '/client/devices',
                 },
             ],
+        },
+        {
+            title: 'Interconnection',
+            href: '/client/interconnections',
+            icon: Package,
         },
         {
             title: 'Invoices',

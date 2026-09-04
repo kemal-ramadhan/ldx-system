@@ -9,6 +9,7 @@ use App\Http\Controllers\InvoiceClientController;
 use App\Http\Controllers\RackClientController;
 use App\Http\Controllers\ServiceClientController;
 use App\Http\Controllers\TicketClientController;
+use App\Http\Controllers\InterconnectionClientController;
 
 Route::middleware(['auth', 'verified', 'role:client'])->group(function () {
     Route::GET('client/dashboard', [DashboardAdminController::class, 'client'])->name('client.dashboard');
@@ -26,4 +27,36 @@ Route::middleware(['auth', 'verified', 'role:client'])->group(function () {
 
     Route::resource('client/tickets', TicketClientController::class);
     Route::post('client/tickets/{ticketId}/reply', [TicketClientController::class, 'storeReply'])->name('client.tickets.reply');
+
+    Route::prefix('client')->group(function () {
+        Route::get(
+            '/interconnections',
+            [InterconnectionClientController::class, 'index']
+        )->name('interconnections.index');
+
+        Route::get(
+            '/interconnections/create',
+            [InterconnectionClientController::class, 'create']
+        )->name('interconnections.create');
+
+        Route::post(
+            '/interconnections',
+            [InterconnectionClientController::class, 'store']
+        )->name('interconnections.store');
+
+        Route::get(
+            '/interconnections/destination-clients/{clientId}/devices',
+            [InterconnectionClientController::class, 'destinationDevices']
+        )->name('interconnections.destination-devices');
+
+        Route::get(
+            '/interconnections/devices/{deviceId}/ports',
+            [InterconnectionClientController::class, 'devicePorts']
+        )->name('interconnections.device-ports');
+
+        Route::get(
+            '/interconnections/{id}',
+            [InterconnectionClientController::class, 'show']
+        )->name('client.interconnections.show');
+    });
 });
