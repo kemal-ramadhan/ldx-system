@@ -1089,7 +1089,7 @@
                             <h3 class="font-display text-lg font-700 text-white">Best Offer - Colocation 1 Rack</h3>
                         </div>
                         <div class="mb-6">
-                            <span class="font-display text-4xl font-800 text-white">Rp 7.000.000</span>
+                            <span class="font-display text-4xl font-800 text-white">Rp 8.000.000</span>
                             <span class="text-slate-500 text-sm">/bulan</span>
                         </div>
                         <ul class="space-y-3 mb-7">
