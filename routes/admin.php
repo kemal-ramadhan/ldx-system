@@ -75,7 +75,7 @@ Route::middleware(['auth', 'verified', 'role:super-admin'])->group(function () {
     Route::post('/admin/invoices/{invoice}/send', [InvoiceController::class, 'sendInvoice'])->name('invoices.send');
     Route::get('/admin/invoices/{invoice}/payment', [InvoiceController::class, 'paymentInvoice'])->name('invoices.payment');
     Route::post('/admin/invoices/{invoice}/paymentbyadmin', [InvoiceController::class, 'storePayment'])->name('admin.invoices.payment.store');
-    Route::patch('/admin/invoices/{invoice}/verify', [InvoiceController::class, 'verifyPayment'])->name('admin.invoices.payment.store');
+    Route::patch('/admin/invoices/{invoice}/verify', [InvoiceController::class, 'verifyPayment'])->name('admin.invoices.payment.verify');
     /**
      * =========================================
      * REJECT PAYMENT
