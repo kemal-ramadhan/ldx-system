@@ -1141,7 +1141,7 @@
                     </article>
                     
                     <!-- Extra Bonus - Colocation Full Rack -->
-                    <article class="glass-card rounded-2xl p-7 reveal" style="transition-delay:0.15s">
+                    {{-- <article class="glass-card rounded-2xl p-7 reveal" style="transition-delay:0.15s">
                         <div class="flex items-center gap-3 mb-5">
                             <div class="w-10 h-10 rounded-lg bg-violet-500/15 flex items-center justify-center">
                                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -1218,7 +1218,7 @@
                             class="w-full block text-center border border-violet-500/40 text-violet-400 hover:bg-violet-500/10 font-semibold px-5 py-3 rounded-xl transition-all duration-300 text-sm">
                             Order Sekarang
                         </a>
-                    </article>
+                    </article> --}}
             </div>
         </div>
     </section>

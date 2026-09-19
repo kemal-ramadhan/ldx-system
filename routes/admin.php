@@ -48,6 +48,7 @@ Route::middleware(['auth', 'verified', 'role:super-admin'])->group(function () {
     Route::resource('admin/visitors', VisitorController::class);
 
     // racks management
+    Route::delete('admin/racks/bulk-destroy', [RackController::class, 'bulkDestroy'])->name('admin.racks.bulk-destroy');
     Route::resource('admin/racks', RackController::class);
     Route::post('admin/racks/{rack}/owners', [RackController::class, 'assignOwner'])->name('admin.racks.assign-owner');
     Route::delete('admin/racks/{ownerId}/owner', [RackController::class, 'removeOwner'])->name('admin.racks.remove-owner');

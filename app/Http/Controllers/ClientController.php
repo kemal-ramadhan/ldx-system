@@ -108,12 +108,20 @@ class ClientController extends Controller
         $devices = RackDivice::with('rack')
             ->where('client_id', $id)
             ->get();
+            
+        $invoices = \App\Models\Invoice::with(['service'])
+            ->where('client_id', $id)
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
         return Inertia::render('clients/ClientShow', [
             'title' => 'Client Details',
             'client' => $client,
             'users' => $users,
             'racks' => $racks,
-            'devices' => $devices
+            'devices' => $devices,
+            'invoices' => $invoices
         ]);
     }
 

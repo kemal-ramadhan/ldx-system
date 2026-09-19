@@ -31,7 +31,7 @@
 
     <!-- Content -->
     <div class="px-5 pb-5 pt-1">
-      <component :is="currentPanel" :client="props.client" :users="props.users" :racks="props.racks" :devices="props.devices" />
+      <component :is="currentPanel" :client="props.client" :users="props.users" :racks="props.racks" :devices="props.devices" :invoices="props.invoices" />
     </div>
 
   </div>
@@ -43,12 +43,14 @@ import { ref, computed } from 'vue'
 import MemberClient from './tabs/MemberClient.vue'
 import RackClient from './tabs/RackClient.vue'
 import DiviceClient from './tabs/DiviceClient.vue'
+import InvoiceClient from './tabs/InvoiceClient.vue'
 
 const props = defineProps({
   client: Object,
   users: Array,
   racks: Array,
-  devices: Array
+  devices: Array,
+  invoices: Object
 })
 
 const activeTab = ref('member')
@@ -57,12 +59,14 @@ const tabs = [
   { key: 'member',   label: 'Member',  badge: props.client?.pics?.length || 0 },
   { key: 'rack',   label: 'Rack',  badge: props.racks?.length || 0 },
   { key: 'divice',   label: 'Device',  badge: props.devices?.length || 0 },
+  { key: 'invoice',  label: 'Invoice', badge: props.invoices?.total || 0 },
 ]
 
 const panels = {
   member:   MemberClient,
   rack:   RackClient,
   divice:   DiviceClient,
+  invoice:  InvoiceClient,
 }
 
 const currentPanel = computed(() => panels[activeTab.value])

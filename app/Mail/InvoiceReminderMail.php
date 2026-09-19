@@ -14,16 +14,20 @@ class InvoiceReminderMail extends Mailable
 
     public $invoice;
 
+    public $pdfPath;
+
     /**
      * =========================================
      * CONSTRUCTOR
      * =========================================
      */
     public function __construct(
-        Invoice $invoice
+        Invoice $invoice,
+        string $pdfPath
     ) {
 
         $this->invoice = $invoice;
+        $this->pdfPath = $pdfPath;
     }
 
     /**
@@ -60,6 +64,12 @@ class InvoiceReminderMail extends Mailable
      */
     public function attachments(): array
     {
-        return [];
+        return [
+            \Illuminate\Mail\Mailables\Attachment::fromPath(
+                $this->pdfPath
+            )->as(
+                $this->invoice->invoice_number . '.pdf'
+            ),
+        ];
     }
 }

@@ -11,11 +11,11 @@ Artisan::command('inspire', function () {
 
 Schedule::command(
     'invoices:generate'
-)->dailyAt('11:27');
+)->dailyAt('17:52');
 
 Schedule::command(
     'invoices:reminders'
-)->dailyAt('11:27');
+)->dailyAt('17:52');
 
 Service::where('status', 'active')
     ->whereDate(

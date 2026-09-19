@@ -231,10 +231,26 @@ class GenerateInvoices extends Command
              * GENERATE PDF
              * =========================================
              */
+            $logoPath = public_path('assets/logos/ldx-logo.png');
+            $logoLdx = public_path('assets/logos/ldx.png');
+
+            $logoData = base64_encode(
+                file_get_contents($logoPath)
+            );
+
+            $logoDataLdx = base64_encode(
+                file_get_contents($logoLdx)
+            );
+
+            $logoSrc = 'data:image/png;base64,' . $logoData;
+            $logoLdxSrc = 'data:image/png;base64,' . $logoDataLdx;
+
             $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
                 'pdf.invoice',
                 [
-                    'invoice' => $invoice
+                    'invoice' => $invoice,
+                    'logoSrc' => $logoSrc,
+                    'logoLdxSrc' => $logoLdxSrc,
                 ]
             );
 

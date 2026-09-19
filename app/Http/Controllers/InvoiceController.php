@@ -197,6 +197,10 @@ class InvoiceController extends Controller
                     : null,
             ]);
 
+            if ($request->boolean('is_direct_payment')) {
+                $this->processPaymentSuccess($invoice);
+            }
+
             DB::commit();
 
             return back()
@@ -273,6 +277,8 @@ class InvoiceController extends Controller
 
             ]);
 
+            $this->processPaymentSuccess($invoice);
+
 
             DB::commit();
 
@@ -289,6 +295,94 @@ class InvoiceController extends Controller
             return back()->withErrors([
                 'error' => $th->getMessage(),
             ]);
+        }
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function delete(string $id)
+    {
+        $invoice = Invoice::findOrFail($id);
+        $invoice->delete();
+        return back()->with('success', 'Invoice deleted successfully.');
+    }
+
+    private function processPaymentSuccess(Invoice $invoice)
+    {
+        /**
+         * =========================================
+         * GENERATE PDF FOR PAYMENT RECEIVED
+         * =========================================
+         */
+        $invoice->load([
+            'client',
+            'service',
+            'items',
+        ]);
+
+        $logoPath = public_path('assets/logos/ldx-logo.png');
+        $logoLdx = public_path('assets/logos/ldx.png');
+
+        $logoData = base64_encode(
+            file_get_contents($logoPath)
+        );
+
+        $logoDataLdx = base64_encode(
+            file_get_contents($logoLdx)
+        );
+
+        $logoSrc = 'data:image/png;base64,' . $logoData;
+        $logoLdxSrc = 'data:image/png;base64,' . $logoDataLdx;
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+            'pdf.invoice',
+            [
+                'invoice' => $invoice,
+                'logoSrc' => $logoSrc,
+                'logoLdxSrc' => $logoLdxSrc,
+            ]
+        );
+
+        $fileName =
+            $invoice->invoice_number . '.pdf';
+
+        $filePath =
+            storage_path(
+                'app/public/invoices/' . $fileName
+            );
+
+        if (
+            !file_exists(
+                storage_path('app/public/invoices')
+            )
+        ) {
+            mkdir(
+                storage_path('app/public/invoices'),
+                0777,
+                true
+            );
+        }
+
+        file_put_contents(
+            $filePath,
+            $pdf->output()
+        );
+
+        /**
+         * =========================================
+         * SEND PAYMENT RECEIVED EMAIL
+         * =========================================
+         */
+        if ($invoice->client && $invoice->client->company_email) {
+            \Illuminate\Support\Facades\Mail::to(
+                $invoice->client->company_email
+            )->send(
+                new \App\Mail\PaymentReceivedMail(
+                    $invoice,
+                    $filePath
+                )
+            );
         }
     }
 
@@ -531,6 +625,8 @@ class InvoiceController extends Controller
                 'status' => 'paid',
                 'paid_at' => now(),
             ]);
+
+            $this->processPaymentSuccess($invoice);
 
             DB::commit();
 

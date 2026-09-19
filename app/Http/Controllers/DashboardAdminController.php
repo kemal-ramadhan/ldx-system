@@ -98,6 +98,18 @@ class DashboardAdminController extends Controller
             ->limit(5)
             ->get();
 
+        /**
+         * =========================================
+         * OPERATIONAL STATS
+         * =========================================
+         */
+        $totalClients = \App\Models\Client::count();
+        $activeServices = Service::where('status', 'active')->count();
+        $totalDevices = RackDivice::count();
+        $openTickets = Ticket::where('status', '!=', 'resolved')
+            ->where('status', '!=', 'closed')
+            ->count();
+
         return Inertia::render('dashboard/Admin', [
             'title' => 'Dashboard Admin',
 
@@ -112,6 +124,11 @@ class DashboardAdminController extends Controller
             'recentInvoices' => $recentInvoices,
 
             'revenueChart' => $revenuePerMonth,
+
+            'totalClients' => $totalClients,
+            'activeServices' => $activeServices,
+            'totalDevices' => $totalDevices,
+            'openTickets' => $openTickets,
         ]);
     }
     public function client()

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>
-        Invoice Payment Reminder
+        Payment Received
     </title>
 </head>
 
@@ -50,7 +50,7 @@
                                 font-size:14px;
                                 color:#d1d5db;
                             ">
-                                Invoice Payment Reminder
+                                Payment Received
                             </p>
 
                         </td>
@@ -78,10 +78,7 @@
                                 line-height:1.7;
                                 color:#4b5563;
                             ">
-                                Ini adalah pengingat bahwa invoice Anda mendekati tanggal jatuh tempo. Harap melakukan pembayaran untuk layanan dari
-                                <strong>
-                                    LDX Data Center
-                                </strong>.
+                                Terima kasih, kami telah menerima pembayaran Anda untuk invoice di bawah ini. Status layanan Anda tetap aktif.
                             </p>
 
                             <!-- INFO BOX -->
@@ -101,7 +98,7 @@
                                     ">
 
                                         <strong>
-                                            Invoice Information
+                                            Payment Details
                                         </strong>
 
                                     </td>
@@ -157,15 +154,15 @@
                                                     padding:8px 0;
                                                     color:#6b7280;
                                                 ">
-                                                    Due Date
+                                                    Payment Date
                                                 </td>
 
                                                 <td align="right" style="
                                                     padding:8px 0;
-                                                    color:#dc2626;
+                                                    color:#111827;
                                                     font-weight:bold;
                                                 ">
-                                                    {{ $invoice->due_date }}
+                                                    {{ $invoice->paid_at ? \Carbon\Carbon::parse($invoice->paid_at)->format('Y-m-d') : now()->format('Y-m-d') }}
                                                 </td>
 
                                             </tr>
@@ -176,14 +173,14 @@
                                                     padding:8px 0;
                                                     color:#6b7280;
                                                 ">
-                                                    Total Amount
+                                                    Total Paid
                                                 </td>
 
                                                 <td align="right" style="
                                                     padding:8px 0;
                                                     font-size:18px;
                                                     font-weight:bold;
-                                                    color:#111827;
+                                                    color:#16a34a;
                                                 ">
                                                     Rp {{ number_format($invoice->total, 0, ',', '.') }}
                                                 </td>
@@ -213,8 +210,7 @@
                                     color:#1e40af;
                                     line-height:1.7;
                                 ">
-                                    Invoice lengkap terlampir pada email ini dalam format PDF.
-                                    Silakan melakukan pembayaran sebelum tanggal jatuh tempo.
+                                    Tanda terima resmi (Invoice Lunas) dalam format PDF terlampir pada email ini untuk catatan Anda.
                                 </p>
 
                             </div>

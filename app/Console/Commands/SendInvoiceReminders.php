@@ -97,6 +97,66 @@ class SendInvoiceReminders extends Command
 
             /**
              * =========================================
+             * GENERATE PDF
+             * =========================================
+             */
+            $invoice->load([
+                'client',
+                'service',
+                'items',
+            ]);
+
+            $logoPath = public_path('assets/logos/ldx-logo.png');
+            $logoLdx = public_path('assets/logos/ldx.png');
+
+            $logoData = base64_encode(
+                file_get_contents($logoPath)
+            );
+
+            $logoDataLdx = base64_encode(
+                file_get_contents($logoLdx)
+            );
+
+            $logoSrc = 'data:image/png;base64,' . $logoData;
+            $logoLdxSrc = 'data:image/png;base64,' . $logoDataLdx;
+
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+                'pdf.invoice',
+                [
+                    'invoice' => $invoice,
+                    'logoSrc' => $logoSrc,
+                    'logoLdxSrc' => $logoLdxSrc,
+                ]
+            );
+
+            $fileName =
+                $invoice->invoice_number . '.pdf';
+
+            $filePath =
+                storage_path(
+                    'app/public/invoices/' . $fileName
+                );
+
+            if (
+                !file_exists(
+                    storage_path('app/public/invoices')
+                )
+            ) {
+
+                mkdir(
+                    storage_path('app/public/invoices'),
+                    0777,
+                    true
+                );
+            }
+
+            file_put_contents(
+                $filePath,
+                $pdf->output()
+            );
+
+            /**
+             * =========================================
              * SEND REMINDER EMAIL
              * =========================================
              */
@@ -104,7 +164,8 @@ class SendInvoiceReminders extends Command
                 $invoice->client->company_email
             )->send(
                 new InvoiceReminderMail(
-                    $invoice
+                    $invoice,
+                    $filePath
                 )
             );
 

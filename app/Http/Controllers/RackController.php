@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Database\QueryException;
 
 class RackController extends Controller
 {
@@ -26,6 +27,7 @@ class RackController extends Controller
         $room = $request->room;
 
         $racks = Rack::with('room.locationDataCenter')
+            ->withCount(['rackDivices', 'clientRacks'])
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('code', 'like', "%{$search}%")
@@ -1016,7 +1018,86 @@ class RackController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        DB::beginTransaction();
+        try {
+            $this->deleteRackWithCascading($id);
+            DB::commit();
+
+            return back()->with('success', 'Rack deleted successfully.');
+        } catch (QueryException $e) {
+            DB::rollBack();
+            if ($e->getCode() == '23000') {
+                return back()->withErrors(['message' => 'Failed to delete rack: It is currently being used by active devices, interconnections, or cross connects.']);
+            }
+            return back()->withErrors(['message' => 'Failed to delete rack: ' . $e->getMessage()]);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return back()->withErrors(['message' => 'Failed to delete rack: ' . $th->getMessage()]);
+        }
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array'],
+            'ids.*' => ['exists:racks,id'],
+        ]);
+
+        DB::beginTransaction();
+        try {
+            foreach ($validated['ids'] as $id) {
+                $this->deleteRackWithCascading($id);
+            }
+            DB::commit();
+
+            return back()->with('success', count($validated['ids']) . ' racks deleted successfully.');
+        } catch (QueryException $e) {
+            DB::rollBack();
+            if ($e->getCode() == '23000') {
+                return back()->withErrors(['message' => 'Failed to delete racks: One or more racks are currently being used by active devices, interconnections, or cross connects.']);
+            }
+            return back()->withErrors(['message' => 'Failed to delete racks: ' . $e->getMessage()]);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return back()->withErrors(['message' => 'Failed to delete racks: ' . $th->getMessage()]);
+        }
+    }
+
+    private function deleteRackWithCascading($id)
+    {
+        $rack = Rack::findOrFail($id);
+
+        $devices = \App\Models\RackDivice::where('rack_id', $rack->id)->get();
+        foreach ($devices as $device) {
+            $ports = $device->ports;
+            if ($ports) {
+                foreach ($ports as $port) {
+                    \App\Models\CrossConnect::where(function ($query) use ($port) {
+                        $query->where('source_port_id', $port->id)
+                              ->orWhere('destination_port_id', $port->id);
+                    })->where('status', 'active')
+                      ->update([
+                          'status' => 'terminated',
+                          'terminated_at' => now(),
+                      ]);
+
+                    \App\Models\InterconnectionRequest::where(function ($query) use ($port) {
+                        $query->where('source_port_id', $port->id)
+                              ->orWhere('destination_port_id', $port->id);
+                    })->whereNotIn('status', ['completed', 'cancelled', 'rejected'])
+                      ->update([
+                          'status' => 'cancelled',
+                      ]);
+
+                    $port->delete();
+                }
+            }
+            $device->delete();
+        }
+
+        RackUnit::where('rack_id', $rack->id)->delete();
+        \App\Models\ClientRack::where('rack_id', $rack->id)->delete();
+        $rack->delete();
     }
 
     public function removeOwner(string $id)
@@ -1118,6 +1199,35 @@ class RackController extends Controller
                     'rack_divice_id' => null,
                     'status' => 'empty',
                 ]);
+
+            /**
+             * =========================
+             * HANDLE PORTS & CONNECTIONS
+             * =========================
+             */
+            $ports = $device->ports;
+            if ($ports) {
+                foreach ($ports as $port) {
+                    \App\Models\CrossConnect::where(function ($query) use ($port) {
+                        $query->where('source_port_id', $port->id)
+                              ->orWhere('destination_port_id', $port->id);
+                    })->where('status', 'active')
+                      ->update([
+                          'status' => 'terminated',
+                          'terminated_at' => now(),
+                      ]);
+
+                    \App\Models\InterconnectionRequest::where(function ($query) use ($port) {
+                        $query->where('source_port_id', $port->id)
+                              ->orWhere('destination_port_id', $port->id);
+                    })->whereNotIn('status', ['completed', 'cancelled', 'rejected'])
+                      ->update([
+                          'status' => 'cancelled',
+                      ]);
+
+                    $port->delete();
+                }
+            }
 
             /**
              * =========================

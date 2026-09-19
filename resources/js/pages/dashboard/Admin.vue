@@ -7,6 +7,10 @@ import {
     FileText,
     AlertTriangle,
     RefreshCw,
+    Users,
+    Server,
+    HardDrive,
+    Headset
 } from 'lucide-vue-next'
 
 import {
@@ -44,6 +48,10 @@ const props = defineProps<{
     upcomingServices: any[]
     recentInvoices: any[]
     revenueChart: number[]
+    totalClients: number
+    activeServices: number
+    totalDevices: number
+    openTickets: number
 }>()
 
 defineOptions({
@@ -149,7 +157,44 @@ const invoiceChartData = {
 
         </div>
 
-        <!-- KPI CARDS -->
+        <!-- OPERATIONAL KPI CARDS -->
+        <div class="grid md:grid-cols-4 gap-4">
+
+            <div class="rounded-2xl border bg-white dark:bg-gray-900 p-5 shadow-sm">
+                <p class="text-xs text-gray-500">Total Active Clients</p>
+                <h2 class="text-xl font-bold mt-1">
+                    {{ totalClients }}
+                </h2>
+                <Users class="h-5 w-5 text-indigo-500 mt-2" />
+            </div>
+
+            <div class="rounded-2xl border bg-white dark:bg-gray-900 p-5 shadow-sm">
+                <p class="text-xs text-gray-500">Active Services</p>
+                <h2 class="text-xl font-bold mt-1">
+                    {{ activeServices }}
+                </h2>
+                <Server class="h-5 w-5 text-emerald-500 mt-2" />
+            </div>
+
+            <div class="rounded-2xl border bg-white dark:bg-gray-900 p-5 shadow-sm">
+                <p class="text-xs text-gray-500">Total Devices in DC</p>
+                <h2 class="text-xl font-bold mt-1">
+                    {{ totalDevices }}
+                </h2>
+                <HardDrive class="h-5 w-5 text-blue-500 mt-2" />
+            </div>
+
+            <div class="rounded-2xl border bg-white dark:bg-gray-900 p-5 shadow-sm">
+                <p class="text-xs text-gray-500">Open Support Tickets</p>
+                <h2 class="text-xl font-bold mt-1">
+                    {{ openTickets }}
+                </h2>
+                <Headset class="h-5 w-5 text-orange-500 mt-2" />
+            </div>
+
+        </div>
+
+        <!-- FINANCIAL KPI CARDS -->
         <div class="grid md:grid-cols-3 gap-4">
 
             <div class="rounded-2xl border bg-white dark:bg-gray-900 p-5 shadow-sm">

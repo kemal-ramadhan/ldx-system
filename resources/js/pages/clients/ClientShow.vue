@@ -13,6 +13,7 @@ const props = defineProps<{
     users: any;
     racks: any;
     devices: any;
+    invoices: any;
 }>();
 
 defineOptions({
@@ -33,5 +34,5 @@ defineOptions({
 
     <CardCompany :client="props.client" />
 
-    <TabMenuClient :client="props.client" :users="props.users" :racks="props.racks" :devices="props.devices" />
+    <TabMenuClient :client="props.client" :users="props.users" :racks="props.racks" :devices="props.devices" :invoices="props.invoices" />
 </template>
