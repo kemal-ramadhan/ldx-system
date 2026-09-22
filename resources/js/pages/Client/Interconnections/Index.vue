@@ -37,13 +37,19 @@ interface Interconnection {
     description?: string
     requested_at?: string
 
+    destination_type?: string
+    external_client_name?: string
+    external_rack_name?: string
+    external_device_name?: string
+    external_port_name?: string
+
     source_port?: {
         port_name: string
         port_number?: string
         device?: {
             divice_name: string
             client?: {
-                name: string
+                company_name: string
             }
             rack?: {
                 name: string
@@ -57,7 +63,7 @@ interface Interconnection {
         device?: {
             divice_name: string
             client?: {
-                name: string
+                company_name: string
             }
             rack?: {
                 name: string
@@ -181,10 +187,20 @@ function formatDate(date?: string) {
 }
 
 function getDestination(item: Interconnection) {
+    if (item.destination_type === 'external') {
+        return item.external_client_name ?? 'Unknown'
+    }
     return (
-        item.destination_port?.device?.client?.name ??
+        item.destination_port?.device?.client?.company_name ??
         'Unknown'
     )
+}
+
+function getDestinationPort(item: Interconnection) {
+    if (item.destination_type === 'external') {
+        return item.external_port_name ?? 'Unknown Port'
+    }
+    return item.destination_port?.port_name ?? 'Unknown Port'
 }
 </script>
 
@@ -331,7 +347,7 @@ function getDestination(item: Interconnection) {
                                 →
 
                                 {{
-                                    item.destination_port?.port_name
+                                    getDestinationPort(item)
                                 }}
 
                             </div>
@@ -496,7 +512,7 @@ function getDestination(item: Interconnection) {
                         </div>
 
                         <div class="mt-1 text-xs text-muted-foreground">
-                            {{ item.destination_port?.port_name }}
+                            {{ getDestinationPort(item) }}
                         </div>
 
                     </div>

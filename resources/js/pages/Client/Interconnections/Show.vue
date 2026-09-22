@@ -82,6 +82,12 @@ interface Interconnection {
     source_port_id: number
     destination_port_id: number
 
+    destination_type?: string
+    external_client_name?: string
+    external_rack_name?: string
+    external_device_name?: string
+    external_port_name?: string
+
     interconnection_type: string
     cable_type: string
     connector_type: string
@@ -658,7 +664,9 @@ step,
                         </h2>
 
                         <p class="text-xs text-muted-foreground">
-                            Connected tenant
+                            Connected tenant 
+                            <span v-if="interconnection.destination_type === 'external'" class="ml-1 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium text-blue-700">External</span>
+                            <span v-else class="ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-700">Internal</span>
                         </p>
 
                     </div>
@@ -676,11 +684,24 @@ step,
 
                         <p class="mt-1 text-sm font-medium">
                             {{
-                                destinationClient?.company_name ??
-                                '-'
+                                interconnection.destination_type === 'external'
+                                    ? interconnection.external_client_name
+                                    : (destinationClient?.company_name ?? '-')
                             }}
                         </p>
 
+                    </div>
+                    
+                    <div v-if="interconnection.destination_type === 'external'">
+                        <p class="text-xs text-muted-foreground">
+                            Rack
+                        </p>
+                        
+                        <p class="mt-1 text-sm font-medium">
+                            {{
+                                interconnection.external_rack_name ?? '-'
+                            }}
+                        </p>
                     </div>
 
 
@@ -692,12 +713,13 @@ step,
 
                         <p class="mt-1 text-sm font-medium">
                             {{
-                                destinationDevice?.divice_name ??
-                                '-'
+                                interconnection.destination_type === 'external'
+                                    ? interconnection.external_device_name
+                                    : (destinationDevice?.divice_name ?? '-')
                             }}
                         </p>
 
-                        <p class="text-xs text-muted-foreground">
+                        <p v-if="interconnection.destination_type !== 'external'" class="text-xs text-muted-foreground">
                             {{
                                 destinationDevice?.code ??
                                 '-'
@@ -717,14 +739,15 @@ step,
 
                             <p class="mt-1 text-sm font-medium">
                                 {{
-                                    interconnection.destination_port?.port_name ??
-                                    '-'
+                                    interconnection.destination_type === 'external'
+                                        ? interconnection.external_port_name
+                                        : (interconnection.destination_port?.port_name ?? '-')
                                 }}
                             </p>
 
                         </div>
 
-                        <div>
+                        <div v-if="interconnection.destination_type !== 'external'">
 
                             <p class="text-xs text-muted-foreground">
                                 Connector

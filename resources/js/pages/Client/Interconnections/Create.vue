@@ -76,6 +76,13 @@ const props = defineProps<{
 const form = useForm({
     source_port_id: '',
     destination_port_id: '',
+    
+    destination_type: 'internal',
+    
+    external_client_name: '',
+    external_rack_name: '',
+    external_device_name: '',
+    external_port_name: '',
 
     interconnection_type: 'cross_connect',
 
@@ -252,9 +259,17 @@ const submit = () => {
 */
 
 const canSubmit = computed(() => {
+    if (!form.source_port_id) return false
+    
+    if (form.destination_type === 'internal' && !form.destination_port_id) return false
+    
+    if (form.destination_type === 'external') {
+        if (!form.external_client_name || !form.external_rack_name || !form.external_device_name || !form.external_port_name) {
+            return false
+        }
+    }
+
     return (
-        form.source_port_id &&
-        form.destination_port_id &&
         form.interconnection_type &&
         form.cable_type &&
         form.connector_type &&
@@ -418,7 +433,20 @@ const canSubmit = computed(() => {
                         </div>
 
 
-                        <!-- DESTINATION CLIENT -->
+                        <!-- TYPE SELECTION -->
+                        <div class="mb-5 flex gap-4">
+                            <label class="flex items-center gap-2 text-sm font-medium cursor-pointer">
+                                <input type="radio" v-model="form.destination_type" value="internal" class="h-4 w-4 text-primary" />
+                                Internal Data Center
+                            </label>
+                            <label class="flex items-center gap-2 text-sm font-medium cursor-pointer">
+                                <input type="radio" v-model="form.destination_type" value="external" class="h-4 w-4 text-primary" />
+                                External Data Center
+                            </label>
+                        </div>
+                        
+                        <div v-if="form.destination_type === 'internal'" class="space-y-4">
+                            <!-- DESTINATION CLIENT -->
                         <div class="space-y-2">
 
                             <label class="text-sm font-medium">
@@ -516,6 +544,46 @@ const canSubmit = computed(() => {
                                 {{ form.errors.destination_port_id }}
                             </p>
 
+                        </div>
+                        
+                        </div>
+                        
+                        <div v-if="form.destination_type === 'external'" class="space-y-4">
+                            <div class="space-y-2">
+                                <label class="text-sm font-medium">Client Name</label>
+                                <input v-model="form.external_client_name" type="text" placeholder="e.g. PT Telekomunikasi"
+                                    class="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10" />
+                                <p v-if="form.errors.external_client_name" class="mt-1 text-xs text-destructive">
+                                    {{ form.errors.external_client_name }}
+                                </p>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="text-sm font-medium">Rack Name</label>
+                                <input v-model="form.external_rack_name" type="text" placeholder="e.g. Rack A1"
+                                    class="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10" />
+                                <p v-if="form.errors.external_rack_name" class="mt-1 text-xs text-destructive">
+                                    {{ form.errors.external_rack_name }}
+                                </p>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="text-sm font-medium">Device Name</label>
+                                <input v-model="form.external_device_name" type="text" placeholder="e.g. Switch Core 1"
+                                    class="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10" />
+                                <p v-if="form.errors.external_device_name" class="mt-1 text-xs text-destructive">
+                                    {{ form.errors.external_device_name }}
+                                </p>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="text-sm font-medium">Port Name</label>
+                                <input v-model="form.external_port_name" type="text" placeholder="e.g. eth0/1"
+                                    class="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10" />
+                                <p v-if="form.errors.external_port_name" class="mt-1 text-xs text-destructive">
+                                    {{ form.errors.external_port_name }}
+                                </p>
+                            </div>
                         </div>
 
                     </div>

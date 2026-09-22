@@ -244,11 +244,45 @@ class InterconnectionClientController extends Controller
                 'exists:device_ports,id',
             ],
 
-            'destination_port_id' => [
+            'destination_type' => [
                 'required',
+                'in:internal,external',
+            ],
+
+            'destination_port_id' => [
+                'exclude_if:destination_type,external',
+                'required_if:destination_type,internal',
                 'integer',
                 'exists:device_ports,id',
                 'different:source_port_id',
+            ],
+
+            'external_client_name' => [
+                'exclude_if:destination_type,internal',
+                'required_if:destination_type,external',
+                'string',
+                'max:255',
+            ],
+
+            'external_rack_name' => [
+                'exclude_if:destination_type,internal',
+                'required_if:destination_type,external',
+                'string',
+                'max:255',
+            ],
+
+            'external_device_name' => [
+                'exclude_if:destination_type,internal',
+                'required_if:destination_type,external',
+                'string',
+                'max:255',
+            ],
+
+            'external_port_name' => [
+                'exclude_if:destination_type,internal',
+                'required_if:destination_type,external',
+                'string',
+                'max:255',
             ],
 
             'interconnection_type' => [
@@ -338,62 +372,67 @@ class InterconnectionClientController extends Controller
     |--------------------------------------------------------------------------
     */
 
-        $destinationPort = DevicePort::query()
-            ->with('device.client')
-            ->whereKey($validated['destination_port_id'])
-            ->firstOrFail();
+        $isExternal = $validated['destination_type'] === 'external';
+        $destinationPort = null;
+
+        if (!$isExternal) {
+            $destinationPort = DevicePort::query()
+                ->with('device.client')
+                ->whereKey($validated['destination_port_id'])
+                ->firstOrFail();
 
 
-        /*
-    |--------------------------------------------------------------------------
-    | DESTINATION DEVICE HARUS ADA
-    |--------------------------------------------------------------------------
-    */
+            /*
+        |--------------------------------------------------------------------------
+        | DESTINATION DEVICE HARUS ADA
+        |--------------------------------------------------------------------------
+        */
 
-        abort_unless(
-            $destinationPort->device,
-            422,
-            'Destination device tidak ditemukan.'
-        );
-
-
-        /*
-    |--------------------------------------------------------------------------
-    | DESTINATION DEVICE HARUS AKTIF
-    |--------------------------------------------------------------------------
-    */
-
-        abort_unless(
-            $destinationPort->device->status === 'active',
-            422,
-            'Destination device tidak aktif.'
-        );
+            abort_unless(
+                $destinationPort->device,
+                422,
+                'Destination device tidak ditemukan.'
+            );
 
 
-        /*
-    |--------------------------------------------------------------------------
-    | DESTINATION CLIENT HARUS BERBEDA
-    |--------------------------------------------------------------------------
-    */
+            /*
+        |--------------------------------------------------------------------------
+        | DESTINATION DEVICE HARUS AKTIF
+        |--------------------------------------------------------------------------
+        */
 
-        abort_unless(
-            (int) $destinationPort->device->client_id !== $clientId,
-            422,
-            'Destination harus berasal dari client lain.'
-        );
+            abort_unless(
+                $destinationPort->device->status === 'active',
+                422,
+                'Destination device tidak aktif.'
+            );
 
 
-        /*
-    |--------------------------------------------------------------------------
-    | DESTINATION PORT HARUS AVAILABLE
-    |--------------------------------------------------------------------------
-    */
+            /*
+        |--------------------------------------------------------------------------
+        | DESTINATION CLIENT HARUS BERBEDA
+        |--------------------------------------------------------------------------
+        */
 
-        abort_unless(
-            $destinationPort->status === 'available',
-            422,
-            'Destination port tidak tersedia.'
-        );
+            abort_unless(
+                (int) $destinationPort->device->client_id !== $clientId,
+                422,
+                'Destination harus berasal dari client lain.'
+            );
+
+
+            /*
+        |--------------------------------------------------------------------------
+        | DESTINATION PORT HARUS AVAILABLE
+        |--------------------------------------------------------------------------
+        */
+
+            abort_unless(
+                $destinationPort->status === 'available',
+                422,
+                'Destination port tidak tersedia.'
+            );
+        }
 
 
         /*
@@ -471,7 +510,17 @@ class InterconnectionClientController extends Controller
 
                 'source_port_id' => $sourcePort->id,
 
-                'destination_port_id' => $destinationPort->id,
+                'destination_type' => $validated['destination_type'],
+
+                'destination_port_id' => $validated['destination_port_id'] ?? null,
+
+                'external_client_name' => $validated['external_client_name'] ?? null,
+
+                'external_rack_name' => $validated['external_rack_name'] ?? null,
+
+                'external_device_name' => $validated['external_device_name'] ?? null,
+
+                'external_port_name' => $validated['external_port_name'] ?? null,
 
                 /*
             |--------------------------------------------------------------------------
