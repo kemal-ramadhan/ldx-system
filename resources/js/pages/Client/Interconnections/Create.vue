@@ -105,10 +105,30 @@ const form = useForm({
 |--------------------------------------------------------------------------
 */
 
+const selectedSourceRackId = ref<string>('')
 const selectedSourceDeviceId = ref<string>('')
 
+const uniqueSourceRacks = computed(() => {
+    const racks = new Map<number, Rack>()
+    props.devices.forEach(device => {
+        if (device.rack) {
+            racks.set(device.rack.id, device.rack)
+        }
+    })
+    return Array.from(racks.values())
+})
+
+const filteredSourceDevices = computed(() => {
+    if (!selectedSourceRackId.value) {
+        return []
+    }
+    return props.devices.filter(
+        device => String(device.rack_id) === String(selectedSourceRackId.value)
+    )
+})
+
 const selectedSourceDevice = computed(() => {
-    return props.devices.find(
+    return filteredSourceDevices.value.find(
         device =>
             String(device.id) ===
             String(selectedSourceDeviceId.value)
@@ -126,6 +146,9 @@ const sourcePorts = computed(() => {
 */
 
 const selectedDestinationClientId =
+    ref<string>('')
+
+const selectedDestinationRackId =
     ref<string>('')
 
 const selectedDestinationDeviceId =
@@ -150,6 +173,7 @@ const loadingDestinationPorts =
 */
 
 const loadDestinationDevices = async () => {
+    selectedDestinationRackId.value = ''
     selectedDestinationDeviceId.value = ''
     destinationDevices.value = []
 
@@ -224,9 +248,44 @@ const loadDestinationPorts = async () => {
 */
 
 watch(
+    selectedSourceRackId,
+    () => {
+        selectedSourceDeviceId.value = ''
+        form.source_port_id = ''
+    }
+)
+
+watch(
     selectedDestinationClientId,
     () => {
         loadDestinationDevices()
+    }
+)
+
+const uniqueDestinationRacks = computed(() => {
+    const racks = new Map<number, Rack>()
+    destinationDevices.value.forEach(device => {
+        if (device.rack) {
+            racks.set(device.rack.id, device.rack)
+        }
+    })
+    return Array.from(racks.values())
+})
+
+const filteredDestinationDevices = computed(() => {
+    if (!selectedDestinationRackId.value) {
+        return []
+    }
+    return destinationDevices.value.filter(
+        device => String(device.rack_id) === String(selectedDestinationRackId.value)
+    )
+})
+
+watch(
+    selectedDestinationRackId,
+    () => {
+        selectedDestinationDeviceId.value = ''
+        form.destination_port_id = ''
     }
 )
 
@@ -346,6 +405,36 @@ const canSubmit = computed(() => {
                         </div>
 
 
+                        <!-- SOURCE RACK -->
+                        <div class="space-y-2">
+
+                            <label class="text-sm font-medium">
+                                Rack
+                            </label>
+
+                            <div class="relative">
+
+                                <Server
+                                    class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
+                                <select v-model="selectedSourceRackId"
+                                    class="h-11 w-full appearance-none rounded-xl border border-input bg-background pl-10 pr-10 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10">
+                                    <option value="">
+                                        Select source rack
+                                    </option>
+
+                                    <option v-for="rack in uniqueSourceRacks" :key="rack.id" :value="rack.id">
+                                        {{ rack.name ?? rack.code }}
+                                    </option>
+                                </select>
+
+                                <ChevronDown
+                                    class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
+                            </div>
+
+                        </div>
+
                         <!-- SOURCE DEVICE -->
                         <div class="space-y-2">
 
@@ -359,12 +448,13 @@ const canSubmit = computed(() => {
                                     class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 
                                 <select v-model="selectedSourceDeviceId"
-                                    class="h-11 w-full appearance-none rounded-xl border border-input bg-background pl-10 pr-10 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10">
+                                    :disabled="!selectedSourceRackId"
+                                    class="h-11 w-full appearance-none rounded-xl border border-input bg-background pl-10 pr-10 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-50">
                                     <option value="">
                                         Select source device
                                     </option>
 
-                                    <option v-for="device in props.devices" :key="device.id" :value="device.id">
+                                    <option v-for="device in filteredSourceDevices" :key="device.id" :value="device.id">
                                         {{ device.code }}
                                         —
                                         {{ device.divice_name }}
@@ -376,17 +466,7 @@ const canSubmit = computed(() => {
 
                             </div>
 
-                            <p v-if="selectedSourceDevice" class="text-xs text-muted-foreground">
-                                Rack:
-                                {{
-                                    selectedSourceDevice.rack?.name ??
-                                    selectedSourceDevice.rack?.code ??
-                                    '-'
-                                }}
-                            </p>
-
                         </div>
-
 
                         <!-- SOURCE PORT -->
                         <div class="space-y-2">
@@ -470,6 +550,46 @@ const canSubmit = computed(() => {
 
                         </div>
 
+                        <!-- DESTINATION RACK -->
+                        <div class="space-y-2">
+
+                            <label class="text-sm font-medium">
+                                Rack
+                            </label>
+
+                            <div class="relative">
+
+                                <Server
+                                    class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
+                                <select v-model="selectedDestinationRackId"
+                                    :disabled="!selectedDestinationClientId || loadingDestinationDevices"
+                                    class="h-11 w-full appearance-none rounded-xl border border-input bg-background pl-10 pr-10 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-50">
+                                    
+                                    <option value="" disabled selected v-if="loadingDestinationDevices">
+                                        Loading racks...
+                                    </option>
+
+                                    <option value="" v-else>
+                                        Select destination rack
+                                    </option>
+
+                                    <option v-for="rack in uniqueDestinationRacks" :key="rack.id" :value="rack.id">
+                                        {{ rack.name ?? rack.code }}
+                                    </option>
+
+                                </select>
+
+                                <Loader2 v-if="loadingDestinationDevices"
+                                    class="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+                                
+                                <ChevronDown v-else
+                                    class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
+                            </div>
+
+                        </div>
+
 
                         <!-- DESTINATION DEVICE -->
                         <div class="space-y-2">
@@ -483,20 +603,20 @@ const canSubmit = computed(() => {
                                 <Server
                                     class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 
-                                <select v-model="selectedDestinationDeviceId" :disabled="!selectedDestinationClientId ||
-                                    loadingDestinationDevices
-                                    "
+                                <select v-model="selectedDestinationDeviceId"
+                                    :disabled="!selectedDestinationRackId || loadingDestinationDevices"
                                     class="h-11 w-full appearance-none rounded-xl border border-input bg-background pl-10 pr-10 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-50">
 
-                                    <option value="">
-                                        {{
-                                            loadingDestinationDevices
-                                                ? 'Loading devices...'
-                                                : 'Select destination device'
-                                        }}
+                                    <option value="" disabled selected v-if="loadingDestinationDevices">
+                                        Loading devices...
                                     </option>
 
-                                    <option v-for="device in destinationDevices" :key="device.id" :value="device.id">
+                                    <option value="" v-else>
+                                        Select destination device
+                                    </option>
+
+                                    <option v-for="device in filteredDestinationDevices" :key="device.id"
+                                        :value="device.id">
                                         {{ device.code }}
                                         —
                                         {{ device.divice_name }}
@@ -504,7 +624,10 @@ const canSubmit = computed(() => {
 
                                 </select>
 
-                                <ChevronDown
+                                <Loader2 v-if="loadingDestinationDevices"
+                                    class="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+
+                                <ChevronDown v-else
                                     class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 
                             </div>
