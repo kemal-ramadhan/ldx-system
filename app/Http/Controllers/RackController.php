@@ -243,26 +243,30 @@ class RackController extends Controller
                 ->toArray();
 
             $ports = [];
+            $createdCount = 0;
+            $i = 1;
 
-            for ($i = 1; $i <= $validated['total_ports']; $i++) {
+            while ($createdCount < $validated['total_ports']) {
 
                 $portName = 'Port ' . $i;
 
-                if (in_array($portName, $existingPorts)) {
-                    continue;
+                if (!in_array($portName, $existingPorts)) {
+                    $ports[] = [
+                        'rack_divice_id' => $device->id,
+                        'port_name' => $portName,
+                        'port_number' => (string) $i,
+                        'port_type' => $validated['port_type'],
+                        'connector_type' => $validated['connector_type'] ?? null,
+                        'status' => 'available',
+                        'description' => null,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                    $existingPorts[] = $portName;
+                    $createdCount++;
                 }
 
-                $ports[] = [
-                    'rack_divice_id' => $device->id,
-                    'port_name' => $portName,
-                    'port_number' => (string) $i,
-                    'port_type' => $validated['port_type'],
-                    'connector_type' => $validated['connector_type'] ?? null,
-                    'status' => 'available',
-                    'description' => null,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
+                $i++;
             }
 
             if (!empty($ports)) {

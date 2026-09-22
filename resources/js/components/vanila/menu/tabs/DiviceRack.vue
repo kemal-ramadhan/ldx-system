@@ -143,6 +143,9 @@ const submitGeneratePorts = () => {
 
                 router.reload({
                     only: ['rack'],
+                    onSuccess: () => {
+                        refreshSelectedDevice()
+                    },
                 })
             },
 
@@ -170,6 +173,9 @@ const submitPort = () => {
 
                 router.reload({
                     only: ['rack'],
+                    onSuccess: () => {
+                        refreshSelectedDevice()
+                    },
                 })
             },
 
