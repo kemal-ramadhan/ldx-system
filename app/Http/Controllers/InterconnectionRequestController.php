@@ -73,10 +73,44 @@ class InterconnectionRequestController extends Controller
                 'exists:device_ports,id',
             ],
 
-            'destination_port_id' => [
+            'destination_type' => [
                 'required',
+                'in:internal,external',
+            ],
+
+            'destination_port_id' => [
+                'exclude_if:destination_type,external',
+                'required_if:destination_type,internal',
                 'exists:device_ports,id',
                 'different:source_port_id',
+            ],
+
+            'external_client_name' => [
+                'exclude_if:destination_type,internal',
+                'required_if:destination_type,external',
+                'string',
+                'max:255',
+            ],
+
+            'external_rack_name' => [
+                'exclude_if:destination_type,internal',
+                'required_if:destination_type,external',
+                'string',
+                'max:255',
+            ],
+
+            'external_device_name' => [
+                'exclude_if:destination_type,internal',
+                'required_if:destination_type,external',
+                'string',
+                'max:255',
+            ],
+
+            'external_port_name' => [
+                'exclude_if:destination_type,internal',
+                'required_if:destination_type,external',
+                'string',
+                'max:255',
             ],
 
             'interconnection_type' => [
@@ -129,18 +163,29 @@ class InterconnectionRequestController extends Controller
                 'device.rack',
             ])->findOrFail($validated['source_port_id']);
 
-            $destinationPort = DevicePort::with([
-                'device.client',
-                'device.rack',
-            ])->findOrFail($validated['destination_port_id']);
+            $isExternal = $validated['destination_type'] === 'external';
+            $destinationPort = null;
 
-            /*
-             * Port tidak boleh sama
-             */
-            if ($sourcePort->id === $destinationPort->id) {
-                return back()->withErrors([
-                    'message' => 'Source port and destination port cannot be the same.',
-                ]);
+            if (!$isExternal) {
+                $destinationPort = DevicePort::with([
+                    'device.client',
+                    'device.rack',
+                ])->findOrFail($validated['destination_port_id']);
+                
+                /*
+                 * Port tidak boleh sama
+                 */
+                if ($sourcePort->id === $destinationPort->id) {
+                    return back()->withErrors([
+                        'message' => 'Source port and destination port cannot be the same.',
+                    ]);
+                }
+
+                if ($destinationPort->status !== 'available') {
+                    return back()->withErrors([
+                        'message' => 'Destination port is not available.',
+                    ]);
+                }
             }
 
             /*
@@ -149,12 +194,6 @@ class InterconnectionRequestController extends Controller
             if ($sourcePort->status !== 'available') {
                 return back()->withErrors([
                     'message' => 'Source port is not available.',
-                ]);
-            }
-
-            if ($destinationPort->status !== 'available') {
-                return back()->withErrors([
-                    'message' => 'Destination port is not available.',
                 ]);
             }
 
@@ -168,15 +207,24 @@ class InterconnectionRequestController extends Controller
             $requesterId = (int) $validated['requester_client_id'];
 
             $sourceClientId = (int) $sourcePort->device->client_id;
-            $destinationClientId = (int) $destinationPort->device->client_id;
-
-            if (
-                $requesterId !== $sourceClientId &&
-                $requesterId !== $destinationClientId
-            ) {
-                return back()->withErrors([
-                    'message' => 'Requester client must own the source or destination device.',
-                ]);
+            
+            if ($isExternal) {
+                if ($requesterId !== $sourceClientId) {
+                    return back()->withErrors([
+                        'message' => 'Requester client must own the source device.',
+                    ]);
+                }
+            } else {
+                $destinationClientId = (int) $destinationPort->device->client_id;
+    
+                if (
+                    $requesterId !== $sourceClientId &&
+                    $requesterId !== $destinationClientId
+                ) {
+                    return back()->withErrors([
+                        'message' => 'Requester client must own the source or destination device.',
+                    ]);
+                }
             }
 
             /*
@@ -191,7 +239,17 @@ class InterconnectionRequestController extends Controller
 
                 'source_port_id' => $validated['source_port_id'],
 
-                'destination_port_id' => $validated['destination_port_id'],
+                'destination_type' => $validated['destination_type'],
+
+                'destination_port_id' => $validated['destination_port_id'] ?? null,
+
+                'external_client_name' => $validated['external_client_name'] ?? null,
+
+                'external_rack_name' => $validated['external_rack_name'] ?? null,
+
+                'external_device_name' => $validated['external_device_name'] ?? null,
+
+                'external_port_name' => $validated['external_port_name'] ?? null,
 
                 'interconnection_type' => $validated['interconnection_type'],
 
@@ -471,14 +529,19 @@ class InterconnectionRequestController extends Controller
                     $interconnection->source_port_id
                 );
 
-            /**
-             * Lock destination port
-             */
-            $destinationPort = DevicePort::query()
-                ->lockForUpdate()
-                ->findOrFail(
-                    $interconnection->destination_port_id
-                );
+            $isExternal = $interconnection->destination_type === 'external';
+            $destinationPort = null;
+
+            if (!$isExternal) {
+                /**
+                 * Lock destination port
+                 */
+                $destinationPort = DevicePort::query()
+                    ->lockForUpdate()
+                    ->findOrFail(
+                        $interconnection->destination_port_id
+                    );
+            }
 
             /**
              * Both ports must still be available
@@ -490,7 +553,7 @@ class InterconnectionRequestController extends Controller
                 ]);
             }
 
-            if ($destinationPort->status !== 'available') {
+            if (!$isExternal && $destinationPort->status !== 'available') {
                 throw ValidationException::withMessages([
                     'destination_port_id' =>
                     'Destination port is no longer available.',
@@ -500,9 +563,16 @@ class InterconnectionRequestController extends Controller
             /**
              * Prevent duplicate active Cross Connect
              */
-            $busy = CrossConnect::query()
-                ->where('status', 'active')
-                ->where(function ($query) use (
+            $busyQuery = CrossConnect::query()
+                ->where('status', 'active');
+                
+            if ($isExternal) {
+                $busyQuery->where(function ($query) use ($sourcePort) {
+                    $query->where('source_port_id', $sourcePort->id)
+                          ->orWhere('destination_port_id', $sourcePort->id);
+                });
+            } else {
+                $busyQuery->where(function ($query) use (
                     $sourcePort,
                     $destinationPort
                 ) {
@@ -515,8 +585,10 @@ class InterconnectionRequestController extends Controller
                             $sourcePort->id,
                             $destinationPort->id,
                         ]);
-                })
-                ->exists();
+                });
+            }
+            
+            $busy = $busyQuery->exists();
 
             if ($busy) {
                 throw ValidationException::withMessages([
@@ -551,9 +623,24 @@ class InterconnectionRequestController extends Controller
 
                 'source_port_id' =>
                 $sourcePort->id,
+                
+                'destination_type' =>
+                $interconnection->destination_type,
 
                 'destination_port_id' =>
-                $destinationPort->id,
+                $interconnection->destination_port_id,
+                
+                'external_client_name' =>
+                $interconnection->external_client_name,
+                
+                'external_rack_name' =>
+                $interconnection->external_rack_name,
+                
+                'external_device_name' =>
+                $interconnection->external_device_name,
+                
+                'external_port_name' =>
+                $interconnection->external_port_name,
 
                 'cable_type' =>
                 $interconnection->cable_type,
@@ -586,9 +673,11 @@ class InterconnectionRequestController extends Controller
                 'status' => 'connected',
             ]);
 
-            $destinationPort->update([
-                'status' => 'connected',
-            ]);
+            if (!$isExternal) {
+                $destinationPort->update([
+                    'status' => 'connected',
+                ]);
+            }
 
             /**
              * Complete request

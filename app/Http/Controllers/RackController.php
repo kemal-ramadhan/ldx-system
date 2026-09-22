@@ -420,7 +420,8 @@ class RackController extends Controller
 
             $emptyUnits = RackUnit::query()
                 ->where('rack_id', $rack->id)
-                ->where('status', 'empty')
+                ->where('client_id', $validated['client_id'])
+                ->whereNull('rack_divice_id')
                 ->orderBy('unit_number', 'asc')
                 ->get();
 

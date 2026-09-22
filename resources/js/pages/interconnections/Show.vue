@@ -666,43 +666,68 @@ const isFailedStatus = computed(() => {
 
                     </div>
 
-                    <h2 class="text-base font-semibold">
-                        {{ destination.client?.company_name || '-' }}
-                    </h2>
+                    <div v-if="item.destination_type === 'external'">
+                        <h2 class="text-base font-semibold">
+                            {{ item.external_client_name || 'External Client' }}
+                        </h2>
+                        
+                        <div class="mt-4 space-y-2 text-sm">
+                            <div class="flex items-center gap-2">
+                                <MapPin class="h-4 w-4 text-gray-400" />
+                                <span>Rack {{ item.external_rack_name || '-' }}</span>
+                            </div>
 
-                    <div class="mt-4 space-y-2 text-sm">
+                            <div class="rounded-xl bg-gray-50 p-4">
+                                <p class="font-medium">{{ item.external_device_name || '-' }}</p>
+                                <p class="mt-1 text-xs text-muted-foreground">External Device</p>
 
-                        <div class="flex items-center gap-2">
-
-                            <MapPin class="h-4 w-4 text-gray-400" />
-
-                            <span>
-                                Rack {{ destination.rack?.code || '-' }}
-                            </span>
-
+                                <div class="mt-3 inline-flex items-center rounded-lg bg-white px-3 py-2 text-xs font-medium shadow-sm">
+                                    <Cable class="mr-2 h-4 w-4 text-green-500" />
+                                    {{ item.external_port_name || '-' }}
+                                </div>
+                            </div>
                         </div>
+                    </div>
 
-                        <div class="rounded-xl bg-gray-50 p-4">
+                    <div v-else>
+                        <h2 class="text-base font-semibold">
+                            {{ destination.client?.company_name || '-' }}
+                        </h2>
 
-                            <p class="font-medium">
-                                {{ destination.device?.divice_name || '-' }}
-                            </p>
+                        <div class="mt-4 space-y-2 text-sm">
 
-                            <p class="mt-1 text-xs text-muted-foreground">
-                                {{ destination.device?.model || '-' }}
-                            </p>
+                            <div class="flex items-center gap-2">
 
-                            <div
-                                class="mt-3 inline-flex items-center rounded-lg bg-white px-3 py-2 text-xs font-medium shadow-sm">
+                                <MapPin class="h-4 w-4 text-gray-400" />
 
-                                <Cable class="mr-2 h-4 w-4 text-green-500" />
+                                <span>
+                                    Rack {{ destination.rack?.code || '-' }}
+                                </span>
 
-                                {{ destination.port?.port_name || '-' }}
+                            </div>
+
+                            <div class="rounded-xl bg-gray-50 p-4">
+
+                                <p class="font-medium">
+                                    {{ destination.device?.divice_name || '-' }}
+                                </p>
+
+                                <p class="mt-1 text-xs text-muted-foreground">
+                                    {{ destination.device?.model || '-' }}
+                                </p>
+
+                                <div
+                                    class="mt-3 inline-flex items-center rounded-lg bg-white px-3 py-2 text-xs font-medium shadow-sm">
+
+                                    <Cable class="mr-2 h-4 w-4 text-green-500" />
+
+                                    {{ destination.port?.port_name || '-' }}
+
+                                </div>
 
                             </div>
 
                         </div>
-
                     </div>
 
                 </div>

@@ -187,7 +187,19 @@ const formatStatus = (status: string) => {
 
                                 <ArrowRight class="h-4 w-4 shrink-0 text-gray-400" />
 
-                                <div class="min-w-0">
+                                <div class="min-w-0" v-if="item.destination_type === 'external'">
+
+                                    <p class="truncate text-sm font-medium">
+                                        {{ item.external_device_name || 'External Device' }}
+                                    </p>
+
+                                    <p class="text-xs text-muted-foreground">
+                                        {{ item.external_port_name || '-' }}
+                                    </p>
+
+                                </div>
+
+                                <div class="min-w-0" v-else>
 
                                     <p class="truncate text-sm font-medium">
                                         {{ item.destination_port?.device?.divice_name }}

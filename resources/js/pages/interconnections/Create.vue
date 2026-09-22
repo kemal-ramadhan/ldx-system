@@ -57,6 +57,13 @@ const form = useForm({
     destination_device_id: '',
     destination_port_id: '',
 
+    destination_type: 'internal',
+
+    external_client_name: '',
+    external_rack_name: '',
+    external_device_name: '',
+    external_port_name: '',
+
     interconnection_type: 'internal_building',
 
     cable_type: 'fiber_optic',
@@ -507,8 +514,18 @@ const submit = () => {
 
                 </div>
 
+                <div class="mb-5 flex gap-4">
+                    <label class="flex items-center gap-2 text-sm font-medium cursor-pointer">
+                        <input type="radio" v-model="form.destination_type" value="internal" class="h-4 w-4 text-primary" />
+                        Internal Data Center
+                    </label>
+                    <label class="flex items-center gap-2 text-sm font-medium cursor-pointer">
+                        <input type="radio" v-model="form.destination_type" value="external" class="h-4 w-4 text-primary" />
+                        External Data Center
+                    </label>
+                </div>
 
-                <div class="space-y-5">
+                <div class="space-y-5" v-if="form.destination_type === 'internal'">
 
 
                     <!-- CLIENT -->
@@ -614,7 +631,51 @@ const submit = () => {
                         <p class="mt-1 text-xs text-muted-foreground">
                             Only available ports are displayed.
                         </p>
+                        
+                        <p v-if="form.errors.destination_port_id" class="mt-1 text-xs text-red-500">
+                            {{ form.errors.destination_port_id }}
+                        </p>
 
+                    </div>
+
+                </div>
+                
+                <div class="space-y-5" v-if="form.destination_type === 'external'">
+
+                    <div>
+                        <label class="mb-2 block text-sm font-medium">Client Name</label>
+                        <input v-model="form.external_client_name" type="text" placeholder="e.g. PT Telekomunikasi"
+                            class="w-full rounded-xl border px-4 py-3 text-sm" />
+                        <p v-if="form.errors.external_client_name" class="mt-1 text-xs text-red-500">
+                            {{ form.errors.external_client_name }}
+                        </p>
+                    </div>
+
+                    <div>
+                        <label class="mb-2 block text-sm font-medium">Rack Name</label>
+                        <input v-model="form.external_rack_name" type="text" placeholder="e.g. Rack A1"
+                            class="w-full rounded-xl border px-4 py-3 text-sm" />
+                        <p v-if="form.errors.external_rack_name" class="mt-1 text-xs text-red-500">
+                            {{ form.errors.external_rack_name }}
+                        </p>
+                    </div>
+
+                    <div>
+                        <label class="mb-2 block text-sm font-medium">Device Name</label>
+                        <input v-model="form.external_device_name" type="text" placeholder="e.g. Switch Core 1"
+                            class="w-full rounded-xl border px-4 py-3 text-sm" />
+                        <p v-if="form.errors.external_device_name" class="mt-1 text-xs text-red-500">
+                            {{ form.errors.external_device_name }}
+                        </p>
+                    </div>
+
+                    <div>
+                        <label class="mb-2 block text-sm font-medium">Port Name</label>
+                        <input v-model="form.external_port_name" type="text" placeholder="e.g. eth0/1"
+                            class="w-full rounded-xl border px-4 py-3 text-sm" />
+                        <p v-if="form.errors.external_port_name" class="mt-1 text-xs text-red-500">
+                            {{ form.errors.external_port_name }}
+                        </p>
                     </div>
 
                 </div>
