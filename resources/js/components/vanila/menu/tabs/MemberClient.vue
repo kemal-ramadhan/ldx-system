@@ -120,20 +120,20 @@ const deleteMember = (id: number) => {
 
                 <!-- Search Result -->
                 <div v-if="filteredUsers.length"
-                    class="absolute z-50 mt-2 w-full overflow-hidden rounded-2xl border bg-white shadow-xl">
+                    class="absolute z-50 mt-2 w-full overflow-hidden rounded-2xl border bg-white dark:bg-gray-800 dark:border-gray-700 shadow-xl">
                     <button v-for="user in filteredUsers" :key="user.id" @click="inviteMember(user.id)"
-                        class="flex w-full items-center justify-between border-b px-4 py-3 text-left transition hover:bg-gray-50 last:border-none">
+                        class="flex w-full items-center justify-between border-b dark:border-gray-700 px-4 py-3 text-left transition hover:bg-gray-50 dark:hover:bg-gray-700 last:border-none">
                         <div>
-                            <p class="font-medium dark:text-gray-900">
+                            <p class="font-medium dark:text-gray-100">
                                 {{ user.name }}
                             </p>
 
-                            <p class="text-sm text-gray-500">
+                            <p class="text-sm text-gray-500 dark:text-gray-400">
                                 {{ user.email }}
                             </p>
                         </div>
 
-                        <span class="rounded-xl bg-black px-3 py-1 text-sm text-white">
+                        <span class="rounded-xl bg-black dark:bg-white dark:text-gray-900 px-3 py-1 text-sm text-white">
                             {{ form.processing ? 'Inviting...' : 'Invite' }}
                         </span>
                     </button>
@@ -150,18 +150,18 @@ const deleteMember = (id: number) => {
                 </p>
                 <div class="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
                     <div v-for="member in props.client?.pics || []" :key="member.id"
-                        class="relative rounded-2xl border bg-white p-4 shadow-sm">
+                        class="relative rounded-2xl border dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm">
                         <!-- More Menu -->
                         <div class="absolute right-4 top-4">
-                            <button @click="toggleMenu(member.id)" class="rounded-lg p-2 transition hover:bg-gray-100">
-                                <MoreHorizontal class="h-5 w-5 text-gray-500" />
+                            <button @click="toggleMenu(member.id)" class="rounded-lg p-2 transition hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <MoreHorizontal class="h-5 w-5 text-gray-500 dark:text-gray-400" />
                             </button>
 
                             <!-- Dropdown -->
                             <div v-if="openMenu === member.id"
-                                class="absolute right-0 top-12 z-20 w-40 overflow-hidden rounded-xl border bg-white shadow-lg">
+                                class="absolute right-0 top-12 z-20 w-40 overflow-hidden rounded-xl border dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg">
                                 <button @click="deleteMember(member.id)"
-                                    class="flex w-full items-center gap-2 px-4 py-3 text-sm text-red-500 transition hover:bg-red-50">
+                                    class="flex w-full items-center gap-2 px-4 py-3 text-sm text-red-500 transition hover:bg-red-50 dark:hover:bg-red-950/30">
                                     <Trash2 class="h-4 w-4" />
                                     Remove
                                 </button>
@@ -172,7 +172,7 @@ const deleteMember = (id: number) => {
                         <div class="flex items-start gap-3">
                             <!-- Avatar -->
                             <div
-                                class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-300 text-sm font-medium text-gray-600">
+                                class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-300 dark:bg-gray-700 text-sm font-medium text-gray-600 dark:text-gray-300">
                                 {{
                                     member.user.name
                                         .split(' ')
@@ -183,7 +183,7 @@ const deleteMember = (id: number) => {
 
                             <!-- Info -->
                             <div class="pr-10">
-                                <p class="font-medium text-gray-900">
+                                <p class="font-medium text-gray-900 dark:text-gray-100">
                                     {{ member.user.name }}
 
                                     <span class="text-sm text-muted-foreground">

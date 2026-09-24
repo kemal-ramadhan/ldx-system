@@ -37,10 +37,10 @@ const statusColor = (status: string) => {
             <p class="text-muted-foreground">This client does not have any invoices yet.</p>
         </div>
 
-        <div v-else class="overflow-hidden rounded-2xl border bg-white shadow-sm dark:bg-transparent">
+        <div v-else class="overflow-hidden rounded-2xl border dark:border-gray-700 bg-white shadow-sm dark:bg-transparent">
             <div class="overflow-x-auto">
                 <table class="min-w-full">
-                    <thead class="bg-muted/40">
+                    <thead class="bg-muted/40 dark:bg-gray-800 dark:text-gray-100">
                         <tr class="text-left text-sm">
                             <th class="px-5 py-3">Invoice</th>
                             <th class="px-5 py-3">Issue Date</th>
@@ -51,28 +51,28 @@ const statusColor = (status: string) => {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="invoice in invoices.data" :key="invoice.id" class="border-t">
+                        <tr v-for="invoice in invoices.data" :key="invoice.id" class="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                             <td class="px-5 py-4">
                                 <div class="flex items-center gap-3">
                                     <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
                                         <Receipt class="h-5 w-5 text-primary" />
                                     </div>
                                     <div>
-                                        <div class="font-semibold">{{ invoice.invoice_number }}</div>
+                                        <div class="font-semibold dark:text-gray-100">{{ invoice.invoice_number }}</div>
                                         <div class="text-sm text-muted-foreground">{{ invoice.service?.name }}</div>
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-5 py-4">{{ invoice.issue_date }}</td>
-                            <td class="px-5 py-4">{{ invoice.due_date }}</td>
-                            <td class="px-5 py-4 font-semibold">{{ formatRupiah(invoice.total) }}</td>
+                            <td class="px-5 py-4 dark:text-gray-300">{{ invoice.issue_date }}</td>
+                            <td class="px-5 py-4 dark:text-gray-300">{{ invoice.due_date }}</td>
+                            <td class="px-5 py-4 font-semibold dark:text-gray-100">{{ formatRupiah(invoice.total) }}</td>
                             <td class="px-5 py-4">
                                 <span class="inline-flex rounded-full border px-3 py-1 text-xs font-medium" :class="statusColor(invoice.status)">
                                     {{ invoice.status }}
                                 </span>
                             </td>
                             <td class="px-5 py-4">
-                                <Link :href="`/admin/invoices/${invoice.id}`" class="inline-flex items-center rounded-lg border px-3 py-2 text-sm hover:bg-muted">
+                                <Link :href="`/admin/invoices/${invoice.id}`" class="inline-flex items-center rounded-lg border dark:border-gray-700 px-3 py-2 text-sm hover:bg-muted dark:hover:bg-gray-700 dark:text-gray-300">
                                     <Eye class="mr-2 h-4 w-4" />
                                     View
                                 </Link>

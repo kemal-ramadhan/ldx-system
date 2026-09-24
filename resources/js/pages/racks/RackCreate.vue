@@ -90,8 +90,8 @@ defineOptions({
                         <button type="button" @click="form.status = 'active'" :class="[
                             'rounded-md border px-4 py-2 text-sm font-medium transition-all',
                             form.status === 'active'
-                                ? 'border-primary bg-primary text-white'
-                                : 'border-input bg-background hover:bg-muted'
+                                ? 'border-primary bg-primary text-white dark:text-gray-900'
+                                : 'border-input bg-background hover:bg-muted dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:bg-transparent'
                         ]">
                             Active
                         </button>
@@ -99,8 +99,8 @@ defineOptions({
                         <button type="button" @click="form.status = 'inactive'" :class="[
                             'rounded-md border px-4 py-2 text-sm font-medium transition-all',
                             form.status === 'inactive'
-                                ? 'border-primary bg-primary text-white'
-                                : 'border-input bg-background hover:bg-muted'
+                                ? 'border-primary bg-primary text-white dark:text-gray-900'
+                                : 'border-input bg-background hover:bg-muted dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:bg-transparent'
                         ]">
                             Inactive
                         </button>
@@ -108,8 +108,8 @@ defineOptions({
                         <button type="button" @click="form.status = 'maintenance'" :class="[
                             'rounded-md border px-4 py-2 text-sm font-medium transition-all',
                             form.status === 'maintenance'
-                                ? 'border-primary bg-primary text-white'
-                                : 'border-input bg-background hover:bg-muted'
+                                ? 'border-primary bg-primary text-white dark:text-gray-900'
+                                : 'border-input bg-background hover:bg-muted dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:bg-transparent'
                         ]">
                             Maintenance
                         </button>
@@ -117,8 +117,8 @@ defineOptions({
                         <button type="button" @click="form.status = 'full'" :class="[
                             'rounded-md border px-4 py-2 text-sm font-medium transition-all',
                             form.status === 'full'
-                                ? 'border-primary bg-primary text-white'
-                                : 'border-input bg-background hover:bg-muted'
+                                ? 'border-primary bg-primary text-white dark:text-gray-900'
+                                : 'border-input bg-background hover:bg-muted dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:bg-transparent'
                         ]">
                             Full
                         </button>
@@ -130,13 +130,13 @@ defineOptions({
                     <Label for="description">Description <span class="text-red-500">*</span></Label>
                     <textarea id="description" v-model="form.description" required autofocus :tabindex="3"
                         autocomplete="description" name="description" placeholder="Rack description"
-                        class="w-full rounded-md border border-gray-300 bg-white py-2 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none resize-none h-24 dark:bg-transparent dark:text-gray-300"></textarea>
+                        class="w-full rounded-md border border-gray-300 bg-white py-2 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none resize-none h-24 dark:bg-transparent dark:text-gray-300 dark:border-gray-700"></textarea>
                     <InputError :message="errors.description" />
                 </div>
                 <div class="grid md:col-span-2 gap-3 w-full">
                     <Label for="description">Location<span class="text-red-500">*</span></Label>
                     <select v-model="form.room_id" required
-                        class="rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none dark:text-gray-900 dark:bg-white">
+                        class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700">
                         <option value="">Location Room</option>
 
                         <option v-for="item in rooms" :key="item.id" :value="item.id">

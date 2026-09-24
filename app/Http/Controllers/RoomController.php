@@ -130,9 +130,15 @@ class RoomController extends Controller
      */
     public function destroy(string $id)
     {
-        $room = Room::findOrFail($id);
-        $room->delete();
-
-        return redirect('admin/rooms')->with('success', 'Room deleted successfully.');
+        try {
+            $room = Room::findOrFail($id);
+            $room->delete();
+            return redirect('admin/rooms')->with('success', 'Room deleted successfully.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() == '23000') {
+                return back()->with('error', 'Cannot delete this room because it has active associated resources (e.g. racks or interconnections).');
+            }
+            throw $e;
+        }
     }
 }

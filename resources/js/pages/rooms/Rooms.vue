@@ -2,6 +2,15 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { Search, Plus, Pencil, Eye, Trash2 } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 
 const props = defineProps<{
@@ -31,9 +40,25 @@ watch([search, location], () => {
     );
 });
 
-const deleteRoom = (id: number) => {
-    if (confirm('Yakin ingin menghapus ruangan ini?')) {
-        router.delete(`/admin/rooms/${id}`);
+const deleteConfirmation = ref<{ isOpen: boolean, room: any | null }>({
+    isOpen: false,
+    room: null,
+});
+
+const deleteRoom = (room: any) => {
+    deleteConfirmation.value = {
+        isOpen: true,
+        room: room,
+    };
+};
+
+const confirmDelete = () => {
+    if (deleteConfirmation.value.room) {
+        router.delete(`/admin/rooms/${deleteConfirmation.value.room.id}`, {
+            onSuccess: () => {
+                deleteConfirmation.value.isOpen = false;
+            }
+        });
     }
 };
 
@@ -130,7 +155,7 @@ defineOptions({
                             <Pencil class="w-4 h-4" />
                         </Link>
                         <button
-                            @click="deleteRoom(room.id)"
+                            @click="deleteRoom(room)"
                             class="text-red-500 hover:underline"
                         >
                             <Trash2 class="w-4 h-4" />
@@ -163,4 +188,23 @@ defineOptions({
         </div>
     </div>
     </div>
+
+    <Dialog :open="deleteConfirmation.isOpen" @update:open="(val) => deleteConfirmation.isOpen = val">
+        <DialogContent>
+            <DialogHeader class="space-y-3">
+                <DialogTitle>
+                    Are you sure you want to delete this room?
+                </DialogTitle>
+                <DialogDescription>
+                    You are about to delete room <strong>{{ deleteConfirmation.room?.name }}</strong>. 
+                    <br><br>
+                    This action will hide the data but keep it in the history.
+                </DialogDescription>
+            </DialogHeader>
+            <DialogFooter class="gap-2">
+                <Button variant="secondary" @click="deleteConfirmation.isOpen = false">Cancel</Button>
+                <Button variant="destructive" @click="confirmDelete">Delete</Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
 </template>

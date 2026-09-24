@@ -2,7 +2,7 @@
   <div class="rounded-2xl overflow-hidden">
 
     <!-- Tab Bar -->
-    <div class="flex items-center gap-1 bg-gray-50 rounded-xl m-3 p-1.5">
+    <div class="flex items-center gap-1 bg-gray-50 dark:bg-gray-800/50 rounded-xl m-3 p-1.5">
       <button
         v-for="tab in tabs"
         :key="tab.key"
@@ -11,7 +11,7 @@
           'px-4 py-2 rounded-lg text-sm transition-all whitespace-nowrap',
           activeTab === tab.key
             ? 'bg-gray-900 text-white font-medium dark:bg-gray-700'
-            : 'text-gray-500 hover:bg-white hover:text-gray-800 dark:text-gray-900 dark:hover:bg-gray-700 dark:hover:text-white'
+            : 'text-gray-500 hover:bg-white hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white'
         ]"
       >
         {{ tab.label }}
@@ -21,7 +21,7 @@
             'ml-1 text-xs rounded-full px-2 py-0.5',
             activeTab === tab.key
               ? 'bg-white/25 text-white'
-              : 'bg-gray-200 text-gray-500'
+              : 'bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-300'
           ]"
         >
           {{ tab.badge }}

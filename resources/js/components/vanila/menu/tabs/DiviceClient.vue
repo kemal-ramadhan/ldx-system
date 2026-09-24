@@ -16,9 +16,9 @@ const badgeClass = (status: string) => {
 </script>
 
 <template>
-    <div class="overflow-hidden rounded-xl border">
+    <div class="overflow-hidden rounded-xl border dark:border-gray-700">
         <table class="w-full text-sm">
-            <thead class="bg-gray-50 dark:text-gray-900">
+            <thead class="bg-gray-50 dark:bg-gray-800 dark:text-gray-100">
                 <tr>
                     <th class="px-4 py-3 text-left">Code</th>
                     <th class="px-4 py-3 text-left">Device</th>
@@ -35,49 +35,49 @@ const badgeClass = (status: string) => {
                 <tr
                     v-for="device in devices"
                     :key="device.id"
-                    class="border-t hover:bg-gray-50"
+                    class="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"
                 >
-                    <td class="px-4 py-3 font-medium">
+                    <td class="px-4 py-3 font-medium dark:text-gray-100">
                         {{ device.code }}
                     </td>
 
                     <td class="px-4 py-3">
                         <div>
-                            <div class="font-medium">
+                            <div class="font-medium dark:text-gray-100">
                                 {{ device.divice_name }}
                             </div>
 
-                            <div class="text-xs text-gray-500">
+                            <div class="text-xs text-gray-500 dark:text-gray-400">
                                 {{ device.model }}
                             </div>
                         </div>
                     </td>
 
-                    <td class="px-4 py-3">
+                    <td class="px-4 py-3 dark:text-gray-300">
                         {{ device.divice_type }}
                     </td>
 
                     <td class="px-4 py-3">
                         <div>
-                            <div class="font-medium">
+                            <div class="font-medium dark:text-gray-100">
                                 {{ device.rack?.name }}
                             </div>
 
-                            <div class="text-xs text-gray-500">
+                            <div class="text-xs text-gray-500 dark:text-gray-400">
                                 {{ device.rack?.code }}
                             </div>
                         </div>
                     </td>
 
-                    <td class="px-4 py-3">
+                    <td class="px-4 py-3 dark:text-gray-300">
                         {{ device.total_unit }} U
                     </td>
 
-                    <td class="px-4 py-3">
+                    <td class="px-4 py-3 dark:text-gray-300">
                         {{ device.power_usage }} W
                     </td>
 
-                    <td class="px-4 py-3">
+                    <td class="px-4 py-3 dark:text-gray-300">
                         {{ device.ip_address || '-' }}
                     </td>
 
@@ -96,7 +96,7 @@ const badgeClass = (status: string) => {
                 <tr v-if="!devices.length">
                     <td
                         colspan="8"
-                        class="py-10 text-center text-gray-500"
+                        class="py-10 text-center text-gray-500 dark:text-gray-400"
                     >
                         No devices found
                     </td>
