@@ -205,10 +205,21 @@ class UserController extends Controller
     public function show(string $id)
     {
         $user = User::with('role')->findOrFail($id);
+        
+        $companies = [];
+        if ($user->role && $user->role->slug === 'client') {
+            $companies = \App\Models\ClientPic::where('user_id', $user->id)
+                ->with(['client.pics.user'])
+                ->get()
+                ->map(function ($pic) {
+                    return $pic->client;
+                });
+        }
 
         return Inertia::render('users/UserShow', [
             'title' => 'Detail User',
             'user' => $user,
+            'companies' => $companies,
         ]);
     }
 
