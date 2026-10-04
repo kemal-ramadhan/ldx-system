@@ -25,7 +25,9 @@ class DeviceClientController extends Controller
         $devices = RackDivice::query()
             ->with([
                 'rack.room.locationDataCenter',
-                'rackUnits'
+                'rackUnits',
+                'ports.activeSourceCrossConnect.destinationPort.device',
+                'ports.activeDestinationCrossConnect.sourcePort.device'
             ])
 
             ->where('client_id', $client->id)

@@ -14,6 +14,7 @@ const props = defineProps<{
     racks: any;
     devices: any;
     invoices: any;
+    interconnections?: any;
 }>();
 
 defineOptions({
@@ -34,5 +35,5 @@ defineOptions({
 
     <CardCompany :client="props.client" />
 
-    <TabMenuClient :client="props.client" :users="props.users" :racks="props.racks" :devices="props.devices" :invoices="props.invoices" />
+    <TabMenuClient :client="props.client" :users="props.users" :racks="props.racks" :devices="props.devices" :invoices="props.invoices" :interconnections="props.interconnections" />
 </template>

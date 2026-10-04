@@ -43,13 +43,15 @@ interface MemberInvite {
     role?: string
 }
 
-interface Clients {
+interface Client {
+    id?: number
+    company_name?: string
     pics?: MemberInvite[]
     [key: string]: any
 }
 
 
-const props = defineProps<{ clients?: Clients, rack: any }>()
+const props = defineProps<{ clients?: Client[], rack: any }>()
 
 const openMenu = ref<number | null>(null)
 const openEditOwner = ref(false)
@@ -198,7 +200,7 @@ const updateOwner = () => {
                                         Client
                                     </Label>
 
-                                    <Multiselect v-model="selectedClient" :options="props.clients" label="company_name"
+                                    <Multiselect v-model="selectedClient" :options="props.clients || []" label="company_name"
                                         track-by="id" placeholder="Search Client" :searchable="true"
                                         :close-on-select="true" :allow-empty="false" />
                                 </div>

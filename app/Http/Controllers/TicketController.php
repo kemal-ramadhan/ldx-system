@@ -135,7 +135,7 @@ class TicketController extends Controller
                 'id' => $message->id,
                 'message' => $message->message,
                 'is_internal' => $message->is_internal ?? false,
-                'sender_type' => $message->user?->type === 'technician' ? 'technician' : 'client',
+                'sender_type' => in_array($message->user?->role?->slug, ['teknisi', 'super-admin']) ? 'technician' : 'client',
                 'sender_name' => $message->user?->name ?? 'Unknown',
                 'sender_email' => $message->user?->email ?? '',
                 'sender_avatar' => $message->user?->avatar ?? null,
@@ -163,9 +163,17 @@ class TicketController extends Controller
         ->where('status', 'active')
         ->get(['id', 'name', 'email']);
 
+        $ticketArray = $ticket->toArray();
+        $ticketArray['assigned_technician'] = $ticket->assignedUser ? [
+            'id' => $ticket->assignedUser->id,
+            'name' => $ticket->assignedUser->name,
+            'email' => $ticket->assignedUser->email,
+            'avatar' => $ticket->assignedUser->avatar,
+        ] : null;
+
         return Inertia::render('support/tickets/TicketDetail', [
             'title' => 'Ticket Detail',
-            'ticket' => $ticket,
+            'ticket' => $ticketArray,
             'messages' => $messages,
             'all_attachments' => $ticket->attachments->map(function ($attachment) {
                 return [
@@ -213,10 +221,17 @@ class TicketController extends Controller
         
         $validated = $request->validate([
             'status' => 'required|in:open,in_progress,waiting_customer,waiting_technician,resolved,closed',
-            'priority' => 'required|in:low,medium,high,critical',
+            'priority' => 'required',
             'assigned_to' => 'nullable|exists:users,id',
-            'category_id' => 'nullable|exists:categories,id',
+            'category_id' => 'nullable|exists:ticket_categories,id',
         ]);
+
+        $priorityStr = $request->input('priority');
+        $priorityModel = \App\Models\TicketPriority::where('name', 'like', $priorityStr)->orWhere('id', $priorityStr)->first();
+        if ($priorityModel) {
+            $validated['priority_id'] = $priorityModel->id;
+        }
+        unset($validated['priority']);
 
         $ticket->update($validated);
 
@@ -347,7 +362,7 @@ class TicketController extends Controller
 
         // Messages
         foreach ($ticket->messages as $message) {
-            $senderType = $message->user?->type === 'technician' ? 'technician' : 'client';
+            $senderType = in_array($message->user?->role?->slug, ['teknisi', 'super-admin']) ? 'technician' : 'client';
             $type = $message->is_internal ? 'internal_note' : ($senderType === 'technician' ? 'technician_replied' : 'client_replied');
             $description = $message->is_internal 
                 ? 'Internal note added' 

@@ -132,7 +132,7 @@ const replyForm = useForm({
 // Form untuk update ticket
 const updateForm = useForm({
     status: props.ticket?.status || 'open',
-    priority: props.ticket?.priority?.name || 'medium',
+    priority: props.ticket?.priority?.name?.toLowerCase() || 'medium',
     assigned_to: props.ticket?.assigned_technician?.id || null,
     category_id: props.ticket?.category?.id || null,
 });
@@ -482,9 +482,17 @@ onBeforeUnmount(() => {
     }
 });
 
+watch(() => props.messages, (newMessages) => {
+    messages.value = newMessages || [];
+}, { deep: true });
+
+watch(() => props.ticket, (newTicket) => {
+    ticketData.value = newTicket;
+}, { deep: true });
+
 watch(publicMessages, () => {
     scrollToBottom();
-});
+}, { deep: true });
 </script>
 
 <template>
@@ -542,11 +550,11 @@ watch(publicMessages, () => {
                             <RefreshCw class="mr-2 h-4 w-4" />
                             Reopen
                         </button>
-                        <!-- <button @click="isEditing = !isEditing"
+                        <button @click="isEditing = !isEditing"
                             class="inline-flex items-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">
                             <Edit class="mr-2 h-4 w-4" />
                             Edit
-                        </button> -->
+                        </button>
                         <button
                             class="inline-flex items-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">
                             <RefreshCw class="mr-2 h-4 w-4" />
@@ -836,7 +844,7 @@ watch(publicMessages, () => {
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Status</p>
-                                    <span :class="[getStatusColor(ticketData?.status || 'open'), 'mt-1 inline-block rounded-full px-3 py-1 text-xs font-medium capitalize flex items-center gap-1']">
+                                    <span :class="[getStatusColor(ticketData?.status || 'open'), 'mt-1 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium capitalize']">
                                         <component :is="getStatusBadgeIcon(ticketData?.status || 'open')" class="h-3 w-3" />
                                         {{ ticketData?.status?.replace('_', ' ') || 'Open' }}
                                     </span>
@@ -851,34 +859,50 @@ watch(publicMessages, () => {
 
                             <hr class="border-gray-200 dark:border-gray-700" />
 
-                            <div class="space-y-3">
-                                <div class="flex items-center gap-2">
-                                    <Hash class="h-4 w-4 text-gray-400" />
-                                    <span class="font-mono text-sm text-gray-600 dark:text-gray-300">
-                                        {{ ticketData?.code || 'N/A' }}
-                                    </span>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <Tag class="h-4 w-4 text-gray-400" />
-                                    <span class="text-sm text-gray-600 dark:text-gray-300">
-                                        {{ ticketData?.category?.name || 'Uncategorized' }}
-                                    </span>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <User class="h-4 w-4 text-gray-400" />
+                            <div class="space-y-4">
+                                <div class="flex items-start gap-3">
+                                    <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                                        <Hash class="h-4 w-4" />
+                                    </div>
                                     <div>
-                                        <p class="text-sm text-gray-600 dark:text-gray-300">
-                                            {{ ticketData?.client?.name || 'Unknown' }}
-                                        </p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">
-                                            {{ ticketData?.client?.email || '' }}
+                                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Ticket Code</p>
+                                        <p class="font-mono text-sm font-semibold text-gray-900 dark:text-white">
+                                            {{ ticketData?.code || 'N/A' }}
                                         </p>
                                     </div>
                                 </div>
-                                <div class="flex items-center gap-2">
-                                    <UserCircle class="h-4 w-4 text-gray-400" />
+                                <div class="flex items-start gap-3">
+                                    <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+                                        <Tag class="h-4 w-4" />
+                                    </div>
                                     <div>
-                                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Category</p>
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                            {{ ticketData?.category?.name || 'Uncategorized' }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-3">
+                                    <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400">
+                                        <User class="h-4 w-4" />
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Client</p>
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                            {{ ticketData?.client?.company_name || 'Unknown' }}
+                                        </p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                                            {{ ticketData?.client?.company_email || '' }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-3">
+                                    <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-50 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">
+                                        <UserCircle class="h-4 w-4" />
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Assigned To</p>
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
                                             {{ ticketData?.assigned_technician?.name || 'Unassigned' }}
                                         </p>
                                         <p v-if="ticketData?.assigned_technician" class="text-xs text-gray-500 dark:text-gray-400">
@@ -886,29 +910,49 @@ watch(publicMessages, () => {
                                         </p>
                                     </div>
                                 </div>
-                                <div class="flex items-center gap-2">
-                                    <Calendar class="h-4 w-4 text-gray-400" />
-                                    <span class="text-sm text-gray-600 dark:text-gray-300">
-                                        {{ formatDate(ticketData?.created_at) }}
-                                    </span>
+                                <div class="flex items-start gap-3">
+                                    <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                                        <Calendar class="h-4 w-4" />
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Created At</p>
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                            {{ formatDate(ticketData?.created_at) }}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div v-if="ticketData?.sla_due" class="flex items-center gap-2">
-                                    <Clock class="h-4 w-4 text-gray-400" />
-                                    <span class="text-sm text-gray-600 dark:text-gray-300">
-                                        SLA Due: {{ formatDate(ticketData.sla_due) }}
-                                    </span>
+                                <div v-if="ticketData?.sla_due" class="flex items-start gap-3">
+                                    <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400">
+                                        <Clock class="h-4 w-4" />
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400">SLA Due</p>
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                            {{ formatDate(ticketData.sla_due) }}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div v-if="ticketData?.resolved_at" class="flex items-center gap-2">
-                                    <CheckCircle class="h-4 w-4 text-green-500" />
-                                    <span class="text-sm text-gray-600 dark:text-gray-300">
-                                        Resolved: {{ formatDate(ticketData.resolved_at) }}
-                                    </span>
+                                <div v-if="ticketData?.resolved_at" class="flex items-start gap-3">
+                                    <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+                                        <CheckCircle class="h-4 w-4" />
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Resolved At</p>
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                            {{ formatDate(ticketData.resolved_at) }}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div v-if="ticketData?.closed_at" class="flex items-center gap-2">
-                                    <XCircle class="h-4 w-4 text-gray-500" />
-                                    <span class="text-sm text-gray-600 dark:text-gray-300">
-                                        Closed: {{ formatDate(ticketData.closed_at) }}
-                                    </span>
+                                <div v-if="ticketData?.closed_at" class="flex items-start gap-3">
+                                    <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                                        <XCircle class="h-4 w-4" />
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Closed At</p>
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                            {{ formatDate(ticketData.closed_at) }}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>

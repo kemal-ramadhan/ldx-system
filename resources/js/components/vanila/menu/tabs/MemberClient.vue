@@ -96,7 +96,7 @@ const deleteMember = (id: number) => {
 
 <template>
     <div class="p-4">
-        <div class="mx-auto max-w-7xl">
+        <div class="w-full">
 
             <!-- Header -->
             <div class="mb-8">

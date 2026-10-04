@@ -185,8 +185,8 @@ const getStatusColor = (status: string) => {
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <!-- Racks Card -->
-            <div
-                class="group relative overflow-hidden rounded-[32px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+            <Link href="/client/racks" 
+                class="group relative overflow-hidden rounded-[32px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl block">
                 <div class="flex items-start justify-between">
                     <div>
                         <h3 class="text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -216,11 +216,11 @@ const getStatusColor = (status: string) => {
                         {{ stats.racks.total_units }} Units
                     </span>
                 </div>
-            </div>
+            </Link>
 
             <!-- Devices Card -->
-            <div
-                class="group relative overflow-hidden rounded-[32px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+            <Link href="/client/devices" 
+                class="group relative overflow-hidden rounded-[32px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl block">
                 <div class="flex items-start justify-between">
                     <div>
                         <h3 class="text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -242,11 +242,11 @@ const getStatusColor = (status: string) => {
                         {{ stats.devices.by_type.length }} types
                     </span>
                 </div>
-            </div>
+            </Link>
 
             <!-- Services Card -->
-            <div
-                class="group relative overflow-hidden rounded-[32px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+            <Link href="/client/services" 
+                class="group relative overflow-hidden rounded-[32px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl block">
                 <div class="flex items-start justify-between">
                     <div>
                         <h3 class="text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -268,11 +268,11 @@ const getStatusColor = (status: string) => {
                         Total: {{ stats.services.total }}
                     </span>
                 </div>
-            </div>
+            </Link>
 
             <!-- Invoices Card -->
-            <div
-                class="group relative overflow-hidden rounded-[32px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+            <Link href="/client/invoices" 
+                class="group relative overflow-hidden rounded-[32px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl block">
                 <div class="flex items-start justify-between">
                     <div>
                         <h3 class="text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -302,14 +302,14 @@ const getStatusColor = (status: string) => {
                         {{ stats.invoices.overdue }} Overdue
                     </span>
                 </div>
-            </div>
+            </Link>
         </div>
 
         <!-- Second Row Stats -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <!-- Total Paid Amount -->
-            <div
-                class="group relative overflow-hidden rounded-[32px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+            <Link href="/client/invoices" 
+                class="group relative overflow-hidden rounded-[32px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl block">
                 <div class="flex items-start justify-between">
                     <div>
                         <h3 class="text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -325,11 +325,11 @@ const getStatusColor = (status: string) => {
                         </svg>
                     </div>
                 </div>
-            </div>
+            </Link>
 
             <!-- Outstanding Amount -->
-            <div
-                class="group relative overflow-hidden rounded-[32px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+            <Link href="/client/invoices" 
+                class="group relative overflow-hidden rounded-[32px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl block">
                 <div class="flex items-start justify-between">
                     <div>
                         <h3 class="text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -350,11 +350,11 @@ const getStatusColor = (status: string) => {
                         {{ stats.invoices.upcoming_due }} due in 7 days
                     </span>
                 </div>
-            </div>
+            </Link>
 
             <!-- Open Tickets -->
-            <div
-                class="group relative overflow-hidden rounded-[32px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+            <Link href="/client/tickets" 
+                class="group relative overflow-hidden rounded-[32px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl block">
                 <div class="flex items-start justify-between">
                     <div>
                         <h3 class="text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -375,11 +375,11 @@ const getStatusColor = (status: string) => {
                         Total: {{ stats.tickets.total }}
                     </span>
                 </div>
-            </div>
+            </Link>
 
             <!-- Total Racks Card -->
-            <div
-                class="group relative overflow-hidden rounded-[32px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+            <Link href="/client/racks" 
+                class="group relative overflow-hidden rounded-[32px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl block">
                 <div class="flex items-start justify-between">
                     <div>
                         <h3 class="text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -400,7 +400,7 @@ const getStatusColor = (status: string) => {
                         From {{ stats.racks.total }} racks
                     </span>
                 </div>
-            </div>
+            </Link>
         </div>
 
         <!-- Charts Section -->
@@ -420,8 +420,8 @@ const getStatusColor = (status: string) => {
             </div>
 
             <!-- Ticket Status Distribution -->
-            <div
-                class="rounded-[32px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6">
+            <Link href="/client/tickets"
+                class="block rounded-[32px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 hover:shadow-md transition-shadow">
                 <h3 class="text-sm font-semibold text-slate-900 dark:text-white mb-4">Ticket Status Distribution</h3>
                 <div class="h-64 flex items-center justify-center">
                     <Doughnut 
@@ -431,7 +431,7 @@ const getStatusColor = (status: string) => {
                     />
                     <p v-else class="text-slate-500 dark:text-slate-400">No ticket data available</p>
                 </div>
-            </div>
+            </Link>
         </div>
 
         <!-- Monthly Trend -->
@@ -462,13 +462,13 @@ const getStatusColor = (status: string) => {
                 class="rounded-[32px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Recent Tickets</h3>
-                    <Link href="/support/tickets" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                    <Link href="/client/tickets" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
                         View All
                     </Link>
                 </div>
                 <div class="space-y-3">
-                    <div v-for="ticket in stats.recent.tickets" :key="ticket.id" 
-                         class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50">
+                    <Link v-for="ticket in stats.recent.tickets" :key="ticket.id" :href="`/client/tickets/${ticket.id}`"
+                         class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                         <div class="flex-1 min-w-0">
                             <p class="text-sm font-medium text-slate-900 dark:text-white truncate">{{ ticket.subject }}</p>
                             <p class="text-xs text-slate-500 dark:text-slate-400">
@@ -478,7 +478,7 @@ const getStatusColor = (status: string) => {
                         <span :class="['px-2.5 py-1 rounded-full text-xs font-medium', getStatusColor(ticket.status)]">
                             {{ ticket.status.replace('_', ' ') }}
                         </span>
-                    </div>
+                    </Link>
                     <p v-if="stats.recent.tickets.length === 0" class="text-slate-500 dark:text-slate-400 text-center py-4">
                         No recent tickets
                     </p>
@@ -490,13 +490,13 @@ const getStatusColor = (status: string) => {
                 class="rounded-[32px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Recent Invoices</h3>
-                    <Link href="/billings/invoices" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                    <Link href="/client/invoices" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
                         View All
                     </Link>
                 </div>
                 <div class="space-y-3">
-                    <div v-for="invoice in stats.recent.invoices" :key="invoice.id" 
-                         class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50">
+                    <Link v-for="invoice in stats.recent.invoices" :key="invoice.id" :href="`/client/invoices/${invoice.id}`"
+                         class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                         <div class="flex-1 min-w-0">
                             <p class="text-sm font-medium text-slate-900 dark:text-white">{{ invoice.invoice_number }}</p>
                             <p class="text-xs text-slate-500 dark:text-slate-400">
@@ -506,7 +506,7 @@ const getStatusColor = (status: string) => {
                         <span :class="['px-2.5 py-1 rounded-full text-xs font-medium', getStatusColor(invoice.status)]">
                             {{ invoice.status }}
                         </span>
-                    </div>
+                    </Link>
                     <p v-if="stats.recent.invoices.length === 0" class="text-slate-500 dark:text-slate-400 text-center py-4">
                         No recent invoices                    </p>
                 </div>

@@ -209,11 +209,11 @@ class TicketClientController extends Controller
                 'id' => $message->id,
                 'message' => $message->message,
                 'is_internal' => $message->is_internal ?? false,
-                'sender_type' => $message->user?->type === 'technician' ? 'technician' : 'client',
+                'sender_type' => in_array($message->user?->role?->slug, ['teknisi', 'super-admin']) ? 'technician' : 'client',
                 'sender_name' => $message->user?->name ?? 'Unknown',
                 'sender_email' => $message->user?->email ?? '',
                 'sender_avatar' => $message->user?->avatar ?? null,
-                'role' => $message->user?->type === 'technician' ? 'Technician' : 'Client',
+                'role' => in_array($message->user?->role?->slug, ['teknisi', 'super-admin']) ? 'Technician' : 'Client',
                 'attachments' => $message->attachments->map(function ($attachment) {
                     return [
                         'id' => $attachment->id,
@@ -268,7 +268,7 @@ class TicketClientController extends Controller
         
         // Add message events to timeline
         foreach ($ticket->messages as $message) {
-            $senderType = $message->user?->type === 'technician' ? 'technician' : 'client';
+            $senderType = in_array($message->user?->role?->slug, ['teknisi', 'super-admin']) ? 'technician' : 'client';
             $timeline[] = [
                 'id' => 'msg_' . $message->id,
                 'type' => $senderType === 'technician' ? 'technician_replied' : 'client_replied',
@@ -298,8 +298,8 @@ class TicketClientController extends Controller
             ],
             'client' => [
                 'id' => $ticket->client->id,
-                'name' => $ticket->client->name,
-                'email' => $ticket->client->email,
+                'company_name' => $ticket->client->company_name,
+                'company_email' => $ticket->client->company_email,
                 'avatar' => $ticket->client->avatar ?? null,
             ],
             'assigned_technician' => $ticket->assignedUser ? [

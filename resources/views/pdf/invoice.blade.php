@@ -429,7 +429,7 @@
           <div class="box-title">Bank Account Details</div>
           <table class="bank-table">
             <tr>
-              <td class="bank-name">BCA PT Lintas Data telekomunikasi</td>
+              <td class="bank-name">BCA PT Lintas Data Telekomunikasi</td>
               <td class="bank-number">7435944400</td>
             </tr>
           </table>

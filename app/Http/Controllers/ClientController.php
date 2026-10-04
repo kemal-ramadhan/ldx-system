@@ -10,6 +10,7 @@ use App\Models\Client;
 use App\Models\ClientPic;
 use App\Models\ClientRack;
 use App\Models\RackDivice;
+use App\Models\InterconnectionRequest;
 
 class ClientController extends Controller
 {
@@ -115,13 +116,22 @@ class ClientController extends Controller
             ->paginate(10)
             ->withQueryString();
 
+        $interconnections = InterconnectionRequest::with([
+            'sourcePort.device', 
+            'destinationPort.device'
+        ])
+        ->where('requester_client_id', $id)
+        ->latest()
+        ->get();
+
         return Inertia::render('clients/ClientShow', [
             'title' => 'Client Details',
             'client' => $client,
             'users' => $users,
             'racks' => $racks,
             'devices' => $devices,
-            'invoices' => $invoices
+            'invoices' => $invoices,
+            'interconnections' => $interconnections,
         ]);
     }
 

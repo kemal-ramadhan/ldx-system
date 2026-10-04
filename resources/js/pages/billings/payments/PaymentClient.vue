@@ -78,7 +78,7 @@ const formatRupiah = (value: number) => {
     ).format(value || 0);
 };
 
-const accountNumber = ref('7435303471')
+const accountNumber = ref('7435944400')
 
 const copied = ref(false)
 
@@ -295,7 +295,7 @@ const copyAccountNumber = async () => {
                     </p>
 
                     <p class="mt-1 font-semibold">
-                        RONI M
+                        BCA PT Lintas Data Telekomunikasi
                     </p>
                 </div>
 
@@ -309,7 +309,7 @@ const copyAccountNumber = async () => {
                     <div class="mt-1 flex items-center justify-between">
 
                         <p class="font-bold tracking-wider text-lg">
-                            7435303471
+                            {{ accountNumber }}
                         </p>
 
 

@@ -69,7 +69,9 @@ class RackClientController extends Controller
                 $query->where('client_id', $client->id)
                     ->with([
                         'client',
-                        'rackUnits'
+                        'rackUnits',
+                        'ports.activeSourceCrossConnect.destinationPort.device',
+                        'ports.activeDestinationCrossConnect.sourcePort.device'
                     ]);
             },
         ])

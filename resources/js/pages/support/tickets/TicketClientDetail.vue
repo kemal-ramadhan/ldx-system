@@ -351,10 +351,20 @@ const downloadAttachment = (url: string, filename: string) => {
     }
 };
 
-// Watch for new messages and scroll
+// Watch for new messages from props (e.g. after Inertia post)
+watch(() => props.messages, (newMessages) => {
+    messages.value = newMessages || [];
+}, { deep: true });
+
+// Watch for ticket changes from props
+watch(() => props.ticket, (newTicket) => {
+    ticketData.value = newTicket;
+}, { deep: true });
+
+// Watch for filtered messages and scroll
 watch(filteredMessages, () => {
     scrollToBottom();
-});
+}, { deep: true });
 
 // Lifecycle
 onMounted(() => {
@@ -686,10 +696,10 @@ defineOptions({
                                     <User class="h-4 w-4 text-gray-400" />
                                     <div>
                                         <p class="text-sm text-gray-600 dark:text-gray-300">
-                                            {{ ticket?.client?.name || 'Unknown' }}
+                                            {{ ticket?.client?.company_name || 'Unknown' }}
                                         </p>
                                         <p class="text-xs text-gray-500 dark:text-gray-400">
-                                            {{ ticket?.client?.email || '' }}
+                                            {{ ticket?.client?.company_email || '' }}
                                         </p>
                                     </div>
                                 </div>
