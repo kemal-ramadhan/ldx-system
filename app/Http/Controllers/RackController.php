@@ -591,10 +591,34 @@ class RackController extends Controller
             'company_email'
         )->get();
 
+        $invoices = \App\Models\Invoice::with(['service', 'client'])
+            ->whereHas('service', function ($q) use ($id) {
+                $q->where('rack_id', $id);
+            })
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
+        $interconnections = \App\Models\InterconnectionRequest::with([
+            'sourcePort.device', 
+            'destinationPort.device',
+            'requesterClient'
+        ])
+        ->whereHas('sourcePort.device', function ($q) use ($id) {
+            $q->where('rack_id', $id);
+        })
+        ->orWhereHas('destinationPort.device', function ($q) use ($id) {
+            $q->where('rack_id', $id);
+        })
+        ->latest()
+        ->get();
+
         return Inertia::render('racks/RackShow', [
             'title' => 'Rack Details',
             'rack' => $rack,
-            'clients' => $clients
+            'clients' => $clients,
+            'invoices' => $invoices,
+            'interconnections' => $interconnections
         ]);
     }
 

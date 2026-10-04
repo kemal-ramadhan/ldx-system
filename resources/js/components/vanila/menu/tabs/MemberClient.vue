@@ -19,6 +19,7 @@ interface User {
     id: number
     name: string
     email: string
+    avatar?: string
 }
 
 interface MemberInvite {
@@ -171,8 +172,11 @@ const deleteMember = (id: number) => {
                         <!-- Content -->
                         <div class="flex items-start gap-3">
                             <!-- Avatar -->
-                            <div
-                                class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-300 dark:bg-gray-700 text-sm font-medium text-gray-600 dark:text-gray-300">
+                            <div v-if="member.user.avatar" class="flex h-10 w-10 shrink-0 overflow-hidden rounded-full border border-gray-200 dark:border-gray-700">
+                                <img :src="member.user.avatar.startsWith('http') ? member.user.avatar : `/storage/${member.user.avatar}`" :alt="member.user.name" class="h-full w-full object-cover" />
+                            </div>
+                            <div v-else
+                                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-300 dark:bg-gray-700 text-sm font-medium text-gray-600 dark:text-gray-300">
                                 {{
                                     member.user.name
                                         .split(' ')

@@ -35,6 +35,8 @@ class InterconnectionRequest extends Model
         'description',
         'rejection_reason',
         'notes',
+        'service_id',
+        'invoice_id',
     ];
 
     protected $casts = [
@@ -96,6 +98,20 @@ class InterconnectionRequest extends Model
     {
         return $this->hasOne(
             CrossConnect::class
+        );
+    }
+
+    public function service(): BelongsTo
+    {
+        return $this->belongsTo(
+            Service::class
+        );
+    }
+
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(
+            Invoice::class
         );
     }
 }

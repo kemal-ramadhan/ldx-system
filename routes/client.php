@@ -26,6 +26,7 @@ Route::middleware(['auth', 'verified', 'role:client'])->group(function () {
     )->name('client.invoices.download');
 
     Route::resource('client/tickets', TicketClientController::class)->names('client.tickets');
+    Route::get('client/tickets/{ticketId}/chat-data', [TicketClientController::class, 'getChatData'])->name('client.tickets.chat-data');
     Route::post('client/tickets/{ticketId}/reply', [TicketClientController::class, 'storeReply'])->name('client.tickets.reply');
 
     Route::prefix('client')->group(function () {

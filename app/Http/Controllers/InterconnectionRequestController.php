@@ -9,6 +9,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use App\Models\CrossConnect;
+use App\Models\Service;
+use App\Models\Invoice;
+use App\Models\Product;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
@@ -310,6 +313,21 @@ class InterconnectionRequestController extends Controller
         return Inertia::render('interconnections/Show', [
             'title' => 'Interconnection Request',
             'interconnection' => $interconnection,
+        ]);
+    }
+
+    public function createCost(InterconnectionRequest $interconnection)
+    {
+        $interconnection->load([
+            'requesterClient'
+        ]);
+
+        $products = Product::where('status', 'active')->get();
+
+        return Inertia::render('interconnections/AddCost', [
+            'title' => 'Set Interconnection Cost',
+            'interconnection' => $interconnection,
+            'products' => $products,
         ]);
     }
 
@@ -739,5 +757,115 @@ class InterconnectionRequestController extends Controller
             'success',
             'Interconnection request cancelled.'
         );
+    }
+
+    public function addCost(Request $request, string $id)
+    {
+        $interconnection = InterconnectionRequest::findOrFail($id);
+
+        $validated = $request->validate([
+            'products' => 'required|array',
+            'products.*.id' => 'required|exists:products,id',
+            'products.*.quantity' => 'required|integer|min:1',
+            'billing_cycle' => 'required|in:one-time,monthly,yearly',
+            'ppn_enabled' => 'boolean',
+            'ppn_percentage' => 'nullable|numeric|min:0|max:100',
+            'pph23_enabled' => 'boolean',
+            'pph23_percentage' => 'nullable|numeric|min:0|max:100',
+        ]);
+
+        DB::transaction(function () use ($interconnection, $validated) {
+            $subtotal = 0;
+            $serviceItems = [];
+            $invoiceItems = [];
+            
+            foreach ($validated['products'] as $productData) {
+                $product = Product::find($productData['id']);
+                $itemSubtotal = $product->base_price * $productData['quantity'];
+                $subtotal += $itemSubtotal;
+                
+                $serviceItems[] = [
+                    'product_id' => $product->id,
+                    'description' => $product->name,
+                    'quantity' => $productData['quantity'],
+                    'price' => $product->base_price,
+                    'subtotal' => $itemSubtotal,
+                ];
+
+                $invoiceItems[] = [
+                    'product_id' => $product->id,
+                    'name' => $product->name,
+                    'quantity' => $productData['quantity'],
+                    'price' => $product->base_price,
+                    'total' => $itemSubtotal,
+                ];
+            }
+
+            $ppnEnabled = $validated['ppn_enabled'] ?? false;
+            $ppnPercentage = $ppnEnabled ? ($validated['ppn_percentage'] ?? 11) : 0;
+            $ppnAmount = $ppnEnabled ? ($subtotal * ($ppnPercentage / 100)) : 0;
+
+            $pph23Enabled = $validated['pph23_enabled'] ?? false;
+            $pph23Percentage = $pph23Enabled ? ($validated['pph23_percentage'] ?? 2) : 0;
+            $pph23Amount = $pph23Enabled ? ($subtotal * ($pph23Percentage / 100)) : 0;
+
+            $grandTotal = $subtotal + $ppnAmount - $pph23Amount;
+
+            $serviceCode = 'SRV-' . now()->format('Ymd') . '-' . mt_rand(1000, 9999);
+            $service = Service::create([
+                'client_id' => $interconnection->requester_client_id,
+                'rack_id' => null, 
+                'code' => $serviceCode,
+                'name' => 'Interconnection Service: ' . $interconnection->request_number,
+                'description' => 'Service for interconnection request ' . $interconnection->request_number,
+                'billing_cycle' => $validated['billing_cycle'],
+                'start_date' => now(),
+                'end_date' => $validated['billing_cycle'] == 'one-time' ? now() : null, 
+                'next_due_date' => $validated['billing_cycle'] == 'monthly' ? now()->addMonth() : ($validated['billing_cycle'] == 'yearly' ? now()->addYear() : null),
+                'ppn_enabled' => $ppnEnabled,
+                'ppn_percentage' => $ppnPercentage,
+                'ppn_amount' => $ppnAmount,
+                'pph23_enabled' => $pph23Enabled,
+                'pph23_percentage' => $pph23Percentage,
+                'pph23_amount' => $pph23Amount,
+                'monthly_total' => $grandTotal, 
+                'total' => $grandTotal,
+                'status' => 'active',
+            ]);
+
+            foreach ($serviceItems as $item) {
+                $service->serviceItems()->create($item);
+            }
+
+            $invoiceNumber = 'INV-' . now()->format('Ym') . '-' . mt_rand(1000, 9999);
+            $invoice = Invoice::create([
+                'invoice_number' => $invoiceNumber,
+                'client_id' => $interconnection->requester_client_id,
+                'service_id' => $service->id,
+                'issue_date' => now(),
+                'due_date' => now()->addDays(14),
+                'subtotal' => $subtotal,
+                'ppn_enabled' => $ppnEnabled,
+                'ppn_percentage' => $ppnPercentage,
+                'ppn_amount' => $ppnAmount,
+                'pph23_enabled' => $pph23Enabled,
+                'pph23_percentage' => $pph23Percentage,
+                'pph23_amount' => $pph23Amount,
+                'total' => $grandTotal,
+                'status' => 'pending',
+                'created_by' => Auth::id(),
+            ]);
+
+            foreach ($invoiceItems as $item) {
+                $invoice->items()->create($item);
+            }
+
+            $interconnection->update([
+                'service_id' => $service->id,
+                'invoice_id' => $invoice->id,
+            ]);
+        });
+
+        return back()->with('success', 'Cost added and service/invoice generated successfully.');
     }
 }

@@ -6,6 +6,7 @@ use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Storage;
 
 use App\Models\User;
 use App\Models\Role;
@@ -14,15 +15,13 @@ use App\Models\ClientPic;
 
 class UserController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
         $search = $request->search;
         $role = $request->role;
+        $type = $request->type;
 
-        $users = User::with('role')
+        $users = User::with(['role', 'clientPic.client'])
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
@@ -35,19 +34,32 @@ class UserController extends Controller
                     $q->where('slug', $role);
                 });
             })
+            
+            ->when($type === 'client', function ($query) {
+                $query->whereHas('role', function ($q) {
+                    $q->where('slug', 'client');
+                });
+            })
+
+            ->when($type === 'admin', function ($query) {
+                $query->whereHas('role', function ($q) {
+                    $q->where('slug', '!=', 'client');
+                });
+            })
 
             ->latest()
             ->paginate(10)
             ->withQueryString();
 
         return Inertia::render('users/Users', [
-            'title' => 'User Management',
+            'title' => $type === 'client' ? 'Data User Client' : ($type === 'admin' ? 'Data User Admin' : 'User Management'),
 
             'users' => $users,
 
             'filters' => [
                 'search' => $search,
                 'role' => $role,
+                'type' => $type,
             ],
 
             'roles' => Role::select('id', 'name', 'slug')->get(),
@@ -85,6 +97,7 @@ class UserController extends Controller
             'password' => 'required|confirmed',
             'phone' => 'required',
             'role_id' => 'required',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
         // =========================
@@ -98,6 +111,11 @@ class UserController extends Controller
             ]);
         }
 
+        $avatarPath = null;
+        if ($request->hasFile('avatar')) {
+            $avatarPath = $request->file('avatar')->store('avatars', 'public');
+        }
+
         // =========================
         // Create User
         // =========================
@@ -107,6 +125,7 @@ class UserController extends Controller
             'phone' => $validated['phone'],
             'password' => bcrypt($validated['password']),
             'role_id' => $validated['role_id'],
+            'avatar' => $avatarPath,
             'email_verified_at' => now(),
         ]);
 
@@ -140,6 +159,7 @@ class UserController extends Controller
             'company_postal_code' => 'required',
             'contract_date' => 'required|date',
             'contract_done_date' => 'nullable|date|after_or_equal:contract_date',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
 
@@ -149,9 +169,15 @@ class UserController extends Controller
             Client::query()->where('company_code', $companyCode)->exists()
         );
 
+        $logoPath = null;
+        if ($request->hasFile('logo')) {
+            $logoPath = $request->file('logo')->store('logos', 'public');
+        }
+
         $client = Client::create([
             'company_code' => $companyCode,
             'company_name' => $validated['company_name'],
+            'logo' => $logoPath,
             'company_email' => $validated['company_email'],
             'company_phone' => $validated['company_phone'],
             'company_npwp' => $validated['company_npwp'],
@@ -215,12 +241,20 @@ class UserController extends Controller
             'phone' => ['required'],
             'role_id' => ['required', 'exists:roles,id'],
             'password' => ['nullable', 'confirmed', 'min:8'],
+            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
         ]);
 
         if (!empty($validated['password'])) {
             $validated['password'] = bcrypt($validated['password']);
         } else {
             unset($validated['password']);
+        }
+
+        if ($request->hasFile('avatar')) {
+            if ($user->avatar) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+            $validated['avatar'] = $request->file('avatar')->store('avatars', 'public');
         }
 
         $user->update($validated);

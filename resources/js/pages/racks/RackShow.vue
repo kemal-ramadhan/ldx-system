@@ -14,6 +14,8 @@ const props = defineProps<{
     title: string;
     rack: any;
     clients: any;
+    invoices: any;
+    interconnections: any;
 }>();
 
 defineOptions({
@@ -55,5 +57,5 @@ defineOptions({
     </div>
 
     <CardRack :rack="rack" />
-    <TabMenuRack :rack="rack" :clients="clients" />
+    <TabMenuRack :rack="rack" :clients="clients" :invoices="invoices" :interconnections="interconnections" />
 </template>

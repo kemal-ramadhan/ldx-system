@@ -15,16 +15,25 @@ export const navigation = {
             icon: LayoutGrid,
         },
         {
-            title: 'User Management',
+            title: 'Management Admin',
             icon: Users,
-
             children: [
                 {
-                    title: 'Users',
-                    href: '/admin/users',
+                    title: 'Data User Admin',
+                    href: '/admin/users?type=admin',
+                },
+            ],
+        },
+        {
+            title: 'Management Client',
+            icon: Users,
+            children: [
+                {
+                    title: 'Data User Client',
+                    href: '/admin/users?type=client',
                 },
                 {
-                    title: 'Clients Or Companies',
+                    title: 'Companies',
                     href: '/admin/clients',
                 },
             ],

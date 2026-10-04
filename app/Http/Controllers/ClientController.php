@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 use App\Models\User;
@@ -166,7 +167,15 @@ class ClientController extends Controller
             'contract_date' => 'nullable|date',
             'contract_done_date' => 'nullable|date',
             'status' => 'required|in:active,inactive',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
+
+        if ($request->hasFile('logo')) {
+            if ($client->logo) {
+                Storage::disk('public')->delete($client->logo);
+            }
+            $validatedData['logo'] = $request->file('logo')->store('logos', 'public');
+        }
 
         $client->update($validatedData);
 

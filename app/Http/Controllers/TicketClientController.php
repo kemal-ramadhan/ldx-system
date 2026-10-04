@@ -428,8 +428,50 @@ class TicketClientController extends Controller
 
         broadcast(new TicketMessageSent($message, $ticket->id))->toOthers();
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => 'Your reply has been sent successfully.',
+                'message' => $message,
+            ]);
+        }
+
         return redirect()->back()->with([
             'success' => 'Your reply has been sent successfully.',
+        ]);
+    }
+
+    public function getChatData(Request $request, $ticketId)
+    {
+        $ticket = Ticket::query()->where('client_id', Auth::user()->clientPic?->client_id)
+            ->with([
+                'messages' => function ($q) {
+                    $q->where('is_internal', false)->with('user', 'attachments')->orderBy('created_at', 'asc');
+                }
+            ])
+            ->findOrFail($ticketId);
+
+        $messages = $ticket->messages->map(function ($message) {
+            return [
+                'id' => $message->id,
+                'message' => $message->message,
+                'created_at' => $message->created_at,
+                'sender_type' => $message->user_id === Auth::id() ? 'client' : 'admin',
+                'sender_name' => $message->user?->name,
+                'role' => $message->user_id === Auth::id() ? 'Client' : 'Admin',
+                'attachments' => $message->attachments->map(function ($attachment) {
+                    return [
+                        'id' => $attachment->id,
+                        'filename' => $attachment->file_name,
+                        'url' => \Illuminate\Support\Facades\Storage::url($attachment->file_path),
+                        'mime_type' => $attachment->file_type,
+                    ];
+                }),
+            ];
+        });
+
+        return response()->json([
+            'ticket' => $ticket,
+            'messages' => $messages,
         ]);
     }
 }

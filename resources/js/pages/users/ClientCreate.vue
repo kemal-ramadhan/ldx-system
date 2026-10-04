@@ -12,6 +12,7 @@ const props = defineProps<{
 
 
 const form = useForm({
+    logo: null,
     company_name: '',
     company_email: '',
     company_phone: '',
@@ -52,6 +53,19 @@ defineOptions({
             v-slot="{ errors, processing }"
             class="flex flex-col gap-3"
         >
+        <div class="grid grid-cols-1 gap-3 w-full rounded-md border p-4 mb-4">
+            <div class="grid gap-3 w-full">
+                <Label for="logo">Company Logo</Label>
+                <Input
+                    id="logo"
+                    type="file"
+                    @input="form.logo = $event.target.files[0]"
+                    accept="image/*"
+                    class="block w-full max-w-sm"
+                />
+                <InputError class="mt-2" :message="errors.logo" />
+            </div>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 w-full rounded-md border overflow-x-auto p-4">
             <div class="grid gap-3 w-full">
                 <Label for="company_name">Company Name <span class="text-red-500">*</span></Label>

@@ -104,7 +104,7 @@ defineOptions({
                             >
                                 <img
                                     v-if="pic.user?.avatar"
-                                    :src="pic.user.avatar"
+                                    :src="pic.user.avatar.startsWith('http') ? pic.user.avatar : `/storage/${pic.user.avatar}`"
                                     :alt="pic.user.name"
                                     class="w-8 h-8 rounded-full border-2 border-white object-cover"
                                 />

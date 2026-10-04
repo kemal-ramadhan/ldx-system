@@ -17,8 +17,9 @@ const props = defineProps<{
                 <div
                     class="p-5 flex items-center gap-4 bg-gray-900 dark:bg-gray-800">
                     <div
-                        class="w-14 h-14 rounded-xl flex items-center justify-center bg-gray-200 dark:bg-gray-700">
-                        <div
+                        :class="['w-14 h-14 rounded-xl flex items-center justify-center overflow-hidden', props.client?.logo ? 'bg-transparent' : 'bg-gray-200 dark:bg-gray-700']">
+                        <img v-if="props.client?.logo" :src="props.client.logo.startsWith('http') ? props.client.logo : `/storage/${props.client.logo}`" :alt="props.client.company_name" class="w-full h-full object-cover" />
+                        <div v-else
                             class="flex items-center justify-center text-sm font-bold uppercase text-gray-900 dark:text-gray-100">
                             {{
                                 props.client?.company_name
@@ -208,7 +209,7 @@ const props = defineProps<{
                     <div class="flex items-center">
                         <template v-for="(pic, index) in props.client.pics" :key="pic.id">
                             <div class="flex items-center gap-2 mr-5">
-                                <img v-if="pic.user?.avatar" :src="pic.user.avatar" :alt="pic.user.name"
+                                <img v-if="pic.user?.avatar" :src="pic.user.avatar.startsWith('http') ? pic.user.avatar : `/storage/${pic.user.avatar}`" :alt="pic.user.name"
                                     class="w-8 h-8 rounded-full object-cover" />
 
                                 <!-- fallback kalau tidak ada avatar -->

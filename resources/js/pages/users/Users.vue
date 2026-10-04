@@ -11,18 +11,21 @@ const props = defineProps<{
     filters: {
         search: string;
         role: string;
+        type: string;
     };
 }>();
 
 const search = ref(props.filters.search || '');
 const role = ref(props.filters.role || '');
+const type = ref(props.filters.type || '');
 
-watch([search, role], () => {
+watch([search, role, type], () => {
     router.get(
         '/admin/users',
         {
             search: search.value,
             role: role.value,
+            type: type.value,
         },
         {
             preserveState: true,
@@ -42,7 +45,7 @@ defineOptions({
         breadcrumbs: [
             {
                 title: 'User Management',
-                href: '/admin/users',
+                href: '#',
             },
         ],
     },
@@ -86,6 +89,7 @@ defineOptions({
             <Search class="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
         </div>
         <select
+            v-if="type !== 'client'"
             v-model="role"
             class="rounded-xl border bg-white px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:bg-transparent"
         >
@@ -107,6 +111,7 @@ defineOptions({
                 <tr class="text-left text-sm font-semibold text-muted-foreground">
                     <th class="px-4 py-2">Name</th>
                     <th class="px-4 py-2">Email</th>
+                    <th v-if="type === 'client'" class="px-4 py-2">Company</th>
                     <th class="px-4 py-2">Role</th>
                     <th class="px-4 py-2">Actions</th>
                 </tr>
@@ -119,6 +124,22 @@ defineOptions({
                 >
                     <td class="px-4 py-2">{{ user.name }}</td>
                     <td class="px-4 py-2">{{ user.email }}</td>
+                    <td v-if="type === 'client'" class="px-4 py-2">
+                        <div v-if="user.client_pic && user.client_pic.client" class="text-sm font-medium">
+                            {{ user.client_pic.client.company_name }}
+                        </div>
+                        <div v-else class="flex flex-col gap-1 items-start">
+                            <span class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/50 dark:text-red-300">
+                                No Company
+                            </span>
+                            <Link
+                                :href="`/admin/users/${user.id}/client`"
+                                class="mt-1 inline-flex items-center rounded bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700"
+                            >
+                                Connect Company
+                            </Link>
+                        </div>
+                    </td>
                     <td class="px-4 py-2 capitalize">{{ user.role?.name }}</td>
                     <td class="px-4 py-2 flex gap-2 flex-nowrap">
                         <Link

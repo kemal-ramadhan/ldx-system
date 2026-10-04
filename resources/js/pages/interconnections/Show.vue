@@ -534,6 +534,18 @@ const isFailedStatus = computed(() => {
                         class="inline-flex items-center rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50">
                         Cancel
                     </button>
+
+                    <Link v-if="!interconnection.service_id && !isFailedStatus && interconnection.status !== 'completed'"
+                        :href="`/admin/interconnections/${interconnection.id}/add-cost`"
+                        class="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700">
+                        Set Cost
+                    </Link>
+
+                    <Link v-if="interconnection.invoice_id"
+                        :href="`/admin/invoices/${interconnection.invoice_id}`"
+                        class="inline-flex items-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-700 transition hover:bg-blue-100">
+                        View Invoice
+                    </Link>
                 </div>
             </div>
         </div>

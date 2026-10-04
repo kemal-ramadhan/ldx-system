@@ -250,7 +250,7 @@ const rightNavItems: NavItem[] = [
                                 >
                                     <AvatarImage
                                         v-if="auth.user.avatar"
-                                        :src="auth.user.avatar"
+                                        :src="auth.user.avatar.startsWith('http') ? auth.user.avatar : `/storage/${auth.user.avatar}`"
                                         :alt="auth.user.name"
                                     />
                                     <AvatarFallback

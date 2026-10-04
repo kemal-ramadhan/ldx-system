@@ -18,12 +18,14 @@ const form = useForm({
     email: props.user.email ?? '',
     phone: props.user.phone ?? '',
     role_id: props.user.role_id ?? '',
+    avatar: null,
+    _method: 'put',
     password: '',
     password_confirmation: '',
 })
 
 const updateUser = () => {
-    form.put(`/admin/users/${props.user.id}`)
+    form.post(`/admin/users/${props.user.id}`)
 }
 
 defineOptions({
@@ -84,6 +86,25 @@ defineOptions({
                         placeholder="email@example.com"
                     />
                     <InputError :message="errors.email" />
+                </div>
+
+                <div class="grid gap-3 w-full">
+                    <Label for="avatar">Avatar</Label>
+                    <div class="flex items-center gap-4">
+                        <div v-if="user.avatar" class="w-12 h-12 rounded-full overflow-hidden shrink-0 border border-gray-200">
+                            <img :src="`/storage/${user.avatar}`" alt="Avatar" class="w-full h-full object-cover" />
+                        </div>
+                        <div class="flex-1">
+                            <Input
+                                id="avatar"
+                                type="file"
+                                @input="form.avatar = $event.target.files[0]"
+                                accept="image/*"
+                                class="block w-full"
+                            />
+                            <InputError class="mt-2" :message="errors.avatar" />
+                        </div>
+                    </div>
                 </div>
 
                 <div class="grid gap-3 w-full">

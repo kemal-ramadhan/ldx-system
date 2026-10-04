@@ -51,6 +51,25 @@ const user = computed(() => page.props.auth.user);
             v-slot="{ errors, processing }"
         >
             <div class="grid gap-2">
+                <Label for="avatar">Avatar</Label>
+                <div class="flex items-center gap-4">
+                    <div v-if="user.avatar" class="w-12 h-12 rounded-full overflow-hidden shrink-0 border border-gray-200">
+                        <img :src="user.avatar.startsWith('http') ? user.avatar : `/storage/${user.avatar}`" alt="Avatar" class="w-full h-full object-cover" />
+                    </div>
+                    <div class="flex-1">
+                        <Input
+                            id="avatar"
+                            type="file"
+                            accept="image/*"
+                            class="block w-full"
+                            name="avatar"
+                        />
+                        <InputError class="mt-2" :message="errors.avatar" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid gap-2">
                 <Label for="name">Name</Label>
                 <Input
                     id="name"

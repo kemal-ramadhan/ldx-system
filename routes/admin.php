@@ -195,6 +195,20 @@ Route::middleware(['auth', 'verified', 'role:super-admin'])->group(function () {
             'admin.interconnections.start-testing'
         );
 
+        Route::get(
+            'interconnections/{interconnection}/add-cost',
+            [InterconnectionRequestController::class, 'createCost']
+        )->name(
+            'admin.interconnections.create-cost'
+        );
+
+        Route::post(
+            'interconnections/{interconnection}/add-cost',
+            [InterconnectionRequestController::class, 'addCost']
+        )->name(
+            'admin.interconnections.add-cost'
+        );
+
         Route::patch(
             'interconnections/{interconnection}/complete',
             [InterconnectionRequestController::class, 'complete']

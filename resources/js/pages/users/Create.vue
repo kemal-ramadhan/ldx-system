@@ -21,6 +21,7 @@ const form = useForm({
     password_confirmation: '',
     phone: '',
     role_id: '',
+    avatar: null,
 });
 
 const createUser = () => {
@@ -88,6 +89,17 @@ onMounted(() => {
                     placeholder="email@example.com"
                 />
                 <InputError :message="errors.email" />
+            </div>
+            <div class="grid gap-3 w-full">
+                <Label for="avatar">Avatar</Label>
+                <Input
+                    id="avatar"
+                    type="file"
+                    @input="form.avatar = $event.target.files[0]"
+                    accept="image/*"
+                    class="block w-full"
+                />
+                <InputError class="mt-2" :message="errors.avatar" />
             </div>
             <div class="grid gap-3 w-full">
                 <Label for="role">Role</Label>
