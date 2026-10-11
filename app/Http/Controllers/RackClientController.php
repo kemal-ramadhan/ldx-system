@@ -127,9 +127,29 @@ class RackClientController extends Controller
         $rack->rental_start_date = $clientRack?->rental_start_date;
         $rack->rental_end_date = $clientRack?->rental_end_date;
 
+        $monitoringData = null;
+        $telemetryLogs = [];
+        if (!empty($rack->api_suhu)) {
+            $monitoringData = \Illuminate\Support\Facades\Cache::remember('rack_monitoring_' . $rack->api_suhu, 60, function () use ($rack) {
+                return RackMonitoringController::fetchMonitoringData($rack->api_suhu);
+            });
+
+            // Ambil histori log tersimpan (maksimal 7 hari ke belakang, urut terlama ke terbaru untuk grafik)
+            $telemetryLogs = \App\Models\RackTelemetryLog::where(function ($q) use ($rack) {
+                $q->where('rack_id', $rack->id)
+                  ->orWhere('api_rack_name', $rack->api_suhu);
+            })
+            ->where('recorded_at', '>=', now()->subDays(7))
+            ->orderBy('recorded_at', 'asc')
+            ->limit(100)
+            ->get();
+        }
+
         return Inertia::render('racks/RackShowClient', [
             'title' => 'Rack Details',
             'rack' => $rack,
+            'monitoringData' => $monitoringData,
+            'telemetryLogs' => $telemetryLogs,
         ]);
     }
 }

@@ -187,6 +187,7 @@ defineOptions({
                     <th class="px-4 py-2">Weight Capacity</th>
                     <th class="px-4 py-2">Location</th>
                     <th class="px-4 py-2">Description</th>
+                    <th class="px-4 py-2">Sensor Suhu</th>
                     <th class="px-4 py-2">Status</th>
                     <th class="px-4 py-2">Actions</th>
                 </tr>
@@ -212,6 +213,15 @@ defineOptions({
                     <td class="px-4 py-2">{{ rack.weight_capacity }} (kg)</td>
                     <td class="px-4 py-2">{{ rack.room?.location_data_center?.name }} - {{ rack.room?.name }}</td>
                     <td class="px-4 py-2">{{ rack.description }}</td>
+                    <td class="px-4 py-2">
+                        <span
+                            v-if="rack.api_suhu"
+                            class="inline-flex items-center gap-1 rounded bg-cyan-50 px-2 py-0.5 text-xs font-mono font-semibold text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800"
+                        >
+                            {{ rack.api_suhu }}
+                        </span>
+                        <span v-else class="text-xs text-muted-foreground italic">-</span>
+                    </td>
                     <td class="px-4 py-2">
                         <span
                             :class="`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${

@@ -15,6 +15,7 @@ Route::middleware(['auth', 'verified', 'role:client'])->group(function () {
     Route::GET('client/dashboard', [DashboardAdminController::class, 'client'])->name('client.dashboard');
 
     Route::resource('client/racks', RackClientController::class)->names('client.racks');
+    Route::get('/client/racks-monitoring/data', [App\Http\Controllers\RackMonitoringController::class, 'data'])->name('client.racks.monitoring.data');
     Route::resource('client/devices', DeviceClientController::class)->names('client.devices');
     Route::resource('client/services', ServiceClientController::class)->names('client.services');
     Route::resource('client/invoices', InvoiceClientController::class)->names('client.invoices');

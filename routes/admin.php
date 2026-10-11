@@ -11,6 +11,7 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RackController;
+use App\Http\Controllers\RackMonitoringController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\TicketCategoryController;
@@ -51,6 +52,8 @@ Route::middleware(['auth', 'verified', 'role:super-admin'])->group(function () {
     Route::delete('admin/locations/bulk-destroy', [LocationController::class, 'bulkDestroy'])->name('admin.locations.bulk-destroy');
 
     Route::delete('admin/racks/bulk-destroy', [RackController::class, 'bulkDestroy'])->name('admin.racks.bulk-destroy');
+    Route::get('admin/racks/monitoring', [RackMonitoringController::class, 'index'])->name('admin.racks.monitoring');
+    Route::get('admin/racks/monitoring/data', [RackMonitoringController::class, 'data'])->name('admin.racks.monitoring.data');
     Route::resource('admin/racks', RackController::class);
     Route::post('admin/racks/{rack}/owners', [RackController::class, 'assignOwner'])->name('admin.racks.assign-owner');
     Route::delete('admin/racks/{ownerId}/owner', [RackController::class, 'removeOwner'])->name('admin.racks.remove-owner');

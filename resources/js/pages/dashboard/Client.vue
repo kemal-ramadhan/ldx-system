@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import { 
     Chart as ChartJS, 
@@ -14,6 +14,17 @@ import {
     ArcElement
 } from 'chart.js'
 import { Bar, Doughnut, Line } from 'vue-chartjs'
+import {
+    Thermometer,
+    Droplets,
+    Zap,
+    Server,
+    Activity,
+    CheckCircle2,
+    AlertTriangle,
+    ArrowUpRight,
+    RefreshCw
+} from 'lucide-vue-next'
 
 ChartJS.register(
     CategoryScale,
@@ -26,6 +37,56 @@ ChartJS.register(
     BarElement,
     ArcElement
 )
+
+interface TelemetryData {
+    rack?: string
+    slave?: number
+    status?: string
+    terakhir?: string
+    pln?: {
+        ada?: boolean
+        voltage?: number
+        current?: number
+        power?: number
+        volt?: number
+        arus?: number
+        daya?: number
+        status?: string
+        status_arus?: string
+    }
+    ups?: {
+        ada?: boolean
+        voltage?: number
+        current?: number
+        power?: number
+        volt?: number
+        arus?: number
+        daya?: number
+        status?: string
+        status_arus?: string
+    }
+    suhu?: {
+        ada?: boolean
+        temp?: number
+        hum?: number
+        status?: string
+        status_hum?: string
+    }
+}
+
+interface ClientRackItem {
+    id: number
+    name: string
+    code: string
+    api_suhu?: string | null
+    rented_units: number
+    rental_start_date?: string | null
+    rental_end_date?: string | null
+    status: string
+    room_name?: string | null
+    location_name?: string | null
+    telemetry?: TelemetryData | null
+}
 
 const props = defineProps<{
     title: string
@@ -67,6 +128,15 @@ const props = defineProps<{
             invoices: Array<any>
         }
     }
+    clientRacks?: Array<ClientRackItem>
+    temperatureHistory?: Array<{
+        log_date: string
+        avg_temp: number
+        max_temp: number
+        min_temp: number
+        avg_hum: number
+    }>
+    telemetryLogs?: Array<any>
 }>()
 
 defineOptions({
@@ -76,6 +146,249 @@ defineOptions({
         ],
     },
 })
+
+// Selected rack tab for multi-rack clients
+const selectedRackIndex = ref(0)
+const activeChartTab = ref<'timeline' | 'history_7days' | 'multi_rack'>('timeline')
+
+const clientRacksList = computed(() => props.clientRacks || [])
+const activeRack = computed(() => {
+    if (!clientRacksList.value.length) return null
+    return clientRacksList.value[selectedRackIndex.value] || clientRacksList.value[0]
+})
+
+// Format date helper for labels
+const formatPointDate = (dateStr: string) => {
+    try {
+        const d = new Date(dateStr)
+        const day = d.getDate().toString().padStart(2, '0')
+        const month = (d.getMonth() + 1).toString().padStart(2, '0')
+        const hour = d.getHours().toString().padStart(2, '0')
+        const min = d.getMinutes().toString().padStart(2, '0')
+        return `${day}/${month} ${hour}:${min}`
+    } catch {
+        return dateStr
+    }
+}
+
+// Timeline Chart Data for the active selected rack (combines telemetryLogs & current realtime snapshot)
+const activeRackTimelineChartData = computed(() => {
+    const rack = activeRack.value
+    if (!rack) {
+        return { labels: ['Belum Ada Data'], datasets: [] }
+    }
+
+    // Filter logs for this specific rack or its api_suhu
+    const logs = (props.telemetryLogs || []).filter((l: any) => {
+        return (rack.id && l.rack_id === rack.id) || (rack.api_suhu && l.api_rack_name === rack.api_suhu)
+    })
+
+    const points: Array<{ time: string, temp: number | null, hum: number | null }> = []
+
+    logs.forEach((l: any) => {
+        points.push({
+            time: formatPointDate(l.recorded_at),
+            temp: l.temp !== null && l.temp !== undefined ? Number(l.temp) : null,
+            hum: l.hum !== null && l.hum !== undefined ? Number(l.hum) : null,
+        })
+    })
+
+    // If current realtime telemetry exists, append as latest point if not already present
+    if (rack.telemetry?.suhu?.ada && typeof rack.telemetry.suhu.temp === 'number') {
+        const lastLabel = rack.telemetry.terakhir
+            ? formatPointDate(rack.telemetry.terakhir)
+            : 'Saat Ini'
+        if (!points.length || points[points.length - 1].time !== lastLabel) {
+            points.push({
+                time: lastLabel,
+                temp: rack.telemetry.suhu.temp,
+                hum: rack.telemetry.suhu.hum ?? null,
+            })
+        }
+    }
+
+    if (points.length === 0) {
+        return {
+            labels: ['Belum Ada Log'],
+            datasets: [
+                {
+                    label: 'Suhu (°C)',
+                    data: [rack.telemetry?.suhu?.temp ?? 0],
+                    borderColor: '#f97316',
+                    backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                }
+            ]
+        }
+    }
+
+    return {
+        labels: points.map(p => p.time),
+        datasets: [
+            {
+                label: `Suhu ${rack.code || rack.name} (°C)`,
+                data: points.map(p => p.temp),
+                borderColor: '#f97316',
+                backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                tension: 0.35,
+                fill: true,
+                pointRadius: points.length > 20 ? 2 : 4,
+                pointBackgroundColor: '#ea580c',
+                yAxisID: 'yTemp',
+            },
+            {
+                label: `Kelembapan (%)`,
+                data: points.map(p => p.hum),
+                borderColor: '#0284c7',
+                backgroundColor: 'rgba(2, 132, 199, 0.08)',
+                tension: 0.35,
+                fill: false,
+                pointRadius: points.length > 20 ? 2 : 4,
+                pointBackgroundColor: '#0369a1',
+                yAxisID: 'yHum',
+            }
+        ]
+    }
+})
+
+// 7-day temperature history line chart for client's rented racks (Daily Aggregation)
+const history7DaysChartData = computed(() => {
+    const history = props.temperatureHistory || []
+    const labels = history.map(h => {
+        const parts = h.log_date.split('-')
+        return `${parts[2]}/${parts[1]}`
+    })
+
+    return {
+        labels: labels.length ? labels : ['Hari Ini'],
+        datasets: [
+            {
+                label: 'Suhu Rata-rata (°C)',
+                data: history.map(h => Number(h.avg_temp)),
+                borderColor: '#ea580c',
+                backgroundColor: 'rgba(234, 88, 12, 0.1)',
+                tension: 0.35,
+                fill: true,
+                pointRadius: 4,
+                pointBackgroundColor: '#c2410c',
+                yAxisID: 'yTemp',
+            },
+            {
+                label: 'Suhu Maksimum (°C)',
+                data: history.map(h => Number(h.max_temp)),
+                borderColor: '#ef4444',
+                backgroundColor: 'transparent',
+                borderDash: [5, 5],
+                tension: 0.35,
+                pointRadius: 3,
+                pointBackgroundColor: '#b91c1c',
+                yAxisID: 'yTemp',
+            },
+            {
+                label: 'Kelembapan Rata-rata (%)',
+                data: history.map(h => Number(h.avg_hum)),
+                borderColor: '#0284c7',
+                backgroundColor: 'rgba(2, 132, 199, 0.08)',
+                tension: 0.35,
+                fill: false,
+                pointRadius: 4,
+                pointBackgroundColor: '#0369a1',
+                yAxisID: 'yHum',
+            }
+        ]
+    }
+})
+
+const history7DaysChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: {
+            position: 'top' as const,
+            labels: {
+                boxWidth: 12,
+                font: { size: 11 }
+            }
+        },
+        tooltip: {
+            mode: 'index' as const,
+            intersect: false,
+        }
+    },
+    scales: {
+        yTemp: {
+            type: 'linear' as const,
+            position: 'left' as const,
+            title: { display: true, text: 'Suhu (°C)', font: { size: 10 } },
+            suggestedMin: 15,
+            suggestedMax: 30,
+            grid: { color: 'rgba(156, 163, 175, 0.12)' },
+            ticks: { font: { size: 10 } }
+        },
+        yHum: {
+            type: 'linear' as const,
+            position: 'right' as const,
+            title: { display: true, text: 'Kelembapan (%)', font: { size: 10 } },
+            suggestedMin: 30,
+            suggestedMax: 80,
+            grid: { display: false },
+            ticks: { font: { size: 10 } }
+        },
+        x: {
+            grid: { display: false },
+            ticks: { font: { size: 10 } }
+        }
+    }
+}
+
+// Per-rack bar chart comparison if client rents multiple racks
+const multiRackBarChartData = computed(() => {
+    const racks = clientRacksList.value
+    return {
+        labels: racks.map(r => r.code || r.name),
+        datasets: [
+            {
+                label: 'Suhu Saat Ini (°C)',
+                data: racks.map(r => r.telemetry?.suhu?.temp ?? null),
+                backgroundColor: racks.map(r => {
+                    const temp = r.telemetry?.suhu?.temp ?? 0
+                    if (temp > 24) return 'rgba(245, 158, 11, 0.85)'
+                    if (temp <= 0) return 'rgba(156, 163, 175, 0.5)'
+                    return 'rgba(16, 185, 129, 0.85)'
+                }),
+                borderRadius: 6,
+            },
+            {
+                label: 'Kelembapan (%)',
+                data: racks.map(r => r.telemetry?.suhu?.hum ?? null),
+                backgroundColor: 'rgba(2, 132, 199, 0.6)',
+                borderRadius: 6,
+            }
+        ]
+    }
+})
+
+const multiRackBarChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: {
+            position: 'top' as const,
+            labels: { boxWidth: 12, font: { size: 11 } }
+        }
+    },
+    scales: {
+        y: {
+            beginAtZero: true,
+            suggestedMax: 100,
+            grid: { color: 'rgba(156, 163, 175, 0.12)' },
+            ticks: { font: { size: 10 } }
+        },
+        x: {
+            grid: { display: false },
+            ticks: { font: { size: 10 } }
+        }
+    }
+}
 
 // Chart configurations
 const deviceTypeChartData = computed(() => {
@@ -401,6 +714,284 @@ const getStatusColor = (status: string) => {
                     </span>
                 </div>
             </Link>
+        </div>
+
+        <!-- Rented Racks Telemetry & Monitoring Section (Suhu & Power) -->
+        <div v-if="clientRacksList.length > 0" class="rounded-[32px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 space-y-6 shadow-sm">
+            <!-- Header with Rack Selector & Status -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4 dark:border-slate-700/60">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            Monitoring Suhu & Power Rack Sewa
+                        </h2>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Telemetri sensor dan riwayat performa khusus unit rack yang Anda sewa
+                    </p>
+                </div>
+
+                <!-- Multi-rack Selector Tabs (if client rents > 1 rack) -->
+                <div v-if="clientRacksList.length > 1" class="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-900 text-xs">
+                    <button
+                        v-for="(r, idx) in clientRacksList"
+                        :key="r.id"
+                        type="button"
+                        @click="selectedRackIndex = idx"
+                        :class="[
+                            'px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1.5',
+                            selectedRackIndex === idx
+                                ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        ]"
+                    >
+                        <Server class="h-3.5 w-3.5" />
+                        <span>{{ r.code || r.name }}</span>
+                        <span
+                            v-if="r.telemetry?.suhu?.temp"
+                            :class="[
+                                'text-[10px] px-1.5 py-0.2 rounded-full font-bold',
+                                (r.telemetry.suhu.temp > 24) ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                            ]"
+                        >
+                            {{ r.telemetry.suhu.temp }}°C
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Active Rack Summary & Telemetry Cards -->
+            <div v-if="activeRack" class="space-y-4">
+                <!-- Rack Info Banner -->
+                <div class="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 text-xs">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 font-bold text-sm">
+                            {{ activeRack.code?.slice(-3) || activeRack.name?.slice(0, 3) || 'RCK' }}
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="font-bold text-slate-900 dark:text-white text-sm">
+                                    {{ activeRack.name }} ({{ activeRack.code }})
+                                </h3>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                                    Sewa: {{ activeRack.rented_units }} Unit
+                                </span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                Lokasi: {{ activeRack.location_name || '-' }} • Ruang: {{ activeRack.room_name || '-' }}
+                                <span v-if="activeRack.api_suhu" class="ml-1 text-slate-400">
+                                    (Sensor: {{ activeRack.api_suhu }})
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <div class="text-right">
+                            <span class="text-[11px] text-slate-400 block">Status Sensor</span>
+                            <span
+                                v-if="activeRack.telemetry?.status === 'normal' || (!activeRack.telemetry?.status && activeRack.api_suhu)"
+                                class="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400 text-xs"
+                            >
+                                <CheckCircle2 class="h-3.5 w-3.5" /> Online
+                            </span>
+                            <span
+                                v-else-if="activeRack.telemetry?.status === 'warning'"
+                                class="inline-flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400 text-xs"
+                            >
+                                <AlertTriangle class="h-3.5 w-3.5" /> Warning
+                            </span>
+                            <span
+                                v-else
+                                class="inline-flex items-center gap-1 font-semibold text-slate-400 text-xs"
+                            >
+                                {{ activeRack.api_suhu ? 'Standby' : 'Sensor Belum Dipetakan' }}
+                            </span>
+                        </div>
+
+                        <Link
+                            :href="`/client/racks/${activeRack.id}`"
+                            class="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-blue-600 text-white font-medium text-xs hover:bg-blue-700 transition-colors shadow-sm"
+                        >
+                            <span>Detail Rack</span>
+                            <ArrowUpRight class="h-3.5 w-3.5" />
+                        </Link>
+                    </div>
+                </div>
+
+                <!-- 4 KPI Telemetry Cards: Temp, Hum, PLN, UPS -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+                    <!-- Suhu Realtime -->
+                    <div class="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800/60 dark:bg-slate-900/40">
+                        <div class="flex items-center justify-between text-slate-500 text-xs">
+                            <span class="font-medium">Suhu Udara</span>
+                            <Thermometer class="h-4 w-4 text-orange-500" />
+                        </div>
+                        <div class="mt-2 flex items-baseline gap-1">
+                            <span
+                                :class="[
+                                    'text-2xl font-bold',
+                                    (activeRack.telemetry?.suhu?.temp ?? 0) > 24
+                                        ? 'text-amber-600 dark:text-amber-400'
+                                        : 'text-slate-900 dark:text-white'
+                                ]"
+                            >
+                                {{ activeRack.telemetry?.suhu?.temp ?? '--' }}
+                            </span>
+                            <span class="text-xs text-slate-400">°C</span>
+                        </div>
+                        <div class="mt-1 flex items-center justify-between text-[11px]">
+                            <span class="text-slate-400">Ambang: 18 - 24°C</span>
+                            <span
+                                :class="[
+                                    'font-medium text-[10px] px-1.5 py-0.5 rounded',
+                                    (activeRack.telemetry?.suhu?.temp ?? 0) > 24
+                                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                                        : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                                ]"
+                            >
+                                {{ (activeRack.telemetry?.suhu?.temp ?? 0) > 24 ? 'Hangat' : 'Optimal' }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Kelembapan Realtime -->
+                    <div class="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800/60 dark:bg-slate-900/40">
+                        <div class="flex items-center justify-between text-slate-500 text-xs">
+                            <span class="font-medium">Kelembapan</span>
+                            <Droplets class="h-4 w-4 text-cyan-500" />
+                        </div>
+                        <div class="mt-2 flex items-baseline gap-1">
+                            <span class="text-2xl font-bold text-slate-900 dark:text-white">
+                                {{ activeRack.telemetry?.suhu?.hum ?? '--' }}
+                            </span>
+                            <span class="text-xs text-slate-400">%</span>
+                        </div>
+                        <div class="mt-1 flex items-center justify-between text-[11px]">
+                            <span class="text-slate-400">Ambang: 40 - 70%</span>
+                            <span class="font-medium text-[10px] px-1.5 py-0.5 rounded bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300">
+                                Normal
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Daya PLN Realtime -->
+                    <div class="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800/60 dark:bg-slate-900/40">
+                        <div class="flex items-center justify-between text-slate-500 text-xs">
+                            <span class="font-medium">Listrik PLN</span>
+                            <Zap class="h-4 w-4 text-amber-500" />
+                        </div>
+                        <div class="mt-2 flex items-baseline gap-1">
+                            <span class="text-2xl font-bold text-slate-900 dark:text-white">
+                                {{ activeRack.telemetry?.pln?.voltage ?? activeRack.telemetry?.pln?.volt ?? '--' }}
+                            </span>
+                            <span class="text-xs text-slate-400">V</span>
+                        </div>
+                        <div class="mt-1 flex items-center justify-between text-[11px] text-slate-400">
+                            <span>Arus: {{ activeRack.telemetry?.pln?.current ?? activeRack.telemetry?.pln?.arus ?? 0 }} A</span>
+                            <span class="font-semibold text-slate-600 dark:text-slate-300">
+                                {{ activeRack.telemetry?.pln?.power ?? activeRack.telemetry?.pln?.daya ?? 0 }} W
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Daya UPS Realtime -->
+                    <div class="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800/60 dark:bg-slate-900/40">
+                        <div class="flex items-center justify-between text-slate-500 text-xs">
+                            <span class="font-medium">Backup UPS</span>
+                            <Activity class="h-4 w-4 text-emerald-500" />
+                        </div>
+                        <div class="mt-2 flex items-baseline gap-1">
+                            <span class="text-2xl font-bold text-slate-900 dark:text-white">
+                                {{ activeRack.telemetry?.ups?.voltage ?? activeRack.telemetry?.ups?.volt ?? '--' }}
+                            </span>
+                            <span class="text-xs text-slate-400">V</span>
+                        </div>
+                        <div class="mt-1 flex items-center justify-between text-[11px] text-slate-400">
+                            <span>Arus: {{ activeRack.telemetry?.ups?.current ?? activeRack.telemetry?.ups?.arus ?? 0 }} A</span>
+                            <span class="font-semibold text-slate-600 dark:text-slate-300">
+                                {{ activeRack.telemetry?.ups?.power ?? activeRack.telemetry?.ups?.daya ?? 0 }} W
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grafik Section: Timeline, 7 Hari Terakhir & Per-Rack Comparison -->
+                <div class="rounded-2xl border border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/30">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                        <div>
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                <span v-if="activeChartTab === 'timeline'">Grafik Suhu & Kelembapan Rack {{ activeRack.code || activeRack.name }}</span>
+                                <span v-else-if="activeChartTab === 'history_7days'">Riwayat Tren Harian (7 Hari Terakhir)</span>
+                                <span v-else>Perbandingan Suhu Antar Rack Anda</span>
+                            </h3>
+                            <p class="text-[11px] text-slate-400">
+                                <span v-if="activeChartTab === 'timeline'">Riwayat pencatatan sensor dan telemetri realtime pada unit rack ini</span>
+                                <span v-else-if="activeChartTab === 'history_7days'">Tren harian rata-rata, suhu maksimum, dan kelembapan unit rack Anda</span>
+                                <span v-else>Perbandingan suhu dan kelembapan realtime seluruh rack yang Anda sewa</span>
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-1 rounded-xl bg-white p-1 border border-slate-200 dark:border-slate-800 dark:bg-slate-900 text-xs shadow-sm">
+                            <button
+                                type="button"
+                                @click="activeChartTab = 'timeline'"
+                                :class="[
+                                    'px-2.5 py-1 rounded-lg text-xs font-medium transition-colors',
+                                    activeChartTab === 'timeline'
+                                        ? 'bg-blue-600 text-white shadow-sm'
+                                        : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                                ]"
+                            >
+                                Timeline Log
+                            </button>
+                            <button
+                                type="button"
+                                @click="activeChartTab = 'history_7days'"
+                                :class="[
+                                    'px-2.5 py-1 rounded-lg text-xs font-medium transition-colors',
+                                    activeChartTab === 'history_7days'
+                                        ? 'bg-blue-600 text-white shadow-sm'
+                                        : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                                ]"
+                            >
+                                Tren 7 Hari
+                            </button>
+                            <button
+                                v-if="clientRacksList.length > 1"
+                                type="button"
+                                @click="activeChartTab = 'multi_rack'"
+                                :class="[
+                                    'px-2.5 py-1 rounded-lg text-xs font-medium transition-colors',
+                                    activeChartTab === 'multi_rack'
+                                        ? 'bg-blue-600 text-white shadow-sm'
+                                        : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                                ]"
+                            >
+                                Perbandingan Rack
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="h-60 w-full">
+                        <Line
+                            v-if="activeChartTab === 'timeline'"
+                            :data="activeRackTimelineChartData"
+                            :options="history7DaysChartOptions"
+                        />
+                        <Line
+                            v-else-if="activeChartTab === 'history_7days'"
+                            :data="history7DaysChartData"
+                            :options="history7DaysChartOptions"
+                        />
+                        <Bar
+                            v-else-if="clientRacksList.length > 1"
+                            :data="multiRackBarChartData"
+                            :options="multiRackBarChartOptions"
+                        />
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Charts Section -->

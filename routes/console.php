@@ -17,9 +17,7 @@ Schedule::command(
     'invoices:reminders'
 )->dailyAt('17:52');
 
-Service::where('status', 'active')
-    ->whereDate(
-        'next_due_date',
-        '<=',
-        now()
-    );
+// Fetch telemetry every 2 minutes and prune records older than 7 days
+Schedule::command('telemetry:fetch')
+    ->everyTwoMinutes()
+    ->withoutOverlapping();

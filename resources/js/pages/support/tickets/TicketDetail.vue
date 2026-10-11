@@ -52,10 +52,12 @@ const props = defineProps<{
         };
         client: {
             id: number;
-            name: string;
-            email: string;
+            name?: string;
+            email?: string;
             avatar?: string;
-        };
+            company_name?: string;
+            company_email?: string;
+        } | null;
         assigned_technician?: {
             id: number;
             name: string;

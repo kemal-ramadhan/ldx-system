@@ -52,6 +52,8 @@ const props = defineProps<{
             name: string;
             email: string;
             avatar?: string;
+            company_name?: string;
+            company_email?: string;
         };
         assigned_technician?: {
             id: number;

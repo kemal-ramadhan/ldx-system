@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'ldx_monitoring' => [
+        'url' => env('LDX_MONITORING_API_URL', 'https://ldx.theinvention.net/api/data.php'),
+        'key' => env('LDX_MONITORING_API_KEY', 'ldx-b71909cbfdc6462a8d5041b4191c3154'),
+    ],
+
 ];

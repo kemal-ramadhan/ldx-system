@@ -18,6 +18,7 @@ class Rack extends Model
         'weight_capacity',
         'description',
         'status',
+        'api_suhu',
     ];
 
     public function room()
@@ -33,5 +34,10 @@ class Rack extends Model
     public function rackDivices()
     {
         return $this->hasMany(RackDivice::class, 'rack_id');
+    }
+
+    public function telemetryLogs()
+    {
+        return $this->hasMany(RackTelemetryLog::class, 'rack_id');
     }
 }

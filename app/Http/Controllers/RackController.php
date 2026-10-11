@@ -9,8 +9,11 @@ use App\Models\RackDivice;
 use App\Models\RackUnit;
 use App\Models\Room;
 use App\Models\DevicePort;
+use App\Models\RackTelemetryLog;
+use App\Http\Controllers\RackMonitoringController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -86,6 +89,7 @@ class RackController extends Controller
             'weight_capacity' => ['required', 'integer', 'min:0'],
             'description' => ['nullable', 'string'],
             'status' => ['required', 'in:active,inactive,maintenance,full'],
+            'api_suhu' => ['nullable', 'string', 'max:100'],
         ]);
 
         DB::beginTransaction();
@@ -104,6 +108,7 @@ class RackController extends Controller
                 'weight_capacity' => $validated['weight_capacity'],
                 'description' => $validated['description'] ?? null,
                 'status' => $validated['status'],
+                'api_suhu' => $validated['api_suhu'] ?? null,
             ]);
 
             /**
@@ -613,12 +618,32 @@ class RackController extends Controller
         ->latest()
         ->get();
 
+        $monitoringData = null;
+        $telemetryLogs = [];
+        if (!empty($rack->api_suhu)) {
+            $monitoringData = Cache::remember('rack_monitoring_' . $rack->api_suhu, 60, function () use ($rack) {
+                return RackMonitoringController::fetchMonitoringData($rack->api_suhu);
+            });
+
+            // Ambil histori log tersimpan (maksimal 7 hari ke belakang, urut terlama ke terbaru untuk grafik)
+            $telemetryLogs = RackTelemetryLog::where(function ($q) use ($rack) {
+                $q->where('rack_id', $rack->id)
+                  ->orWhere('api_rack_name', $rack->api_suhu);
+            })
+            ->where('recorded_at', '>=', now()->subDays(7))
+            ->orderBy('recorded_at', 'asc')
+            ->limit(100)
+            ->get();
+        }
+
         return Inertia::render('racks/RackShow', [
             'title' => 'Rack Details',
             'rack' => $rack,
             'clients' => $clients,
             'invoices' => $invoices,
-            'interconnections' => $interconnections
+            'interconnections' => $interconnections,
+            'monitoringData' => $monitoringData,
+            'telemetryLogs' => $telemetryLogs,
         ]);
     }
 
@@ -653,6 +678,7 @@ class RackController extends Controller
             'weight_capacity' => ['required', 'integer', 'min:0'],
             'description' => ['nullable', 'string'],
             'status' => ['required', 'in:active,inactive,maintenance,full'],
+            'api_suhu' => ['nullable', 'string', 'max:100'],
         ]);
 
         DB::beginTransaction();
@@ -716,6 +742,7 @@ class RackController extends Controller
                 'weight_capacity' => $validated['weight_capacity'],
                 'description' => $validated['description'] ?? null,
                 'status' => $validated['status'],
+                'api_suhu' => $validated['api_suhu'] ?? null,
             ]);
 
             /**

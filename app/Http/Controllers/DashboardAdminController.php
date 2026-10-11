@@ -8,11 +8,14 @@ use App\Models\Invoice;
 use App\Models\RackDivice;
 use App\Models\Service;
 use App\Models\Ticket;
+use App\Models\RackTelemetryLog;
 use Carbon\Carbon;
 use Inertia\Inertia;
+use App\Http\Controllers\RackMonitoringController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class DashboardAdminController extends Controller
 {
@@ -110,6 +113,34 @@ class DashboardAdminController extends Controller
             ->where('status', '!=', 'closed')
             ->count();
 
+        /**
+         * =========================================
+         * RACK MONITORING TELEMETRY (SUHU & POWER)
+         * =========================================
+         */
+        $monitoringData = Cache::remember('dashboard_rack_monitoring', 30, function () {
+            return RackMonitoringController::fetchMonitoringData();
+        });
+
+        /**
+         * Riwayat Tren Suhu & Kelembapan 7 Hari Terakhir
+         */
+        $temperatureHistory = Cache::remember('dashboard_telemetry_history_7days', 60, function () {
+            return RackTelemetryLog::selectRaw('
+                    DATE(recorded_at) as log_date,
+                    ROUND(AVG(temp), 1) as avg_temp,
+                    ROUND(MAX(temp), 1) as max_temp,
+                    ROUND(MIN(temp), 1) as min_temp,
+                    ROUND(AVG(hum), 1) as avg_hum
+                ')
+                ->where('recorded_at', '>=', now()->subDays(7))
+                ->whereNotNull('temp')
+                ->where('temp', '>', 0)
+                ->groupBy('log_date')
+                ->orderBy('log_date', 'asc')
+                ->get();
+        });
+
         return Inertia::render('dashboard/Admin', [
             'title' => 'Dashboard Admin',
 
@@ -129,6 +160,9 @@ class DashboardAdminController extends Controller
             'activeServices' => $activeServices,
             'totalDevices' => $totalDevices,
             'openTickets' => $openTickets,
+
+            'monitoringData' => $monitoringData,
+            'temperatureHistory' => $temperatureHistory,
         ]);
     }
     public function client()
@@ -292,10 +326,102 @@ class DashboardAdminController extends Controller
             ],
         ];
 
+        /**
+         * =========================================
+         * CLIENT RENTED RACKS & SUHU TELEMETRY
+         * =========================================
+         */
+        $clientRacksData = ClientRack::with([
+            'rack.room.locationDataCenter',
+        ])
+        ->where('client_id', $clientId)
+        ->get();
+
+        // Ambil data monitoring all / per-rack via Cache
+        $allMonitoring = Cache::remember('ldx_rack_monitoring_all', 60, function () {
+            return RackMonitoringController::fetchMonitoringData();
+        });
+
+        $apiRacksMap = collect($allMonitoring['data'] ?? [])->keyBy('rack');
+
+        $rentedRacksWithTelemetry = $clientRacksData->map(function ($clientRack) use ($apiRacksMap) {
+            $rack = $clientRack->rack;
+            if (!$rack) return null;
+
+            $telemetry = null;
+            if (!empty($rack->api_suhu) && isset($apiRacksMap[$rack->api_suhu])) {
+                $telemetry = $apiRacksMap[$rack->api_suhu];
+            } elseif (!empty($rack->api_suhu)) {
+                // Fallback jika tidak ada di all data, coba fetch per-rack
+                $telemetry = Cache::remember('rack_monitoring_' . $rack->api_suhu, 60, function () use ($rack) {
+                    return RackMonitoringController::fetchMonitoringData($rack->api_suhu);
+                });
+            }
+
+            return [
+                'id' => $rack->id,
+                'name' => $rack->name,
+                'code' => $rack->code,
+                'api_suhu' => $rack->api_suhu,
+                'rented_units' => $clientRack->rented_units,
+                'rental_start_date' => $clientRack->rental_start_date,
+                'rental_end_date' => $clientRack->rental_end_date,
+                'status' => $clientRack->status,
+                'room_name' => $rack->room?->name,
+                'location_name' => $rack->room?->locationDataCenter?->name,
+                'telemetry' => $telemetry,
+            ];
+        })->filter()->values();
+
+        // Ambil riwayat telemetri rack-rack yang disewa client (7 hari terakhir)
+        $mappedApiNames = $rentedRacksWithTelemetry->pluck('api_suhu')->filter()->values()->all();
+        $rackIds = $rentedRacksWithTelemetry->pluck('id')->filter()->values()->all();
+
+        $clientTemperatureHistory = [];
+        $clientTelemetryLogs = [];
+
+        if (!empty($mappedApiNames) || !empty($rackIds)) {
+            $clientTemperatureHistory = RackTelemetryLog::where(function ($q) use ($rackIds, $mappedApiNames) {
+                if (!empty($rackIds)) {
+                    $q->whereIn('rack_id', $rackIds);
+                }
+                if (!empty($mappedApiNames)) {
+                    $q->orWhereIn('api_rack_name', $mappedApiNames);
+                }
+            })
+            ->where('recorded_at', '>=', now()->subDays(7))
+            ->select(
+                DB::raw('DATE(recorded_at) as log_date'),
+                DB::raw('ROUND(AVG(temp), 1) as avg_temp'),
+                DB::raw('ROUND(MAX(temp), 1) as max_temp'),
+                DB::raw('ROUND(MIN(temp), 1) as min_temp'),
+                DB::raw('ROUND(AVG(hum), 1) as avg_hum')
+            )
+            ->groupBy('log_date')
+            ->orderBy('log_date', 'asc')
+            ->get();
+
+            $clientTelemetryLogs = RackTelemetryLog::where(function ($q) use ($rackIds, $mappedApiNames) {
+                if (!empty($rackIds)) {
+                    $q->whereIn('rack_id', $rackIds);
+                }
+                if (!empty($mappedApiNames)) {
+                    $q->orWhereIn('api_rack_name', $mappedApiNames);
+                }
+            })
+            ->where('recorded_at', '>=', now()->subDays(7))
+            ->orderBy('recorded_at', 'asc')
+            ->limit(100)
+            ->get();
+        }
+
         return Inertia::render('dashboard/Client', [
             'title' => 'Dashboard Client',
             'user' => Auth::user(),
             'stats' => $stats,
+            'clientRacks' => $rentedRacksWithTelemetry,
+            'temperatureHistory' => $clientTemperatureHistory,
+            'telemetryLogs' => $clientTelemetryLogs,
         ]);
     }
     public function marketing()

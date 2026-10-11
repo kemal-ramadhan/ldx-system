@@ -55,6 +55,10 @@ export const navigation = {
                     title: 'Racks',
                     href: '/admin/racks',
                 },
+                {
+                    title: 'Suhu Monitoring',
+                    href: '/admin/racks/monitoring',
+                },
             ],
         },
         {
