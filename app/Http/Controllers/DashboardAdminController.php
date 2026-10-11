@@ -46,12 +46,12 @@ class DashboardAdminController extends Controller
             return (float) ($rawRevenue[$month] ?? 0);
         });
 
-        $monthlyRevenue = Invoice::where('status', 'paid')
+        $monthlyRevenue = (float) Invoice::where('status', 'paid')
             ->whereMonth('paid_at', $now->month)
             ->whereYear('paid_at', $now->year)
             ->sum('total');
 
-        $yearlyRevenue = Invoice::where('status', 'paid')
+        $yearlyRevenue = (float) Invoice::where('status', 'paid')
             ->whereYear('paid_at', $now->year)
             ->sum('total');
 
@@ -123,10 +123,14 @@ class DashboardAdminController extends Controller
         });
 
         /**
-         * Riwayat Tren Suhu & Kelembapan 7 Hari Terakhir
+         * Riwayat Tren Suhu & Kelembapan 7 Hari Terakhir (Lengkap 7 Slot Tanggal)
          */
         $temperatureHistory = Cache::remember('dashboard_telemetry_history_7days', 60, function () {
-            return RackTelemetryLog::selectRaw('
+            $last7Days = collect(range(6, 0))->map(function ($daysAgo) {
+                return now()->subDays($daysAgo)->format('Y-m-d');
+            });
+
+            $logsByDate = RackTelemetryLog::selectRaw('
                     DATE(recorded_at) as log_date,
                     ROUND(AVG(temp), 1) as avg_temp,
                     ROUND(MAX(temp), 1) as max_temp,
@@ -137,8 +141,60 @@ class DashboardAdminController extends Controller
                 ->whereNotNull('temp')
                 ->where('temp', '>', 0)
                 ->groupBy('log_date')
-                ->orderBy('log_date', 'asc')
-                ->get();
+                ->get()
+                ->keyBy('log_date');
+
+            return $last7Days->map(function ($date) use ($logsByDate) {
+                if (isset($logsByDate[$date])) {
+                    $item = $logsByDate[$date];
+                    return [
+                        'log_date' => $date,
+                        'avg_temp' => (float) $item->avg_temp,
+                        'max_temp' => (float) $item->max_temp,
+                        'min_temp' => (float) $item->min_temp,
+                        'avg_hum' => (float) $item->avg_hum,
+                    ];
+                }
+
+                return [
+                    'log_date' => $date,
+                    'avg_temp' => null,
+                    'max_temp' => null,
+                    'min_temp' => null,
+                    'avg_hum' => null,
+                ];
+            })->values()->all();
+        });
+
+        /**
+         * Timeline Log Telemetri (Urut waktu berkala seperti di Rack Detail & Client)
+         */
+        $telemetryLogs = Cache::remember('dashboard_telemetry_logs_recent', 30, function () {
+            return RackTelemetryLog::selectRaw('
+                    DATE_FORMAT(recorded_at, "%d/%m %H:%i") as time_label,
+                    ROUND(AVG(temp), 1) as avg_temp,
+                    ROUND(MAX(temp), 1) as max_temp,
+                    ROUND(AVG(hum), 1) as avg_hum,
+                    MAX(recorded_at) as recorded_at
+                ')
+                ->where('recorded_at', '>=', now()->subDays(7))
+                ->whereNotNull('temp')
+                ->where('temp', '>', 0)
+                ->groupBy('time_label')
+                ->orderBy('recorded_at', 'asc')
+                ->limit(100)
+                ->get()
+                ->map(function ($log) {
+                    return [
+                        'time' => $log->time_label,
+                        'temp' => (float) $log->avg_temp,
+                        'max_temp' => (float) $log->max_temp,
+                        'hum' => (float) $log->avg_hum,
+                        'recorded_at' => $log->recorded_at,
+                    ];
+                })
+                ->values()
+                ->all();
         });
 
         return Inertia::render('dashboard/Admin', [
@@ -163,6 +219,7 @@ class DashboardAdminController extends Controller
 
             'monitoringData' => $monitoringData,
             'temperatureHistory' => $temperatureHistory,
+            'telemetryLogs' => $telemetryLogs,
         ]);
     }
     public function client()

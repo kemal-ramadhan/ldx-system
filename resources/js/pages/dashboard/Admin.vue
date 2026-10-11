@@ -30,6 +30,7 @@ import {
     BarElement,
     PointElement,
     LineElement,
+    Filler,
 } from 'chart.js'
 
 import { Bar, Pie, Line } from 'vue-chartjs'
@@ -42,7 +43,8 @@ ChartJS.register(
     LinearScale,
     BarElement,
     PointElement,
-    LineElement
+    LineElement,
+    Filler
 )
 
 interface RackMonitoringData {
@@ -101,6 +103,13 @@ const props = defineProps<{
         max_temp: number
         min_temp: number
         avg_hum: number
+    }>
+    telemetryLogs?: Array<{
+        time: string
+        temp: number
+        max_temp: number
+        hum: number
+        recorded_at: string
     }>
 }>()
 
@@ -185,49 +194,119 @@ const hottestRacks = computed(() => {
 })
 
 /**
- * 7 Days Daily History Line Chart (From rack_telemetry_logs)
+ * 7 Days Daily History / Timeline Line Chart (From rack_telemetry_logs)
  */
 const history7DaysChartData = computed(() => {
-    const history = props.temperatureHistory || []
+    // 1. Jika ada telemetryLogs (waktu berkala seperti di detail rack), gunakan agar terbentuk garis tren kontinu
+    const logs = props.telemetryLogs || []
+    if (logs.length > 1) {
+        return {
+            labels: logs.map(l => l.time),
+            datasets: [
+                {
+                    label: 'Suhu Rata-rata (°C)',
+                    data: logs.map(l => l.temp !== null && l.temp !== undefined ? Number(l.temp) : null),
+                    borderColor: '#ea580c', // orange
+                    backgroundColor: 'rgba(234, 88, 12, 0.1)',
+                    tension: 0.35,
+                    fill: true,
+                    pointRadius: logs.length > 25 ? 2 : 4,
+                    pointBackgroundColor: '#c2410c',
+                    spanGaps: true,
+                    yAxisID: 'yTemp',
+                },
+                {
+                    label: 'Suhu Maksimum (°C)',
+                    data: logs.map(l => l.max_temp !== null && l.max_temp !== undefined ? Number(l.max_temp) : null),
+                    borderColor: '#ef4444', // red
+                    backgroundColor: 'transparent',
+                    borderDash: [5, 5],
+                    tension: 0.35,
+                    pointRadius: logs.length > 25 ? 2 : 3,
+                    pointBackgroundColor: '#b91c1c',
+                    spanGaps: true,
+                    yAxisID: 'yTemp',
+                },
+                {
+                    label: 'Kelembapan Rata-rata (%)',
+                    data: logs.map(l => l.hum !== null && l.hum !== undefined ? Number(l.hum) : null),
+                    borderColor: '#0284c7', // sky
+                    backgroundColor: 'rgba(2, 132, 199, 0.08)',
+                    tension: 0.35,
+                    fill: false,
+                    pointRadius: logs.length > 25 ? 2 : 4,
+                    pointBackgroundColor: '#0369a1',
+                    spanGaps: true,
+                    yAxisID: 'yHum',
+                }
+            ]
+        }
+    }
+
+    // 2. Fallback ke agregasi harian 7 hari
+    const raw = props.temperatureHistory
+    const history = Array.isArray(raw) ? raw : (raw && typeof raw === 'object' ? Object.values(raw) : [])
+    
+    if (!history.length) {
+        return {
+            labels: ['Hari Ini'],
+            datasets: [
+                {
+                    label: 'Suhu Rata-rata (°C)',
+                    data: [null],
+                    borderColor: '#ea580c',
+                    backgroundColor: 'rgba(234, 88, 12, 0.1)',
+                }
+            ]
+        }
+    }
+
     const labels = history.map(h => {
+        if (!h.log_date) return ''
         const parts = h.log_date.split('-')
-        return `${parts[2]}/${parts[1]}` // format DD/MM
+        return parts.length >= 3 ? `${parts[2]}/${parts[1]}` : h.log_date // format DD/MM
     })
 
     return {
-        labels: labels.length ? labels : ['Hari Ini'],
+        labels,
         datasets: [
             {
                 label: 'Suhu Rata-rata (°C)',
-                data: history.map(h => h.avg_temp),
+                data: history.map(h => h.avg_temp !== null && h.avg_temp !== undefined ? Number(h.avg_temp) : null),
                 borderColor: '#ea580c', // orange
                 backgroundColor: 'rgba(234, 88, 12, 0.1)',
                 tension: 0.35,
                 fill: true,
-                pointRadius: 4,
+                pointRadius: 5,
+                pointHoverRadius: 7,
                 pointBackgroundColor: '#c2410c',
+                spanGaps: true,
                 yAxisID: 'yTemp',
             },
             {
                 label: 'Suhu Maksimum (°C)',
-                data: history.map(h => h.max_temp),
+                data: history.map(h => h.max_temp !== null && h.max_temp !== undefined ? Number(h.max_temp) : null),
                 borderColor: '#ef4444', // red
                 backgroundColor: 'transparent',
                 borderDash: [5, 5],
                 tension: 0.35,
-                pointRadius: 3,
+                pointRadius: 5,
+                pointHoverRadius: 7,
                 pointBackgroundColor: '#b91c1c',
+                spanGaps: true,
                 yAxisID: 'yTemp',
             },
             {
                 label: 'Kelembapan Rata-rata (%)',
-                data: history.map(h => h.avg_hum),
+                data: history.map(h => h.avg_hum !== null && h.avg_hum !== undefined ? Number(h.avg_hum) : null),
                 borderColor: '#0284c7', // sky
                 backgroundColor: 'rgba(2, 132, 199, 0.08)',
                 tension: 0.35,
                 fill: false,
-                pointRadius: 4,
+                pointRadius: 5,
+                pointHoverRadius: 7,
                 pointBackgroundColor: '#0369a1',
+                spanGaps: true,
                 yAxisID: 'yHum',
             }
         ]
