@@ -377,10 +377,22 @@
 
                 <!-- CTA Buttons -->
                 <div class="hidden lg:flex items-center gap-3">
-                    <a href="/login"
-                        class="text-slate-300 hover:text-white text-sm font-medium px-4 py-2 rounded-lg border border-white/10 hover:border-white/20 transition-all duration-200">Login</a>
-                    <a href="/register"
-                        class="btn-primary text-white text-sm font-semibold px-5 py-2.5 rounded-lg relative z-10">Register</a>
+                    @auth
+                        <a href="{{ auth()->user()->dashboard_url }}"
+                            class="btn-primary text-white text-sm font-semibold px-5 py-2.5 rounded-lg relative z-10 inline-flex items-center gap-2 shadow-lg shadow-blue-500/20">
+                            <span class="relative z-10 flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                                </svg>
+                                Dashboard
+                            </span>
+                        </a>
+                    @else
+                        <a href="/login"
+                            class="text-slate-300 hover:text-white text-sm font-medium px-4 py-2 rounded-lg border border-white/10 hover:border-white/20 transition-all duration-200">Login</a>
+                        <a href="/register"
+                            class="btn-primary text-white text-sm font-semibold px-5 py-2.5 rounded-lg relative z-10"><span class="relative z-10">Register</span></a>
+                    @endauth
                 </div>
 
                 <!-- Mobile hamburger -->
@@ -402,7 +414,27 @@
                     class="mobile-link text-slate-300 hover:text-white px-4 py-3 rounded-lg hover:bg-white/05 transition-all text-sm font-medium">Infrastruktur</a>
                 <a href="#faq"
                     class="mobile-link text-slate-300 hover:text-white px-4 py-3 rounded-lg hover:bg-white/05 transition-all text-sm font-medium">FAQ</a>
+                <a href="https://api.whatsapp.com/send/?phone=%2B6281181141746&text&type=phone_number&app_absent=0"
+                    class="mobile-link text-slate-300 hover:text-white px-4 py-3 rounded-lg hover:bg-white/05 transition-all text-sm font-medium">Kontak</a>
             </nav>
+            <div class="pt-3 mt-2 border-t border-white/10 flex flex-col gap-2">
+                @auth
+                    <a href="{{ auth()->user()->dashboard_url }}"
+                        class="mobile-link btn-primary text-white text-sm font-semibold px-4 py-2.5 rounded-lg text-center flex items-center justify-center gap-2">
+                        <span class="relative z-10 flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                            </svg>
+                            Dashboard
+                        </span>
+                    </a>
+                @else
+                    <a href="/login"
+                        class="mobile-link text-slate-300 hover:text-white text-sm font-medium px-4 py-2.5 rounded-lg border border-white/10 hover:border-white/20 text-center transition-all duration-200">Login</a>
+                    <a href="/register"
+                        class="mobile-link btn-primary text-white text-sm font-semibold px-4 py-2.5 rounded-lg text-center"><span class="relative z-10">Register</span></a>
+                @endauth
+            </div>
         </div>
     </header>
 
@@ -872,10 +904,6 @@
                             </div>
                             <h3 class="font-display text-lg font-700 text-white">Limited Offer - Colocation 1U</h3>
                         </div>
-                        <div class="mb-6">
-                            <span class="font-display text-4xl font-800 text-white">Rp 1.000.000 </span>
-                            <span class="text-slate-400 text-sm">/bulan</span>
-                        </div>
                         <ul class="space-y-3 mb-7">
                             <li class="flex items-center gap-2.5 text-sm text-slate-200">
                                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
@@ -943,10 +971,6 @@
                                 </svg>
                             </div>
                             <h3 class="font-display text-lg font-700 text-white">Special Offer - Colocation 2U</h3>
-                        </div>
-                        <div class="mb-6">
-                            <span class="font-display text-4xl font-800 text-white">Rp 1.500.000</span>
-                            <span class="text-slate-500 text-sm">/bulan</span>
                         </div>
                         <ul class="space-y-3 mb-7">
                             <li class="flex items-center gap-2.5 text-sm text-slate-200">
@@ -1016,10 +1040,6 @@
                             </div>
                             <h3 class="font-display text-lg font-700 text-white">Good Offer - Colocation Half Rack</h3>
                         </div>
-                        <div class="mb-6">
-                            <span class="font-display text-4xl font-800 text-white">Rp 5.000.000</span>
-                            <span class="text-slate-500 text-sm">/bulan</span>
-                        </div>
                         <ul class="space-y-3 mb-7">
                             <li class="flex items-center gap-2.5 text-sm text-slate-200">
                                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
@@ -1088,10 +1108,6 @@
                             </div>
                             <h3 class="font-display text-lg font-700 text-white">Best Offer - Colocation 1 Rack</h3>
                         </div>
-                        <div class="mb-6">
-                            <span class="font-display text-4xl font-800 text-white">Rp 8.000.000</span>
-                            <span class="text-slate-500 text-sm">/bulan</span>
-                        </div>
                         <ul class="space-y-3 mb-7">
                             <li class="flex items-center gap-2.5 text-sm text-slate-200">
                                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
@@ -1159,10 +1175,6 @@
                                 </svg>
                             </div>
                             <h3 class="font-display text-lg font-700 text-white">Extra Bonus - Colocation Full Rack</h3>
-                        </div>
-                        <div class="mb-6">
-                            <span class="font-display text-4xl font-800 text-white">Rp 8.000.000</span>
-                            <span class="text-slate-500 text-sm">/bulan</span>
                         </div>
                         <ul class="space-y-3 mb-7">
                             <li class="flex items-center gap-2.5 text-sm text-slate-200">
@@ -1647,10 +1659,6 @@
                                 class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-violet-500 text-white text-xs font-700 font-display px-3 py-1.5 rounded-full mb-4">
                                 🔥 Limited Offer
                             </div>
-                            <h2 class="font-display text-3xl lg:text-4xl font-800 text-white mb-3">
-                                Mulai dari <span class="gradient-text">Rp 1.000.000</span><span
-                                    class="text-slate-400 text-xl font-400">/bulan</span>
-                            </h2>
                             <p class="text-slate-400 text-base leading-relaxed mb-6">
                                 Paket Location 1U — harga terjangkau untuk colocation server, rack server murah
                                 berkualitas enterprise di data center Indonesia terpercaya.
@@ -1667,19 +1675,15 @@
                         <div class="grid grid-cols-2 gap-3">
                             <div class="bg-white/04 rounded-xl p-4 border border-white/06">
                                 <p class="text-2xl font-display font-700 text-white">1U</p>
-                                <p class="text-slate-400 text-xs mt-1">Rp 1.000.000K/bulan</p>
                             </div>
                             <div class="bg-white/04 rounded-xl p-4 border border-blue-500/20">
                                 <p class="text-2xl font-display font-700 text-white">Half</p>
-                                <p class="text-slate-400 text-xs mt-1">Rp 5Jt/bulan</p>
                             </div>
                             <div class="bg-white/04 rounded-xl p-4 border border-white/06">
                                 <p class="text-2xl font-display font-700 text-white">Full</p>
-                                <p class="text-slate-400 text-xs mt-1">Rp 7Jt/bulan</p>
                             </div>
                             <div class="bg-white/04 rounded-xl p-4 border border-violet-500/20">
                                 <p class="text-2xl font-display font-700 text-white">Custom</p>
-                                <p class="text-slate-400 text-xs mt-1">Hubungi kami</p>
                             </div>
                         </div>
                     </div>

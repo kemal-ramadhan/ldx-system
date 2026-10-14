@@ -46,4 +46,20 @@ class User extends Authenticatable
     {
         return $this->hasOne(ClientPic::class);
     }
+
+    public function dashboardUrl(): string
+    {
+        return match ($this->role?->slug) {
+            'super-admin' => route('admin.dashboard'),
+            'client' => route('client.dashboard'),
+            'marketing' => route('marketing.dashboard'),
+            'teknisi' => route('teknisi.dashboard'),
+            default => route('home'),
+        };
+    }
+
+    public function getDashboardUrlAttribute(): string
+    {
+        return $this->dashboardUrl();
+    }
 }

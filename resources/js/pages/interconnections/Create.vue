@@ -521,7 +521,7 @@ const submit = () => {
                     </label>
                     <label class="flex items-center gap-2 text-sm font-medium cursor-pointer">
                         <input type="radio" v-model="form.destination_type" value="external" class="h-4 w-4 text-primary" />
-                        External Data Center
+                        MMR DC APJII
                     </label>
                 </div>
 

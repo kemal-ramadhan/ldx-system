@@ -13,20 +13,8 @@ class LoginResponse implements LoginResponseContract
     {
         $user = $request->user();
 
-        if ($user->role->slug === 'super-admin') {
-            return redirect()->route('admin.dashboard');
-        }
-
-        if ($user->role->slug === 'client') {
-            return redirect()->route('client.dashboard');
-        }
-
-        if ($user->role->slug === 'marketing') {
-            return redirect()->route('marketing.dashboard');
-        }
-        
-        if ($user->role->slug === 'teknisi') {
-            return redirect()->route('teknisi.dashboard');
+        if ($user) {
+            return redirect()->to($user->dashboard_url);
         }
 
         return redirect('/');
