@@ -230,7 +230,7 @@ const trendChartData = computed(() => {
     let points = [...historyPoints.value];
 
     const now = new Date().getTime();
-    if (selectedTimeFilter === 'today' || selectedTimeFilter.value === 'today') {
+    if (selectedTimeFilter.value === 'today') {
         const oneDayAgo = now - 24 * 60 * 60 * 1000;
         points = points.filter((p) => !p.rawDate || new Date(p.rawDate).getTime() >= oneDayAgo);
     } else if (selectedTimeFilter.value === '3days') {
@@ -381,7 +381,11 @@ const formatSeconds = (sec: number) => {
     </div>
 
     <!-- MAIN RACK CARD -->
-    <CardRack :rack="rack" />
+    <CardRack
+        :rack="rack"
+        :telemetry="currentData"
+        :is-loading="isLoading"
+    />
 
     <!-- ==================================================================== -->
     <!-- TELEMETRI & SUHU MONITORING (DI BAWAH CARD RACK, TERLIHAT DI SEMUA TAB) -->

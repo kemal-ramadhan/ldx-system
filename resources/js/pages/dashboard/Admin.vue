@@ -82,6 +82,14 @@ interface RackMonitoringData {
     }>
 }
 
+interface TemperatureHistoryItem {
+    log_date: string
+    avg_temp: number
+    max_temp: number
+    min_temp: number
+    avg_hum: number
+}
+
 const props = defineProps<{
     title: string
     year: number
@@ -97,13 +105,7 @@ const props = defineProps<{
     totalDevices: number
     openTickets: number
     monitoringData?: RackMonitoringData
-    temperatureHistory?: Array<{
-        log_date: string
-        avg_temp: number
-        max_temp: number
-        min_temp: number
-        avg_hum: number
-    }>
+    temperatureHistory?: TemperatureHistoryItem[] | Record<string, TemperatureHistoryItem>
     telemetryLogs?: Array<{
         time: string
         temp: number
@@ -245,7 +247,7 @@ const history7DaysChartData = computed(() => {
 
     // 2. Fallback ke agregasi harian 7 hari
     const raw = props.temperatureHistory
-    const history = Array.isArray(raw) ? raw : (raw && typeof raw === 'object' ? Object.values(raw) : [])
+    const history: TemperatureHistoryItem[] = Array.isArray(raw) ? raw : (raw && typeof raw === 'object' ? Object.values(raw) : [])
     
     if (!history.length) {
         return {
