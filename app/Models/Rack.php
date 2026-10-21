@@ -40,4 +40,9 @@ class Rack extends Model
     {
         return $this->hasMany(RackTelemetryLog::class, 'rack_id');
     }
+
+    public function images()
+    {
+        return $this->hasMany(RackImage::class, 'rack_id')->latest();
+    }
 }

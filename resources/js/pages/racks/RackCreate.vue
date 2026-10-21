@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import InputError from '@/components/InputError.vue';
+import ImageUploadPreview from '@/components/vanila/rack-image/ImageUploadPreview.vue';
 import {
     Activity,
     Thermometer,
@@ -37,10 +39,11 @@ const form = useForm({
     description: '',
     status: 'active',
     api_suhu: '',
+    images: [] as File[],
 });
 
 const createRack = () => {
-    form.post(`/admin/racks`);
+    form.post(`/admin/racks`, { forceFormData: true });
 };
 
 // Modal Connect API Suhu State
@@ -121,21 +124,21 @@ defineOptions({
                     <Label for="code">Rack Code <span class="text-red-500">*</span></Label>
                     <Input id="code" v-model="form.code" type="text" required autofocus :tabindex="1"
                         autocomplete="code" name="code" placeholder="Rack code" />
-                    <InputError :message="errors.code" />
+                    <InputError :message="form.errors.code" />
                 </div>
 
                 <div class="grid gap-3 w-full">
                     <Label for="name">Rack Name <span class="text-red-500">*</span></Label>
                     <Input id="name" v-model="form.name" type="text" required :tabindex="2"
                         autocomplete="name" name="name" placeholder="Rack name" />
-                    <InputError :message="errors.name" />
+                    <InputError :message="form.errors.name" />
                 </div>
 
                 <div class="grid gap-3 w-full">
                     <Label for="total_units">Total Units <span class="text-red-500">*</span></Label>
                     <Input id="total_units" v-model="form.total_units" type="number" required :tabindex="2"
                         autocomplete="total_units" name="total_units" placeholder="Total units" />
-                    <InputError :message="errors.total_units" />
+                    <InputError :message="form.errors.total_units" />
                 </div>
 
                 <div class="grid gap-3 w-full">
@@ -143,7 +146,7 @@ defineOptions({
                     <Input id="power_capacity" v-model="form.power_capacity" type="number" required
                         :tabindex="2" autocomplete="power_capacity" name="power_capacity"
                         placeholder="Power capacity" />
-                    <InputError :message="errors.power_capacity" />
+                    <InputError :message="form.errors.power_capacity" />
                 </div>
 
                 <div class="grid gap-3 w-full">
@@ -151,7 +154,7 @@ defineOptions({
                     <Input id="weight_capacity" v-model="form.weight_capacity" type="number" required
                         :tabindex="2" autocomplete="weight_capacity" name="weight_capacity"
                         placeholder="Weight capacity" />
-                    <InputError :message="errors.weight_capacity" />
+                    <InputError :message="form.errors.weight_capacity" />
                 </div>
 
                 <!-- Status Selector -->
@@ -199,7 +202,7 @@ defineOptions({
                         </button>
                     </div>
 
-                    <InputError :message="errors.status" />
+                    <InputError :message="form.errors.status" />
                 </div>
 
                 <!-- API Suhu Connection Section -->
@@ -268,7 +271,14 @@ defineOptions({
                         </div>
                     </div>
 
-                    <InputError :message="errors.api_suhu" />
+                    <InputError :message="form.errors.api_suhu" />
+                </div>
+
+                <!-- Rack Images -->
+                <div class="grid md:col-span-2 gap-3 w-full">
+                    <Label>Gambar Rack</Label>
+                    <ImageUploadPreview v-model="form.images" />
+                    <InputError :message="form.errors.images" />
                 </div>
 
                 <div class="grid md:col-span-2 gap-3 w-full">
@@ -276,7 +286,7 @@ defineOptions({
                     <textarea id="description" v-model="form.description" required :tabindex="3"
                         autocomplete="description" name="description" placeholder="Rack description"
                         class="w-full rounded-md border border-gray-300 bg-white py-2 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none resize-none h-24 dark:bg-transparent dark:text-gray-300 dark:border-gray-700"></textarea>
-                    <InputError :message="errors.description" />
+                    <InputError :message="form.errors.description" />
                 </div>
 
                 <div class="grid md:col-span-2 gap-3 w-full">
@@ -288,7 +298,7 @@ defineOptions({
                             {{ item.location_data_center?.name }} - {{ item.name }}
                         </option>
                     </select>
-                    <InputError :message="errors.room_id" />
+                    <InputError :message="form.errors.room_id" />
                 </div>
             </div>
 

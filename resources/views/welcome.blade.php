@@ -371,7 +371,7 @@
                         class="text-slate-400 hover:text-white text-sm font-medium transition-colors duration-200">Infrastruktur</a>
                     <a href="#faq"
                         class="text-slate-400 hover:text-white text-sm font-medium transition-colors duration-200">FAQ</a>
-                    <a href="https://api.whatsapp.com/send/?phone=%2B6281181141746&text&type=phone_number&app_absent=0"
+                    <a href="https://api.whatsapp.com/send/?phone=%2B6281112012957&text&type=phone_number&app_absent=0"
                         class="text-slate-400 hover:text-white text-sm font-medium transition-colors duration-200">Kontak</a>
                 </nav>
 
@@ -414,7 +414,7 @@
                     class="mobile-link text-slate-300 hover:text-white px-4 py-3 rounded-lg hover:bg-white/05 transition-all text-sm font-medium">Infrastruktur</a>
                 <a href="#faq"
                     class="mobile-link text-slate-300 hover:text-white px-4 py-3 rounded-lg hover:bg-white/05 transition-all text-sm font-medium">FAQ</a>
-                <a href="https://api.whatsapp.com/send/?phone=%2B6281181141746&text&type=phone_number&app_absent=0"
+                <a href="https://api.whatsapp.com/send/?phone=%2B6281112012957&text&type=phone_number&app_absent=0"
                     class="mobile-link text-slate-300 hover:text-white px-4 py-3 rounded-lg hover:bg-white/05 transition-all text-sm font-medium">Kontak</a>
             </nav>
             <div class="pt-3 mt-2 border-t border-white/10 flex flex-col gap-2">
@@ -946,7 +946,7 @@
                                 No-Rated Data Center
                             </li>
                         </ul>
-                        <a href="https://api.whatsapp.com/send/?phone=%2B6281181141746&text&type=phone_number&app_absent=0"
+                        <a href="https://api.whatsapp.com/send/?phone=%2B6281112012957&text&type=phone_number&app_absent=0"
                             class="btn-primary w-full block text-center text-white font-semibold px-5 py-3 rounded-xl relative z-10 text-sm">
                             Order Sekarang
                         </a>
@@ -1014,7 +1014,7 @@
                                 No-Rated Data Center
                             </li>
                         </ul>
-                        <a href="https://api.whatsapp.com/send/?phone=%2B6281181141746&text&type=phone_number&app_absent=0"
+                        <a href="https://api.whatsapp.com/send/?phone=%2B6281112012957&text&type=phone_number&app_absent=0"
                             class="w-full block text-center border border-violet-500/40 text-violet-400 hover:bg-violet-500/10 font-semibold px-5 py-3 rounded-xl transition-all duration-300 text-sm">
                             Order Sekarang
                         </a>
@@ -1082,7 +1082,7 @@
                                 No-Rated Data Center
                             </li>
                         </ul>
-                        <a href="https://api.whatsapp.com/send/?phone=%2B6281181141746&text&type=phone_number&app_absent=0"
+                        <a href="https://api.whatsapp.com/send/?phone=%2B6281112012957&text&type=phone_number&app_absent=0"
                             class="w-full block text-center border border-violet-500/40 text-violet-400 hover:bg-violet-500/10 font-semibold px-5 py-3 rounded-xl transition-all duration-300 text-sm">
                             Order Sekarang
                         </a>
@@ -1150,7 +1150,7 @@
                                 No-Rated Data Center
                             </li>
                         </ul>
-                        <a href="https://api.whatsapp.com/send/?phone=%2B6281181141746&text&type=phone_number&app_absent=0"
+                        <a href="https://api.whatsapp.com/send/?phone=%2B6281112012957&text&type=phone_number&app_absent=0"
                             class="w-full block text-center border border-violet-500/40 text-violet-400 hover:bg-violet-500/10 font-semibold px-5 py-3 rounded-xl transition-all duration-300 text-sm">
                             Order Sekarang
                         </a>
@@ -1226,7 +1226,7 @@
                                 Support Onsite 24/7
                             </li>
                         </ul>
-                        <a href="https://api.whatsapp.com/send/?phone=%2B6281181141746&text&type=phone_number&app_absent=0"
+                        <a href="https://api.whatsapp.com/send/?phone=%2B6281112012957&text&type=phone_number&app_absent=0"
                             class="w-full block text-center border border-violet-500/40 text-violet-400 hover:bg-violet-500/10 font-semibold px-5 py-3 rounded-xl transition-all duration-300 text-sm">
                             Order Sekarang
                         </a>
@@ -1667,7 +1667,7 @@
                                 <a href="#paket"
                                     class="btn-primary text-white font-semibold px-6 py-3 rounded-xl relative z-10 text-sm">Mulai
                                     Sekarang</a>
-                                <a href="https://api.whatsapp.com/send/?phone=%2B6281181141746&text&type=phone_number&app_absent=0"
+                                <a href="https://api.whatsapp.com/send/?phone=%2B6281112012957&text&type=phone_number&app_absent=0"
                                     class="text-white font-semibold px-6 py-3 rounded-xl border border-white/15 hover:border-white/30 transition-all text-sm">Konsultasi
                                     Gratis</a>
                             </div>
@@ -1820,7 +1820,7 @@
                             class="bg-white text-blue-900 font-700 font-display px-8 py-4 rounded-xl text-base hover:bg-blue-50 transition-colors whitespace-nowrap text-center">
                             Mulai Sekarang
                         </a>
-                        <a href="https://api.whatsapp.com/send/?phone=%2B6281181141746&text&type=phone_number&app_absent=0"
+                        <a href="https://api.whatsapp.com/send/?phone=%2B6281112012957&text&type=phone_number&app_absent=0"
                             class="border border-white/30 text-white font-semibold px-8 py-4 rounded-xl text-base hover:bg-white/10 transition-colors whitespace-nowrap text-center">
                             Hubungi Sales
                         </a>
@@ -1888,7 +1888,7 @@
                                     d="M2 2.5a.5.5 0 01.5-.5H4a.5.5 0 01.5.4l.6 3a.5.5 0 01-.3.5L3.6 6.5a9 9 0 004 4l.6-1.2a.5.5 0 01.5-.3l3 .6a.5.5 0 01.4.5V11.5a.5.5 0 01-.5.5H11A9.5 9.5 0 011.5 3 .5.5 0 012 2.5z"
                                     stroke="#60a5fa" stroke-width="1" />
                             </svg>
-                            <a href="https://api.whatsapp.com/send/?phone=%2B6281181141746&text&type=phone_number&app_absent=0"
+                            <a href="https://api.whatsapp.com/send/?phone=%2B6281112012957&text&type=phone_number&app_absent=0"
                                 class="hover:text-blue-400 transition-colors">+62 811 8114 1746</a>
                         </p>
                     </address>
@@ -1908,10 +1908,10 @@
                         <li><a href="#paket"
                                 class="text-slate-500 text-sm hover:text-blue-400 transition-colors">Full Rack
                                 (42U)</a></li>
-                        <li><a href="https://api.whatsapp.com/send/?phone=%2B6281181141746&text&type=phone_number&app_absent=0"
+                        <li><a href="https://api.whatsapp.com/send/?phone=%2B6281112012957&text&type=phone_number&app_absent=0"
                                 class="text-slate-500 text-sm hover:text-blue-400 transition-colors">Custom
                                 Enterprise</a></li>
-                        <li><a href="https://api.whatsapp.com/send/?phone=%2B6281181141746&text&type=phone_number&app_absent=0"
+                        <li><a href="https://api.whatsapp.com/send/?phone=%2B6281112012957&text&type=phone_number&app_absent=0"
                                 class="text-slate-500 text-sm hover:text-blue-400 transition-colors">Smart Hands</a>
                         </li>
                     </ul>

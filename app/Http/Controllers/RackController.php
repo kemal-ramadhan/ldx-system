@@ -6,6 +6,7 @@ use App\Models\Client;
 use App\Models\ClientRack;
 use App\Models\Rack;
 use App\Models\RackDivice;
+use App\Models\RackImage;
 use App\Models\RackUnit;
 use App\Models\Room;
 use App\Models\DevicePort;
@@ -14,6 +15,8 @@ use App\Http\Controllers\RackMonitoringController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -29,7 +32,7 @@ class RackController extends Controller
         $search = $request->search;
         $room = $request->room;
 
-        $racks = Rack::with('room.locationDataCenter')
+        $racks = Rack::with(['room.locationDataCenter', 'images:id,rack_id,file_path,file_name,caption'])
             ->withCount(['rackDivices', 'clientRacks'])
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
@@ -90,6 +93,8 @@ class RackController extends Controller
             'description' => ['nullable', 'string'],
             'status' => ['required', 'in:active,inactive,maintenance,full'],
             'api_suhu' => ['nullable', 'string', 'max:100'],
+            'images' => ['nullable', 'array', 'max:10'],
+            'images.*' => ['image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
         ]);
 
         DB::beginTransaction();
@@ -131,6 +136,10 @@ class RackController extends Controller
             }
 
             RackUnit::insert($units);
+
+            if ($request->hasFile('images')) {
+                $this->storeRackImages($rack, $request->file('images'));
+            }
 
             DB::commit();
 
@@ -581,7 +590,9 @@ class RackController extends Controller
             'rackDivices.client',
             'rackDivices.ports',
             'rackDivices.rackUnits',
+            'images.uploader:id,name',
         ])
+            ->withCount('images')
             ->withSum('clientRacks', 'rented_units')
             ->withSum('rackDivices', 'power_usage')
             ->withSum('rackDivices', 'weight_usage')
@@ -652,7 +663,7 @@ class RackController extends Controller
      */
     public function edit(string $id)
     {
-        $rack = Rack::with('room.locationDataCenter')->findOrFail($id);
+        $rack = Rack::with(['room.locationDataCenter', 'images'])->findOrFail($id);
         return Inertia::render('racks/RackEdit', [
             'title' => 'Edit Rack',
             'rack' => $rack,
@@ -679,6 +690,10 @@ class RackController extends Controller
             'description' => ['nullable', 'string'],
             'status' => ['required', 'in:active,inactive,maintenance,full'],
             'api_suhu' => ['nullable', 'string', 'max:100'],
+            'images' => ['nullable', 'array', 'max:10'],
+            'images.*' => ['image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'remove_image_ids' => ['nullable', 'array'],
+            'remove_image_ids.*' => ['integer', 'exists:rack_images,id'],
         ]);
 
         DB::beginTransaction();
@@ -772,6 +787,23 @@ class RackController extends Controller
                 }
 
                 RackUnit::insert($units);
+            }
+
+            /**
+             * =========================
+             * RACK IMAGES
+             * =========================
+             */
+            if (!empty($validated['remove_image_ids'])) {
+                $removedImages = $rack->images()->whereIn('id', $validated['remove_image_ids'])->get();
+                foreach ($removedImages as $image) {
+                    Storage::disk('public')->delete($image->file_path);
+                    $image->forceDelete();
+                }
+            }
+
+            if ($request->hasFile('images')) {
+                $this->storeRackImages($rack, $request->file('images'));
             }
 
             DB::commit();
@@ -1153,7 +1185,87 @@ class RackController extends Controller
 
         RackUnit::where('rack_id', $rack->id)->delete();
         \App\Models\ClientRack::where('rack_id', $rack->id)->delete();
+        RackImage::where('rack_id', $rack->id)->delete();
         $rack->delete();
+    }
+
+    /**
+     * Store uploaded images for a rack.
+     */
+    private function storeRackImages(Rack $rack, array $files)
+    {
+        foreach ($files as $file) {
+            $filename = time() . '_' . Str::random(6) . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $file->getClientOriginalName());
+            $path = $file->storeAs('rack-images/' . $rack->id, $filename, 'public');
+
+            RackImage::create([
+                'rack_id' => $rack->id,
+                'file_path' => $path,
+                'file_name' => $file->getClientOriginalName(),
+                'file_type' => $file->getMimeType(),
+                'file_size' => $file->getSize(),
+                'uploaded_by' => Auth::id(),
+            ]);
+        }
+    }
+
+    public function storeImages(Request $request, Rack $rack)
+    {
+        $request->validate([
+            'images' => ['required', 'array', 'min:1', 'max:10'],
+            'images.*' => ['image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+        ]);
+
+        try {
+            $this->storeRackImages($rack, $request->file('images'));
+
+            return back()->with('success', 'Rack images uploaded successfully.');
+        } catch (\Throwable $th) {
+            return back()->withErrors(['message' => 'Failed to upload images: ' . $th->getMessage()]);
+        }
+    }
+
+    public function updateImage(Request $request, RackImage $image)
+    {
+        $validated = $request->validate([
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'caption' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        try {
+            $data = ['caption' => $validated['caption'] ?? null];
+
+            if ($request->hasFile('image')) {
+                $file = $request->file('image');
+                $filename = time() . '_' . Str::random(6) . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $file->getClientOriginalName());
+
+                Storage::disk('public')->delete($image->file_path);
+
+                $data['file_path'] = $file->storeAs('rack-images/' . $image->rack_id, $filename, 'public');
+                $data['file_name'] = $file->getClientOriginalName();
+                $data['file_type'] = $file->getMimeType();
+                $data['file_size'] = $file->getSize();
+                $data['uploaded_by'] = Auth::id();
+            }
+
+            $image->update($data);
+
+            return back()->with('success', 'Rack image updated successfully.');
+        } catch (\Throwable $th) {
+            return back()->withErrors(['message' => 'Failed to update image: ' . $th->getMessage()]);
+        }
+    }
+
+    public function destroyImage(RackImage $image)
+    {
+        try {
+            Storage::disk('public')->delete($image->file_path);
+            $image->forceDelete();
+
+            return back()->with('success', 'Rack image deleted successfully.');
+        } catch (\Throwable $th) {
+            return back()->withErrors(['message' => 'Failed to delete image: ' . $th->getMessage()]);
+        }
     }
 
     public function removeOwner(string $id)

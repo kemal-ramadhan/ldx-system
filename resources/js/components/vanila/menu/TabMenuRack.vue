@@ -62,6 +62,7 @@ import DiviceRack from './tabs/DiviceRack.vue'
 import InvoiceClient from './tabs/InvoiceClient.vue'
 import InterconnectionClient from './tabs/InterconnectionClient.vue'
 import TelemetryRack from './tabs/TelemetryRack.vue'
+import ImageRack from './tabs/ImageRack.vue'
 
 const props = defineProps<{
   rack: any;
@@ -91,6 +92,7 @@ const tabs = computed(() => [
   { key: 'device',   label: 'Device',  badge: props.rack?.rack_divices_count || 0 },
   { key: 'invoice',  label: 'Invoice', badge: props.invoices?.total || 0 },
   { key: 'interconnection',  label: 'Crossconnect', badge: props.interconnections?.length || 0 },
+  { key: 'images', label: 'Gambar', badge: props.rack?.images_count ?? props.rack?.images?.length ?? 0 },
   {
     key: 'telemetry',
     label: 'Sensor Suhu & Telemetri',
@@ -104,6 +106,7 @@ const panels: Record<string, any> = {
   invoice:  InvoiceClient,
   interconnection: InterconnectionClient,
   telemetry: TelemetryRack,
+  images: ImageRack,
 }
 
 const currentPanel = computed(() => panels[activeTab.value])

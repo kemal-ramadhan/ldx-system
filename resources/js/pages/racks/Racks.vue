@@ -11,6 +11,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import RackImageThumbs from '@/components/vanila/rack-image/RackImageThumbs.vue';
 
 
 const props = defineProps<{
@@ -181,6 +182,7 @@ defineOptions({
                         />
                     </th>
                     <th class="px-4 py-2">Code</th>
+                    <th class="px-4 py-2">Gambar</th>
                     <th class="px-4 py-2">Name</th>
                     <th class="px-4 py-2">Unit</th>
                     <th class="px-4 py-2">Power Capacity</th>
@@ -207,6 +209,7 @@ defineOptions({
                         />
                     </td>
                     <td class="px-4 py-2">{{ rack.code }}</td>
+                    <td class="px-4 py-2"><RackImageThumbs :images="rack.images" /></td>
                     <td class="px-4 py-2">{{ rack.name }}</td>
                     <td class="px-4 py-2">{{ rack.total_units }}</td>
                     <td class="px-4 py-2">{{ rack.power_capacity }} (A)</td>

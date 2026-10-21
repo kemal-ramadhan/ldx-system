@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import InputError from '@/components/InputError.vue';
+import ImageUploadPreview from '@/components/vanila/rack-image/ImageUploadPreview.vue';
+import ImageLightbox from '@/components/vanila/rack-image/ImageLightbox.vue';
 import {
     Activity,
     Thermometer,
@@ -15,6 +18,8 @@ import {
     X,
     AlertCircle,
     CheckCircle2,
+    Trash2,
+    Undo2,
 } from 'lucide-vue-next';
 import { ref } from 'vue';
 import axios from 'axios';
@@ -35,10 +40,29 @@ const form = useForm({
     description: props.rack.description,
     status: props.rack.status,
     api_suhu: props.rack.api_suhu || '',
+    images: [] as File[],
+    remove_image_ids: [] as number[],
+    _method: 'put',
 });
 
 const updateRack = () => {
-    form.put(`/admin/racks/${props.rack.id}`);
+    form.post(`/admin/racks/${props.rack.id}`, { forceFormData: true });
+};
+
+// Existing images
+const existingImages = props.rack.images || [];
+const lightboxOpen = ref(false);
+const lightboxIndex = ref(0);
+
+const openLightbox = (index: number) => {
+    lightboxIndex.value = index;
+    lightboxOpen.value = true;
+};
+
+const toggleRemoveImage = (id: number) => {
+    form.remove_image_ids = form.remove_image_ids.includes(id)
+        ? form.remove_image_ids.filter((x) => x !== id)
+        : [...form.remove_image_ids, id];
 };
 
 // Modal Connect API Suhu State
@@ -117,21 +141,21 @@ defineOptions({
                     <Label for="code">Rack Code <span class="text-red-500">*</span></Label>
                     <Input id="code" v-model="form.code" type="text" required autofocus :tabindex="1"
                         autocomplete="code" name="code" placeholder="Rack code" />
-                    <InputError :message="errors.code" />
+                    <InputError :message="form.errors.code" />
                 </div>
 
                 <div class="grid gap-3 w-full">
                     <Label for="name">Rack Name <span class="text-red-500">*</span></Label>
                     <Input id="name" v-model="form.name" type="text" required :tabindex="2"
                         autocomplete="name" name="name" placeholder="Rack name" />
-                    <InputError :message="errors.name" />
+                    <InputError :message="form.errors.name" />
                 </div>
 
                 <div class="grid gap-3 w-full">
                     <Label for="total_units">Total Units <span class="text-red-500">*</span></Label>
                     <Input id="total_units" v-model="form.total_units" type="number" required :tabindex="2"
                         autocomplete="total_units" name="total_units" placeholder="Total units" />
-                    <InputError :message="errors.total_units" />
+                    <InputError :message="form.errors.total_units" />
                 </div>
 
                 <div class="grid gap-3 w-full">
@@ -139,7 +163,7 @@ defineOptions({
                     <Input id="power_capacity" v-model="form.power_capacity" type="number" required
                         :tabindex="2" autocomplete="power_capacity" name="power_capacity"
                         placeholder="Power capacity" />
-                    <InputError :message="errors.power_capacity" />
+                    <InputError :message="form.errors.power_capacity" />
                 </div>
 
                 <div class="grid gap-3 w-full">
@@ -147,7 +171,7 @@ defineOptions({
                     <Input id="weight_capacity" v-model="form.weight_capacity" type="number" required
                         :tabindex="2" autocomplete="weight_capacity" name="weight_capacity"
                         placeholder="Weight capacity" />
-                    <InputError :message="errors.weight_capacity" />
+                    <InputError :message="form.errors.weight_capacity" />
                 </div>
 
                 <!-- Status Selector -->
@@ -195,7 +219,7 @@ defineOptions({
                         </button>
                     </div>
 
-                    <InputError :message="errors.status" />
+                    <InputError :message="form.errors.status" />
                 </div>
 
                 <!-- API Suhu Connection Section -->
@@ -264,7 +288,51 @@ defineOptions({
                         </div>
                     </div>
 
-                    <InputError :message="errors.api_suhu" />
+                    <InputError :message="form.errors.api_suhu" />
+                </div>
+
+                <!-- Rack Images -->
+                <div class="grid md:col-span-2 gap-3 w-full">
+                    <Label>Gambar Rack</Label>
+
+                    <div v-if="existingImages.length" class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                        <div
+                            v-for="(img, i) in existingImages"
+                            :key="img.id"
+                            :class="[
+                                'relative overflow-hidden rounded-xl border bg-gray-50 transition-all dark:border-gray-700 dark:bg-gray-800',
+                                form.remove_image_ids.includes(img.id) ? 'opacity-50 ring-2 ring-red-400' : ''
+                            ]"
+                        >
+                            <button type="button" class="block w-full cursor-zoom-in" @click="openLightbox(i)">
+                                <img :src="img.url" :alt="img.file_name" class="aspect-video w-full object-cover" />
+                            </button>
+                            <span
+                                v-if="form.remove_image_ids.includes(img.id)"
+                                class="absolute left-2 top-2 rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-semibold text-white shadow"
+                            >
+                                Akan dihapus
+                            </span>
+                            <button
+                                type="button"
+                                @click="toggleRemoveImage(img.id)"
+                                class="absolute right-2 top-2 rounded-full bg-white/90 p-1 shadow hover:bg-white cursor-pointer"
+                                :class="form.remove_image_ids.includes(img.id) ? 'text-gray-700' : 'text-red-500'"
+                                :title="form.remove_image_ids.includes(img.id) ? 'Batalkan hapus' : 'Hapus gambar'"
+                            >
+                                <Undo2 v-if="form.remove_image_ids.includes(img.id)" class="h-3.5 w-3.5" />
+                                <Trash2 v-else class="h-3.5 w-3.5" />
+                            </button>
+                            <div class="px-2.5 py-1.5">
+                                <p class="truncate text-xs font-medium text-gray-700 dark:text-gray-200">{{ img.caption || img.file_name }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <ImageUploadPreview v-model="form.images" />
+                    <InputError :message="form.errors.images" />
+
+                    <ImageLightbox v-model:open="lightboxOpen" :images="existingImages" :start-index="lightboxIndex" />
                 </div>
 
                 <div class="grid md:col-span-2 gap-3 w-full">
@@ -272,7 +340,7 @@ defineOptions({
                     <textarea id="description" v-model="form.description" required :tabindex="3"
                         autocomplete="description" name="description" placeholder="Rack description"
                         class="w-full rounded-md border border-gray-300 bg-white py-2 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none resize-none h-24 dark:bg-transparent dark:text-gray-300 dark:border-gray-700"></textarea>
-                    <InputError :message="errors.description" />
+                    <InputError :message="form.errors.description" />
                 </div>
 
                 <div class="grid md:col-span-2 gap-3 w-full">
@@ -284,7 +352,7 @@ defineOptions({
                             {{ item.location_data_center?.name }} - {{ item.name }}
                         </option>
                     </select>
-                    <InputError :message="errors.room_id" />
+                    <InputError :message="form.errors.room_id" />
                 </div>
             </div>
 
