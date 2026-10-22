@@ -47,6 +47,12 @@ interface CrossConnect {
     cross_connect_number: string
     source_port?: DevicePort
     destination_port?: DevicePort
+    destination_type?: 'internal' | 'external'
+    external_location?: string | null
+    external_client_name?: string | null
+    external_rack_name?: string | null
+    external_device_name?: string | null
+    external_port_name?: string | null
     interconnection_request?: InterconnectionRequest
     cable_type: string
     connector_type?: string | null
@@ -236,8 +242,13 @@ const formatDate = (date?: string | null) => {
 const sourceClient = (crossConnect: CrossConnect) =>
     crossConnect.source_port?.device?.client?.company_name ?? '-'
 
+const isExternal = (crossConnect: CrossConnect) =>
+    crossConnect.destination_type === 'external'
+
 const destinationClient = (crossConnect: CrossConnect) =>
-    crossConnect.destination_port?.device?.client?.company_name ?? '-'
+    isExternal(crossConnect)
+        ? crossConnect.external_client_name ?? '-'
+        : crossConnect.destination_port?.device?.client?.company_name ?? '-'
 
 const sourceDevice = (crossConnect: CrossConnect) =>
     crossConnect.source_port?.device?.divice_name ??
@@ -245,6 +256,7 @@ const sourceDevice = (crossConnect: CrossConnect) =>
     '-'
 
 const destinationDevice = (crossConnect: CrossConnect) =>
+    (isExternal(crossConnect) ? crossConnect.external_device_name : null) ??
     crossConnect.destination_port?.device?.divice_name ??
     crossConnect.destination_port?.device?.code ??
     '-'
@@ -253,7 +265,14 @@ const sourcePort = (crossConnect: CrossConnect) =>
     crossConnect.source_port?.port_name ?? '-'
 
 const destinationPort = (crossConnect: CrossConnect) =>
-    crossConnect.destination_port?.port_name ?? '-'
+    (isExternal(crossConnect)
+        ? crossConnect.external_port_name
+        : crossConnect.destination_port?.port_name) ?? '-'
+
+const destinationRack = (crossConnect: CrossConnect) =>
+    isExternal(crossConnect)
+        ? crossConnect.external_rack_name
+        : crossConnect.destination_port?.device?.rack?.code
 
 defineOptions({
     layout: {
@@ -526,12 +545,16 @@ defineOptions({
                             <!-- DESTINATION -->
                             <td class="px-5 py-4">
                                 <div class="min-w-[190px]">
-                                    <p class="font-medium text-foreground">
+                                    <p class="flex flex-wrap items-center gap-1 font-medium text-foreground">
                                         {{
                                             destinationClient(
                                                 crossConnect
                                             )
                                         }}
+                                        <span v-if="isExternal(crossConnect) && crossConnect.external_location"
+                                            class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+                                            MMR · {{ crossConnect.external_location }}
+                                        </span>
                                     </p>
 
                                     <p class="mt-1 text-xs text-muted-foreground">
@@ -550,13 +573,9 @@ defineOptions({
                                         }}
                                     </p>
 
-                                    <p v-if="
-                                        crossConnect.destination_port?.device?.rack
-                                    " class="mt-1 text-xs text-muted-foreground">
+                                    <p v-if="destinationRack(crossConnect)" class="mt-1 text-xs text-muted-foreground">
                                         Rack
-                                        {{
-                                            crossConnect.destination_port.device.rack.code
-                                        }}
+                                        {{ destinationRack(crossConnect) }}
                                     </p>
                                 </div>
                             </td>

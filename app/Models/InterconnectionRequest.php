@@ -14,6 +14,7 @@ class InterconnectionRequest extends Model
         'source_port_id',
         'destination_type',
         'destination_port_id',
+        'external_location',
         'external_client_name',
         'external_rack_name',
         'external_device_name',

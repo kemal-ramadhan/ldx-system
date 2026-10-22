@@ -83,6 +83,7 @@ interface Interconnection {
     destination_port_id: number
 
     destination_type?: string
+    external_location?: string
     external_client_name?: string
     external_rack_name?: string
     external_device_name?: string
@@ -665,7 +666,7 @@ step,
 
                         <p class="text-xs text-muted-foreground">
                             Connected tenant 
-                            <span v-if="interconnection.destination_type === 'external'" class="ml-1 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium text-blue-700">External</span>
+                            <span v-if="interconnection.destination_type === 'external'" class="ml-1 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium text-blue-700">{{ interconnection.external_location ? `MMR DC APJII · ${interconnection.external_location}` : 'External' }}</span>
                             <span v-else class="ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-700">Internal</span>
                         </p>
 
@@ -692,6 +693,16 @@ step,
 
                     </div>
                     
+                    <div v-if="interconnection.destination_type === 'external' && interconnection.external_location">
+                        <p class="text-xs text-muted-foreground">
+                            Lokasi
+                        </p>
+
+                        <p class="mt-1 text-sm font-medium">
+                            MMR DC APJII {{ interconnection.external_location }}
+                        </p>
+                    </div>
+
                     <div v-if="interconnection.destination_type === 'external'">
                         <p class="text-xs text-muted-foreground">
                             Rack

@@ -80,6 +80,13 @@ interface CrossConnect {
     source_port?: DevicePort
     destination_port?: DevicePort
 
+    destination_type?: 'internal' | 'external'
+    external_location?: string | null
+    external_client_name?: string | null
+    external_rack_name?: string | null
+    external_device_name?: string | null
+    external_port_name?: string | null
+
     cable_type: string
     connector_type?: string | null
     cable_length?: string | number | null
@@ -644,6 +651,34 @@ defineOptions({
                         </div>
 
                         <template v-if="
+                            props.connectionSide === 'source' &&
+                            activeCrossConnect.destination_type === 'external'
+                        ">
+
+                            <p class="flex flex-wrap items-center gap-2 font-medium text-foreground">
+                                {{ activeCrossConnect.external_client_name ?? '-' }}
+                                <span v-if="activeCrossConnect.external_location"
+                                    class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+                                    MMR · {{ activeCrossConnect.external_location }}
+                                </span>
+                            </p>
+
+                            <p class="mt-1 text-sm text-muted-foreground">
+                                {{ activeCrossConnect.external_device_name ?? '-' }}
+                            </p>
+
+                            <p class="mt-1 text-sm font-medium text-foreground">
+                                {{ activeCrossConnect.external_port_name ?? '-' }}
+                            </p>
+
+                            <p class="mt-1 text-xs text-muted-foreground">
+                                Rack
+                                {{ activeCrossConnect.external_rack_name ?? '-' }}
+                            </p>
+
+                        </template>
+
+                        <template v-else-if="
                             props.connectionSide ===
                             'source'
                         ">

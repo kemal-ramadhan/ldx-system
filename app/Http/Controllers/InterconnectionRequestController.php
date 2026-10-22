@@ -88,6 +88,12 @@ class InterconnectionRequestController extends Controller
                 'different:source_port_id',
             ],
 
+            'external_location' => [
+                'exclude_if:destination_type,internal',
+                'required_if:destination_type,external',
+                'in:S3,K1',
+            ],
+
             'external_client_name' => [
                 'exclude_if:destination_type,internal',
                 'required_if:destination_type,external',
@@ -245,6 +251,8 @@ class InterconnectionRequestController extends Controller
                 'destination_type' => $validated['destination_type'],
 
                 'destination_port_id' => $validated['destination_port_id'] ?? null,
+
+                'external_location' => $validated['external_location'] ?? null,
 
                 'external_client_name' => $validated['external_client_name'] ?? null,
 
@@ -648,6 +656,9 @@ class InterconnectionRequestController extends Controller
                 'destination_port_id' =>
                 $interconnection->destination_port_id,
                 
+                'external_location' =>
+                $interconnection->external_location,
+
                 'external_client_name' =>
                 $interconnection->external_client_name,
                 

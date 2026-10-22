@@ -96,6 +96,13 @@ interface CrossConnect {
     source_port?: DevicePort
     destination_port?: DevicePort
 
+    destination_type?: 'internal' | 'external'
+    external_location?: string | null
+    external_client_name?: string | null
+    external_rack_name?: string | null
+    external_device_name?: string | null
+    external_port_name?: string | null
+
     interconnection_request?: InterconnectionRequest
 
     cable_type: string
@@ -565,7 +572,64 @@ defineOptions({
                             </span>
                         </div>
 
-                        <div class="space-y-3">
+                        <div v-if="item.destination_type === 'external'" class="space-y-3">
+
+                            <div>
+                                <p class="text-xs text-muted-foreground">
+                                    Client
+                                </p>
+
+                                <p class="mt-1 flex flex-wrap items-center gap-2 font-medium text-foreground">
+                                    {{ item.external_client_name ?? '-' }}
+                                    <span v-if="item.external_location"
+                                        class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+                                        MMR · {{ item.external_location }}
+                                    </span>
+                                </p>
+                            </div>
+
+                            <div v-if="item.external_location">
+                                <p class="text-xs text-muted-foreground">
+                                    Lokasi
+                                </p>
+
+                                <p class="mt-1 font-medium text-foreground">
+                                    MMR DC APJII {{ item.external_location }}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p class="text-xs text-muted-foreground">
+                                    Device
+                                </p>
+
+                                <p class="mt-1 font-medium text-foreground">
+                                    {{ item.external_device_name ?? '-' }}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p class="text-xs text-muted-foreground">
+                                    Rack
+                                </p>
+
+                                <p class="mt-1 font-medium text-foreground">
+                                    {{ item.external_rack_name ?? '-' }}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p class="text-xs text-muted-foreground">
+                                    Port
+                                </p>
+
+                                <p class="mt-1 font-medium text-foreground">
+                                    {{ item.external_port_name ?? '-' }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div v-else class="space-y-3">
 
                             <div>
                                 <p class="text-xs text-muted-foreground">

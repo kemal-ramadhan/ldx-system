@@ -679,8 +679,9 @@ const isFailedStatus = computed(() => {
                     </div>
 
                     <div v-if="item.destination_type === 'external'">
-                        <h2 class="text-base font-semibold">
+                        <h2 class="flex flex-wrap items-center gap-2 text-base font-semibold">
                             {{ item.external_client_name || 'External Client' }}
+                            <span v-if="item.external_location" class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">MMR · {{ item.external_location }}</span>
                         </h2>
                         
                         <div class="mt-4 space-y-2 text-sm">

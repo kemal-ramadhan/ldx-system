@@ -68,6 +68,10 @@ const formatStatus = (status: string) => {
                             <div class="min-w-0" v-if="item.destination_type === 'external'">
                                 <p class="truncate text-sm font-medium dark:text-gray-100">{{ item.external_device_name || 'External Device' }}</p>
                                 <p class="text-xs text-muted-foreground">{{ item.external_port_name || '-' }}</p>
+                                <p class="mt-1 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+                                    <span class="truncate">{{ item.external_client_name }} · Rack {{ item.external_rack_name || '-' }}</span>
+                                    <span v-if="item.external_location" class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">MMR · {{ item.external_location }}</span>
+                                </p>
                             </div>
                             <div class="min-w-0" v-else>
                                 <p class="truncate text-sm font-medium dark:text-gray-100">{{ item.destination_port?.device?.divice_name }}</p>

@@ -38,6 +38,7 @@ interface Interconnection {
     requested_at?: string
 
     destination_type?: string
+    external_location?: string
     external_client_name?: string
     external_rack_name?: string
     external_device_name?: string
@@ -188,7 +189,8 @@ function formatDate(date?: string) {
 
 function getDestination(item: Interconnection) {
     if (item.destination_type === 'external') {
-        return item.external_client_name ?? 'Unknown'
+        const name = item.external_client_name ?? 'Unknown'
+        return item.external_location ? `${name} (${item.external_location})` : name
     }
     return (
         item.destination_port?.device?.client?.company_name ??

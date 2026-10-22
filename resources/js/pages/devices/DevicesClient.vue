@@ -274,10 +274,10 @@ defineOptions({
                                         <div class="flex items-center gap-1 text-gray-600">
                                             <ArrowRight class="w-3 h-3 text-blue-500" />
                                             <span class="font-medium truncate max-w-[150px]" :title="port.active_source_cross_connect.destination_port?.device?.divice_name">
-                                                {{ port.active_source_cross_connect.destination_port?.device?.divice_name || 'Unknown Device' }}
+                                                {{ port.active_source_cross_connect.destination_port?.device?.divice_name || port.active_source_cross_connect.external_device_name || 'Unknown Device' }}<span v-if="port.active_source_cross_connect.external_location" class="ml-1 text-[10px] text-blue-600">(MMR {{ port.active_source_cross_connect.external_location }})</span>
                                             </span>
                                         </div>
-                                        <div class="text-gray-400 ml-4">Port: {{ port.active_source_cross_connect.destination_port?.port_name || '?' }}</div>
+                                        <div class="text-gray-400 ml-4">Port: {{ port.active_source_cross_connect.destination_port?.port_name || port.active_source_cross_connect.external_port_name || '?' }}</div>
                                     </div>
                                     <div v-else-if="port.active_destination_cross_connect" class="flex flex-col text-xs">
                                         <div class="flex items-center gap-1 text-gray-600">

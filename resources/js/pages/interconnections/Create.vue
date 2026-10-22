@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import {
     Head,
@@ -59,6 +59,7 @@ const form = useForm({
 
     destination_type: 'internal',
 
+    external_location: '',
     external_client_name: '',
     external_rack_name: '',
     external_device_name: '',
@@ -236,6 +237,37 @@ const changeDestinationDevice = () => {
 | SUBMIT
 |--------------------------------------------------------------------------
 */
+
+/*
+|--------------------------------------------------------------------------
+| MMR DC APJII
+|--------------------------------------------------------------------------
+*/
+
+const MMR_DEFAULT_CLIENT_NAME = 'MMR DC APJII'
+
+const externalLocations = ['S3', 'K1']
+
+const externalRackOption = ref<'OTB' | 'other'>('OTB')
+
+watch(
+    () => form.destination_type,
+    (type) => {
+        if (type !== 'external') return
+
+        if (!form.external_client_name) {
+            form.external_client_name = MMR_DEFAULT_CLIENT_NAME
+        }
+
+        if (externalRackOption.value === 'OTB') {
+            form.external_rack_name = 'OTB'
+        }
+    }
+)
+
+const changeExternalRackOption = () => {
+    form.external_rack_name = externalRackOption.value === 'OTB' ? 'OTB' : ''
+}
 
 const submit = () => {
 
@@ -643,18 +675,47 @@ const submit = () => {
                 <div class="space-y-5" v-if="form.destination_type === 'external'">
 
                     <div>
+                        <label class="mb-2 block text-sm font-medium">
+                            Lokasi MMR <span class="text-red-500">*</span>
+                        </label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button v-for="location in externalLocations" :key="location" type="button"
+                                @click="form.external_location = location" :class="[
+                                    'rounded-xl border px-4 py-3 text-sm font-medium transition-all',
+                                    form.external_location === location
+                                        ? 'border-primary bg-primary text-white dark:text-gray-900'
+                                        : 'border-input bg-background hover:bg-muted dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:bg-transparent'
+                                ]">
+                                {{ location }}
+                            </button>
+                        </div>
+                        <p v-if="form.errors.external_location" class="mt-1 text-xs text-red-500">
+                            {{ form.errors.external_location }}
+                        </p>
+                    </div>
+
+                    <div>
                         <label class="mb-2 block text-sm font-medium">Client Name</label>
                         <input v-model="form.external_client_name" type="text" placeholder="e.g. PT Telekomunikasi"
                             class="w-full rounded-xl border px-4 py-3 text-sm" />
+                        <p class="mt-1 text-xs text-muted-foreground">
+                            Default: {{ MMR_DEFAULT_CLIENT_NAME }}
+                        </p>
                         <p v-if="form.errors.external_client_name" class="mt-1 text-xs text-red-500">
                             {{ form.errors.external_client_name }}
                         </p>
                     </div>
 
                     <div>
-                        <label class="mb-2 block text-sm font-medium">Rack Name</label>
-                        <input v-model="form.external_rack_name" type="text" placeholder="e.g. Rack A1"
-                            class="w-full rounded-xl border px-4 py-3 text-sm" />
+                        <label class="mb-2 block text-sm font-medium">Rack</label>
+                        <select v-model="externalRackOption" @change="changeExternalRackOption"
+                            class="w-full rounded-xl border bg-background px-4 py-3 text-sm">
+                            <option value="OTB">OTB</option>
+                            <option value="other">Lainnya</option>
+                        </select>
+                        <input v-if="externalRackOption === 'other'" v-model="form.external_rack_name" type="text"
+                            placeholder="Masukkan nama rack"
+                            class="mt-2 w-full rounded-xl border px-4 py-3 text-sm" />
                         <p v-if="form.errors.external_rack_name" class="mt-1 text-xs text-red-500">
                             {{ form.errors.external_rack_name }}
                         </p>
