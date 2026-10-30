@@ -106,7 +106,7 @@ class InterconnectionRequest extends Model
     {
         return $this->belongsTo(
             Service::class
-        );
+        )->withTrashed();
     }
 
     public function invoice(): BelongsTo

@@ -1,6 +1,16 @@
 ```vue
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
+import { onMounted, ref } from 'vue';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 import {
     ArrowLeft,
@@ -10,8 +20,11 @@ import {
     CreditCard,
     Wallet,
     Mail,
-    Download
+    Download,
+    CheckCircle2,
+    Trash2,
 } from 'lucide-vue-next';
+import DeleteInvoiceDialog from '@/components/vanila/invoice/DeleteInvoiceDialog.vue';
 
 /**
  * =========================================
@@ -64,6 +77,26 @@ const statusColor = (status: string) => {
             return 'bg-blue-100 text-blue-700 border-blue-200';
     }
 };
+
+/**
+ * =========================================
+ * GENERATED POPUP (from Service > Generate Invoice)
+ * =========================================
+ */
+const showGeneratedDialog = ref(false);
+const openDeleteDialog = ref(false);
+
+onMounted(() => {
+    const url = new URL(window.location.href);
+
+    if (url.searchParams.has('generated')) {
+        showGeneratedDialog.value = true;
+
+        // remove the flag so a refresh doesn't show the popup again
+        url.searchParams.delete('generated');
+        window.history.replaceState(window.history.state, '', url.toString());
+    }
+});
 
 defineOptions({
     layout: {
@@ -173,6 +206,16 @@ const sendInvoice = () => {
 
                     Download Invoice
                 </a>
+
+                <!-- Delete Invoice (not for paid) -->
+                <button
+                    v-if="invoice.status !== 'paid'"
+                    @click="openDeleteDialog = true"
+                    class="inline-flex items-center rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700 hover:bg-red-100"
+                >
+                    <Trash2 class="mr-2 h-4 w-4" />
+                    Delete
+                </button>
 
             </div>
         </div>
@@ -397,4 +440,54 @@ const sendInvoice = () => {
         </div>
 
     </div>
+    <DeleteInvoiceDialog v-model:open="openDeleteDialog" :invoice="invoice" />
+
+    <!-- INVOICE GENERATED POPUP -->
+    <Dialog v-model:open="showGeneratedDialog">
+        <DialogContent class="sm:max-w-md">
+            <div class="flex flex-col items-center gap-3 pt-2 text-center">
+                <div class="flex h-14 w-14 items-center justify-center rounded-full bg-green-100 dark:bg-green-950/40">
+                    <CheckCircle2 class="h-8 w-8 text-green-600 dark:text-green-400" />
+                </div>
+                <DialogHeader class="items-center space-y-2">
+                    <DialogTitle class="text-center">
+                        Invoice berhasil dibuat
+                    </DialogTitle>
+                    <DialogDescription class="text-center">
+                        Invoice <strong>{{ invoice.invoice_number }}</strong> sudah berstatus <strong>Sent</strong>
+                        dan sedang dikirim ke email client.
+                    </DialogDescription>
+                </DialogHeader>
+            </div>
+
+            <div class="grid gap-2 rounded-lg border p-4 text-sm dark:border-gray-700">
+                <div class="flex justify-between gap-4">
+                    <span class="text-muted-foreground">Client</span>
+                    <span class="font-medium text-right">{{ invoice.client?.company_name || '-' }}</span>
+                </div>
+                <div class="flex justify-between gap-4">
+                    <span class="text-muted-foreground">Email</span>
+                    <span class="inline-flex items-center gap-1 font-medium text-right">
+                        <Mail class="h-3.5 w-3.5 text-muted-foreground" />
+                        {{ invoice.client?.company_email || '-' }}
+                    </span>
+                </div>
+                <div class="flex justify-between gap-4">
+                    <span class="text-muted-foreground">Due Date</span>
+                    <span class="font-medium">{{ invoice.due_date || '-' }}</span>
+                </div>
+                <div class="flex justify-between gap-4 border-t pt-2 dark:border-gray-700">
+                    <span class="text-muted-foreground">Total</span>
+                    <span class="font-semibold">{{ formatRupiah(invoice.total) }}</span>
+                </div>
+            </div>
+
+            <DialogFooter>
+                <Button class="w-full bg-primary text-white hover:bg-primary/90 dark:text-gray-900"
+                    @click="showGeneratedDialog = false">
+                    OK
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
 </template>

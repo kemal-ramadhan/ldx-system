@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\InvoiceController;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
@@ -13,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class ServiceController extends Controller
@@ -25,7 +27,7 @@ class ServiceController extends Controller
         $search = $request->search;
         $status = $request->status;
 
-        $services = Service::with([
+        $services = Service::withCount('invoices')->with([
             'rack.room.locationDataCenter',
             'client'
         ])
@@ -228,7 +230,7 @@ class ServiceController extends Controller
                 \Illuminate\Support\Str::random(6)
             );
         } while (
-            Service::query()->where('code', $code)->exists()
+            Service::withTrashed()->where('code', $code)->exists()
         );
 
         return $code;
@@ -251,7 +253,7 @@ class ServiceController extends Controller
             'rack.room.locationDataCenter',
 
             'serviceItems.product',
-        ])->findOrFail($id);
+        ])->withCount('invoices')->findOrFail($id);
 
         return Inertia::render('services/services/ServiceShow', [
 
@@ -430,7 +432,23 @@ class ServiceController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $service = Service::findOrFail($id);
+
+        try {
+            // soft delete: invoices keep their service relation for reports
+            $service->delete();
+        } catch (\Throwable $th) {
+            return back()->withErrors([
+                'error' => 'Failed to delete service: ' . $th->getMessage(),
+            ]);
+        }
+
+        // deleted from the detail page -> back to the list
+        if (str_contains(url()->previous(), "/admin/services/{$service->id}")) {
+            return redirect('/admin/services')->with('success', 'Service deleted successfully.');
+        }
+
+        return back()->with('success', 'Service deleted successfully.');
     }
 
     /**
@@ -509,11 +527,11 @@ class ServiceController extends Controller
              * =========================================
              */
             if (
-                $service->status !== 'active'
+                !in_array($service->status, ['pending', 'active'])
             ) {
 
                 return back()->withErrors([
-                    'error' => 'Only active services can generate invoices.'
+                    'error' => 'Only pending or active services can generate invoices.'
                 ]);
             }
 
@@ -557,7 +575,7 @@ class ServiceController extends Controller
                 'pph23_percentage' => $service->pph23_percentage,
                 'pph23_amount' => $service->pph23_amount,
                 'total' => $service->total,
-                'status' => 'pending',
+                'status' => 'sent',
                 'created_by' => Auth::id(),
             ]);
 
@@ -603,23 +621,15 @@ class ServiceController extends Controller
                     break;
             }
 
+            /**
+             * First invoice activates a pending service
+             */
             $service->update([
                 'next_due_date' => $nextDueDate,
+                'status' => 'active',
             ]);
 
             DB::commit();
-
-            /**
-             * =========================================
-             * REDIRECT
-             * =========================================
-             */
-            return redirect(
-                "/admin/invoices/{$invoice->id}"
-            )->with(
-                'success',
-                'Invoice generated successfully.'
-            );
         } catch (\Throwable $th) {
 
             DB::rollBack();
@@ -628,6 +638,39 @@ class ServiceController extends Controller
                 'error' => $th->getMessage()
             ]);
         }
+
+        /**
+         * =========================================
+         * SEND EMAIL TO CLIENT
+         * =========================================
+         * Runs after the response so the admin is redirected
+         * immediately. If the email fails the invoice goes back
+         * to pending, so it can be resent from the invoice page.
+         */
+        dispatch(function () use ($invoice) {
+            try {
+                InvoiceController::deliverInvoiceEmail($invoice);
+            } catch (\Throwable $th) {
+                $invoice->update([
+                    'status' => 'pending',
+                ]);
+
+                Log::error('Failed to send invoice email', [
+                    'invoice_id' => $invoice->id,
+                    'error' => $th->getMessage(),
+                ]);
+            }
+        })->afterResponse();
+
+        /**
+         * =========================================
+         * REDIRECT
+         * =========================================
+         */
+        // ?generated=1 opens the success popup on the invoice page
+        return redirect(
+            "/admin/invoices/{$invoice->id}?generated=1"
+        );
     }
 
     /**

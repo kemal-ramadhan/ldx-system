@@ -5,12 +5,28 @@ import {
     Search,
     Eye,
     Receipt,
+    Trash2,
 } from 'lucide-vue-next';
+
+import DeleteInvoiceDialog from '@/components/vanila/invoice/DeleteInvoiceDialog.vue';
 
 import {
     ref,
     watch,
 } from 'vue';
+
+/**
+ * =========================================
+ * DELETE INVOICE
+ * =========================================
+ */
+const deleteTarget = ref<any>(null);
+const openDeleteDialog = ref(false);
+
+const deleteInvoice = (invoice: any) => {
+    deleteTarget.value = invoice;
+    openDeleteDialog.value = true;
+};
 
 /**
  * =========================================
@@ -353,13 +369,24 @@ defineOptions({
                             <!-- Actions -->
                             <td class="px-5 py-4">
 
-                                <Link
-                                    :href="`/admin/invoices/${invoice.id}`"
-                                    class="inline-flex items-center rounded-lg border px-3 py-2 text-sm hover:bg-muted"
-                                >
-                                    <Eye class="mr-2 h-4 w-4" />
-                                    View
-                                </Link>
+                                <div class="flex items-center gap-2">
+                                    <Link
+                                        :href="`/admin/invoices/${invoice.id}`"
+                                        class="inline-flex items-center rounded-lg border px-3 py-2 text-sm hover:bg-muted"
+                                    >
+                                        <Eye class="mr-2 h-4 w-4" />
+                                        View
+                                    </Link>
+
+                                    <button
+                                        v-if="invoice.status !== 'paid'"
+                                        @click="deleteInvoice(invoice)"
+                                        class="inline-flex items-center rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 hover:bg-red-100"
+                                        title="Hapus invoice"
+                                    >
+                                        <Trash2 class="h-4 w-4" />
+                                    </button>
+                                </div>
 
                             </td>
 
@@ -410,4 +437,6 @@ defineOptions({
         </div>
 
     </div>
+
+    <DeleteInvoiceDialog v-model:open="openDeleteDialog" :invoice="deleteTarget" />
 </template>

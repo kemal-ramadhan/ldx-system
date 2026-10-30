@@ -9,6 +9,7 @@ import {
 } from 'lucide-vue-next';
 
 import { ref, watch } from 'vue';
+import DeleteServiceDialog from '@/components/vanila/service/DeleteServiceDialog.vue';
 
 const props = defineProps<{
     title: string;
@@ -18,6 +19,14 @@ const props = defineProps<{
         status: string;
     };
 }>();
+
+const deleteTarget = ref<any>(null);
+const openDeleteDialog = ref(false);
+
+const deleteService = (service: any) => {
+    deleteTarget.value = service;
+    openDeleteDialog.value = true;
+};
 
 const search = ref(props.filters.search || '');
 const status = ref(props.filters.status || '');
@@ -35,12 +44,6 @@ watch([search, status], () => {
         },
     );
 });
-
-const deleteService = (id: number) => {
-    if (confirm('Yakin ingin menghapus service ini?')) {
-        router.delete(`/admin/services/${id}`);
-    }
-};
 
 defineOptions({
     layout: {
@@ -191,6 +194,12 @@ defineOptions({
                                     <Pencil class="h-4 w-4" />
                                     Edit
                                 </Link>
+
+                                <button @click="deleteService(service)"
+                                    class="inline-flex items-center gap-2 rounded-lg bg-red-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-red-600">
+                                    <Trash2 class="h-4 w-4" />
+                                    Delete
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -236,4 +245,6 @@ defineOptions({
             </div>
         </div>
     </div>
+
+    <DeleteServiceDialog v-model:open="openDeleteDialog" :service="deleteTarget" />
 </template>

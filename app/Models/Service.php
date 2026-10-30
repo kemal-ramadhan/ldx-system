@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Service extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'services';
 
     protected $fillable = [
@@ -42,5 +45,10 @@ class Service extends Model
     public function serviceItems()
     {
         return $this->hasMany(ServiceItem::class, 'service_id');
+    }
+
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class, 'service_id');
     }
 }

@@ -463,7 +463,64 @@ class InvoiceController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $invoice = Invoice::with(['payments', 'service'])->findOrFail($id);
+
+        if ($invoice->status === 'paid') {
+            return back()->withErrors([
+                'error' => 'Paid invoices cannot be deleted.',
+            ]);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            /**
+             * =========================================
+             * ROLL BACK SERVICE NEXT DUE DATE
+             * =========================================
+             * Generating an invoice moves the service due date
+             * one cycle ahead, so undo that when the latest
+             * invoice of the service is deleted.
+             */
+            $service = $invoice->service;
+
+            if ($service && $invoice->due_date) {
+                $isLatestInvoice = !Invoice::where('service_id', $service->id)
+                    ->where('id', '>', $invoice->id)
+                    ->exists();
+
+                if ($isLatestInvoice) {
+                    $service->update([
+                        'next_due_date' => $invoice->due_date,
+                    ]);
+                }
+            }
+
+            $files = $invoice->payments
+                ->pluck('proof_of_payment')
+                ->filter()
+                ->push('invoices/' . $invoice->invoice_number . '.pdf');
+
+            // items & payments are removed by cascade
+            $invoice->delete();
+
+            DB::commit();
+
+            Storage::disk('public')->delete($files->all());
+        } catch (\Throwable $th) {
+            DB::rollBack();
+
+            return back()->withErrors([
+                'error' => 'Failed to delete invoice: ' . $th->getMessage(),
+            ]);
+        }
+
+        // deleted from the detail page -> back to the list
+        if (str_contains(url()->previous(), "/admin/invoices/{$invoice->id}")) {
+            return redirect('/admin/invoices')->with('success', 'Invoice deleted successfully.');
+        }
+
+        return back()->with('success', 'Invoice deleted successfully.');
     }
 
     /**
@@ -475,123 +532,7 @@ class InvoiceController extends Controller
         Invoice $invoice
     ) {
         try {
-
-            /**
-             * =========================================
-             * LOAD RELATIONS
-             * =========================================
-             */
-            $invoice->load([
-                'client',
-                'service',
-                'items',
-            ]);
-
-            /**
-             * =========================================
-             * LOAD LOGO
-             * =========================================
-             */
-            $logoPath = public_path('assets/logos/ldx-logo.png');
-            $logoLdx = public_path('assets/logos/ldx.png');
-
-            $logoData = base64_encode(
-                file_get_contents($logoPath)
-            );
-
-            $logoDataLdx = base64_encode(
-                file_get_contents($logoLdx)
-            );
-
-            $logoSrc = 'data:image/png;base64,' . $logoData;
-            $logoLdxSrc = 'data:image/png;base64,' . $logoDataLdx;
-
-            /**
-             * =========================================
-             * GENERATE PDF
-             * =========================================
-             */
-            $pdf = Pdf::loadView(
-                'pdf.invoice',
-                [
-                    'invoice' => $invoice,
-                    'logoSrc' => $logoSrc,
-                    'logoLdxSrc' => $logoLdxSrc,
-                ]
-            );
-
-            /**
-             * =========================================
-             * PDF FILE NAME
-             * =========================================
-             */
-            $fileName =
-                $invoice->invoice_number . '.pdf';
-
-            /**
-             * =========================================
-             * PDF STORAGE PATH
-             * =========================================
-             */
-            $filePath =
-                storage_path(
-                    'app/public/invoices/' . $fileName
-                );
-
-            /**
-             * =========================================
-             * CREATE DIRECTORY
-             * =========================================
-             */
-            if (
-                !file_exists(
-                    storage_path('app/public/invoices')
-                )
-            ) {
-
-                mkdir(
-                    storage_path('app/public/invoices'),
-                    0777,
-                    true
-                );
-            }
-
-            /**
-             * =========================================
-             * SAVE PDF
-             * =========================================
-             */
-            file_put_contents(
-                $filePath,
-                $pdf->output()
-            );
-
-            /**
-             * =========================================
-             * SEND EMAIL
-             * =========================================
-             */
-            Mail::to(
-                $invoice->client->company_email
-            )->send(
-                new InvoiceMail(
-                    $invoice,
-                    $filePath
-                )
-            );
-
-            /**
-             * =========================================
-             * UPDATE STATUS
-             * =========================================
-             */
-            if (
-                in_array($invoice->status, ['draft', 'pending'])
-            ) {
-                $invoice->update([
-                    'status' => 'sent',
-                ]);
-            }
+            self::deliverInvoiceEmail($invoice);
 
             return back()->with(
                 'success',
@@ -600,6 +541,132 @@ class InvoiceController extends Controller
         } catch (\Throwable $th) {
             return back()->withErrors([
                 'error' => $th->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * =========================================
+     * GENERATE PDF, EMAIL CLIENT & MARK AS SENT
+     * =========================================
+     */
+    public static function deliverInvoiceEmail(
+        Invoice $invoice
+    ): void {
+        /**
+         * =========================================
+         * LOAD RELATIONS
+         * =========================================
+         */
+        $invoice->load([
+            'client',
+            'service',
+            'items',
+        ]);
+
+        /**
+         * =========================================
+         * LOAD LOGO
+         * =========================================
+         */
+        $logoPath = public_path('assets/logos/ldx-logo.png');
+        $logoLdx = public_path('assets/logos/ldx.png');
+
+        $logoData = base64_encode(
+            file_get_contents($logoPath)
+        );
+
+        $logoDataLdx = base64_encode(
+            file_get_contents($logoLdx)
+        );
+
+        $logoSrc = 'data:image/png;base64,' . $logoData;
+        $logoLdxSrc = 'data:image/png;base64,' . $logoDataLdx;
+
+        /**
+         * =========================================
+         * GENERATE PDF
+         * =========================================
+         */
+        $pdf = Pdf::loadView(
+            'pdf.invoice',
+            [
+                'invoice' => $invoice,
+                'logoSrc' => $logoSrc,
+                'logoLdxSrc' => $logoLdxSrc,
+            ]
+        );
+
+        /**
+         * =========================================
+         * PDF FILE NAME
+         * =========================================
+         */
+        $fileName =
+            $invoice->invoice_number . '.pdf';
+
+        /**
+         * =========================================
+         * PDF STORAGE PATH
+         * =========================================
+         */
+        $filePath =
+            storage_path(
+                'app/public/invoices/' . $fileName
+            );
+
+        /**
+         * =========================================
+         * CREATE DIRECTORY
+         * =========================================
+         */
+        if (
+            !file_exists(
+                storage_path('app/public/invoices')
+            )
+        ) {
+
+            mkdir(
+                storage_path('app/public/invoices'),
+                0777,
+                true
+            );
+        }
+
+        /**
+         * =========================================
+         * SAVE PDF
+         * =========================================
+         */
+        file_put_contents(
+            $filePath,
+            $pdf->output()
+        );
+
+        /**
+         * =========================================
+         * SEND EMAIL
+         * =========================================
+         */
+        Mail::to(
+            $invoice->client->company_email
+        )->send(
+            new InvoiceMail(
+                $invoice,
+                $filePath
+            )
+        );
+
+        /**
+         * =========================================
+         * UPDATE STATUS
+         * =========================================
+         */
+        if (
+            in_array($invoice->status, ['draft', 'pending'])
+        ) {
+            $invoice->update([
+                'status' => 'sent',
             ]);
         }
     }

@@ -381,16 +381,7 @@ class RackController extends Controller
              * =========================
              */
 
-            $remainingUnits = RackUnit::query()->where('rack_id', $rack->id)
-                ->where('status', 'empty')
-                ->count('id');
-
-            if ($remainingUnits <= 0) {
-
-                $rack->update([
-                    'status' => 'full'
-                ]);
-            }
+            $rack->refreshFullStatus();
 
             DB::commit();
 
@@ -562,6 +553,13 @@ class RackController extends Controller
                     'status' => 'used',
                 ]);
             }
+
+            /**
+             * =========================
+             * UPDATE RACK STATUS (weight)
+             * =========================
+             */
+            $rack->refreshFullStatus();
 
             DB::commit();
 
@@ -806,6 +804,11 @@ class RackController extends Controller
                 $this->storeRackImages($rack, $request->file('images'));
             }
 
+            /**
+             * Units / weight capacity may have changed
+             */
+            $rack->refresh()->refreshFullStatus();
+
             DB::commit();
 
             return redirect('admin/racks')
@@ -957,16 +960,7 @@ class RackController extends Controller
              * UPDATE RACK STATUS
              * =========================
              */
-            $remainingUnits = RackUnit::query()
-                ->where('rack_id', $rack->id)
-                ->where('status', 'empty')
-                ->count('id');
-
-            $rack->update([
-                'status' => $remainingUnits <= 0
-                    ? 'full'
-                    : 'active'
-            ]);
+            $rack->refreshFullStatus();
 
             DB::commit();
 
@@ -1004,6 +998,8 @@ class RackController extends Controller
         ]);
 
         $device->update($validated);
+
+        $device->rack?->refreshFullStatus();
 
         return back()->with(
             'success',
@@ -1314,17 +1310,7 @@ class RackController extends Controller
              * UPDATE RACK STATUS
              * =========================
              */
-            $emptyUnits = RackUnit::query()
-                ->where('rack_id', $rack->id)
-                ->where('status', 'empty')
-                ->count('id');
-
-            if ($emptyUnits > 0 && $rack->status === 'full') {
-
-                $rack->update([
-                    'status' => 'active',
-                ]);
-            }
+            $rack->refreshFullStatus();
 
             DB::commit();
 
@@ -1404,6 +1390,8 @@ class RackController extends Controller
              */
 
             $device->delete();
+
+            $device->rack?->refreshFullStatus();
 
             DB::commit();
 

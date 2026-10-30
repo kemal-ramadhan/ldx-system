@@ -1,12 +1,25 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
+import { ref } from 'vue';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import DeleteServiceDialog from '@/components/vanila/service/DeleteServiceDialog.vue';
 
 import {
     Pencil,
     Ban,
     Trash2,
     Receipt,
-    CheckCircle2
+    CheckCircle2,
+    Mail,
 } from 'lucide-vue-next';
 
 const props = defineProps<{
@@ -14,57 +27,75 @@ const props = defineProps<{
     service: any;
 }>();
 
+const isGenerating = ref(false);
+const openGenerateDialog = ref(false);
+const openDeleteDialog = ref(false);
+
 /**
  * =========================================
- * ACTIVATE SERVICE
+ * STATUS ACTIONS (Activate / Suspend / Terminate)
  * =========================================
  */
-const activateService = () => {
+type StatusAction = 'activate' | 'suspend' | 'terminate';
 
-    if (
-        confirm('Activate this service?')
-    ) {
-
-        router.patch(
-            `/admin/services/${props.service.id}/activate`
-        );
-    }
+const statusActions: Record<StatusAction, {
+    title: string;
+    description: string;
+    confirmLabel: string;
+    variant: 'default' | 'destructive';
+    buttonClass: string;
+}> = {
+    activate: {
+        title: 'Aktifkan service ini?',
+        description: 'Status service akan diubah menjadi Active.',
+        confirmLabel: 'Activate',
+        variant: 'default',
+        buttonClass: 'bg-green-600 text-white hover:bg-green-700',
+    },
+    suspend: {
+        title: 'Suspend service ini?',
+        description: 'Status service akan diubah menjadi Suspended dan invoice tidak bisa di-generate sampai service diaktifkan kembali.',
+        confirmLabel: 'Suspend',
+        variant: 'default',
+        buttonClass: 'bg-yellow-500 text-white hover:bg-yellow-600',
+    },
+    terminate: {
+        title: 'Terminate service ini?',
+        description: 'Service akan dihentikan dan invoice tidak bisa di-generate lagi untuk service ini.',
+        confirmLabel: 'Terminate',
+        variant: 'destructive',
+        buttonClass: '',
+    },
 };
 
-/**
- * =========================================
- * SUSPEND SERVICE
- * =========================================
- */
-const suspendService = () => {
+const pendingAction = ref<StatusAction | null>(null);
+const openStatusDialog = ref(false);
+const isUpdatingStatus = ref(false);
 
-    if (
-        confirm('Suspend this service?')
-    ) {
-
-        router.patch(
-            `/admin/services/${props.service.id}/suspend`
-        );
-    }
+const openStatusAction = (action: StatusAction) => {
+    pendingAction.value = action;
+    openStatusDialog.value = true;
 };
 
-/**
- * =========================================
- * TERMINATE SERVICE
- * =========================================
- */
-const terminateService = () => {
+const activateService = () => openStatusAction('activate');
+const suspendService = () => openStatusAction('suspend');
+const terminateService = () => openStatusAction('terminate');
 
-    if (
-        confirm(
-            'Terminate this service permanently?'
-        )
-    ) {
+const confirmStatusAction = () => {
+    if (!pendingAction.value) return;
 
-        router.patch(
-            `/admin/services/${props.service.id}/terminate`
-        );
-    }
+    router.patch(
+        `/admin/services/${props.service.id}/${pendingAction.value}`,
+        {},
+        {
+            preserveScroll: true,
+            onStart: () => (isUpdatingStatus.value = true),
+            onFinish: () => {
+                isUpdatingStatus.value = false;
+                openStatusDialog.value = false;
+            },
+        }
+    );
 };
 
 /**
@@ -74,16 +105,17 @@ const terminateService = () => {
  */
 const generateInvoice = () => {
 
-    if (
-        confirm(
-            'Generate invoice for this service?'
-        )
-    ) {
-
-        router.post(
-            `/admin/services/${props.service.id}/generate-invoice`
-        );
-    }
+    router.post(
+        `/admin/services/${props.service.id}/generate-invoice`,
+        {},
+        {
+            onStart: () => (isGenerating.value = true),
+            onFinish: () => {
+                isGenerating.value = false;
+                openGenerateDialog.value = false;
+            },
+        }
+    );
 };
 
 defineOptions({
@@ -436,12 +468,20 @@ defineOptions({
                         Terminate
                     </button>
 
+                    <!-- Delete -->
+                    <button @click="openDeleteDialog = true"
+                        class="inline-flex items-center rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700 hover:bg-red-100">
+                        <Trash2 class="mr-2 h-4 w-4" />
+                        Delete
+                    </button>
+
                     <div class="md:col-span-3">
                         <!-- Generate Invoice -->
-                        <button @click="generateInvoice"
-                            class="inline-flex w-full justify-center items-center rounded-lg bg-primary px-4 py-2 text-sm text-white hover:bg-primary/90 dark:text-gray-900">
+                        <button v-if="['pending', 'active'].includes(service.status)" @click="openGenerateDialog = true"
+                            :disabled="isGenerating"
+                            class="inline-flex w-full justify-center items-center rounded-lg bg-primary px-4 py-2 text-sm text-white hover:bg-primary/90 disabled:opacity-60 dark:text-gray-900">
                             <Receipt class="mr-2 h-4 w-4" />
-                            Generate Invoice
+                            {{ isGenerating ? 'Generating & Sending...' : 'Generate Invoice' }}
                         </button>
                     </div>
 
@@ -450,4 +490,93 @@ defineOptions({
             </div>
         </div>
     </div>
+
+    <DeleteServiceDialog v-model:open="openDeleteDialog" :service="service" />
+
+    <!-- STATUS ACTION CONFIRMATION -->
+    <Dialog :open="openStatusDialog" @update:open="(val) => { if (!isUpdatingStatus) openStatusDialog = val }">
+        <DialogContent v-if="pendingAction">
+            <DialogHeader class="space-y-3">
+                <DialogTitle>
+                    {{ statusActions[pendingAction].title }}
+                </DialogTitle>
+                <DialogDescription>
+                    {{ statusActions[pendingAction].description }}
+                </DialogDescription>
+            </DialogHeader>
+
+            <div class="grid gap-2 rounded-lg border p-4 text-sm dark:border-gray-700">
+                <div class="flex justify-between gap-4">
+                    <span class="text-muted-foreground">Client</span>
+                    <span class="font-medium text-right">{{ service.client?.company_name || '-' }}</span>
+                </div>
+                <div class="flex justify-between gap-4">
+                    <span class="text-muted-foreground">Status saat ini</span>
+                    <span class="font-medium capitalize">{{ service.status }}</span>
+                </div>
+            </div>
+
+            <DialogFooter class="gap-2">
+                <Button variant="secondary" :disabled="isUpdatingStatus" @click="openStatusDialog = false">
+                    Batal
+                </Button>
+                <Button :variant="statusActions[pendingAction].variant" :disabled="isUpdatingStatus"
+                    :class="statusActions[pendingAction].buttonClass" @click="confirmStatusAction">
+                    <Spinner v-if="isUpdatingStatus" class="mr-2 h-4 w-4" />
+                    {{ statusActions[pendingAction].confirmLabel }}
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+
+    <!-- GENERATE INVOICE CONFIRMATION -->
+    <Dialog :open="openGenerateDialog" @update:open="(val) => { if (!isGenerating) openGenerateDialog = val }">
+        <DialogContent>
+            <DialogHeader class="space-y-3">
+                <DialogTitle>
+                    Generate invoice untuk service ini?
+                </DialogTitle>
+                <DialogDescription>
+                    Invoice akan dibuat dengan status <strong>Sent</strong> dan langsung dikirim ke email client.
+                    <template v-if="service.status === 'pending'">
+                        <br><br>
+                        Service ini masih <strong>Pending</strong> dan akan otomatis menjadi <strong>Active</strong>.
+                    </template>
+                </DialogDescription>
+            </DialogHeader>
+
+            <div class="grid gap-2 rounded-lg border p-4 text-sm dark:border-gray-700">
+                <div class="flex justify-between gap-4">
+                    <span class="text-muted-foreground">Client</span>
+                    <span class="font-medium text-right">{{ service.client?.company_name || '-' }}</span>
+                </div>
+                <div class="flex justify-between gap-4">
+                    <span class="text-muted-foreground">Email</span>
+                    <span class="inline-flex items-center gap-1 font-medium text-right">
+                        <Mail class="h-3.5 w-3.5 text-muted-foreground" />
+                        {{ service.client?.company_email || '-' }}
+                    </span>
+                </div>
+                <div class="flex justify-between gap-4">
+                    <span class="text-muted-foreground">Due Date</span>
+                    <span class="font-medium">{{ service.next_due_date || '-' }}</span>
+                </div>
+                <div class="flex justify-between gap-4 border-t pt-2 dark:border-gray-700">
+                    <span class="text-muted-foreground">Total</span>
+                    <span class="font-semibold">Rp {{ Number(service.total).toLocaleString('id-ID') }}</span>
+                </div>
+            </div>
+
+            <DialogFooter class="gap-2">
+                <Button variant="secondary" :disabled="isGenerating" @click="openGenerateDialog = false">
+                    Batal
+                </Button>
+                <Button :disabled="isGenerating" @click="generateInvoice"
+                    class="bg-primary text-white hover:bg-primary/90 dark:text-gray-900">
+                    <Spinner v-if="isGenerating" class="mr-2 h-4 w-4" />
+                    {{ isGenerating ? 'Generating & Sending...' : 'Generate & Kirim' }}
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
 </template>
