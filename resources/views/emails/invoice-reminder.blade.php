@@ -78,10 +78,16 @@
                                 line-height:1.7;
                                 color:#4b5563;
                             ">
-                                Ini adalah pengingat bahwa invoice Anda mendekati tanggal jatuh tempo. Harap melakukan pembayaran untuk layanan dari
-                                <strong>
-                                    LDX Data Center
-                                </strong>.
+                                @if ($type === 'overdue')
+                                    Invoice Anda telah <strong style="color:#dc2626;">melewati tanggal jatuh tempo</strong>. Mohon segera melakukan pembayaran agar layanan dari
+                                    <strong>LDX Data Center</strong> tetap berjalan.
+                                @elseif ($type === 'due_today')
+                                    Invoice Anda <strong>jatuh tempo hari ini</strong>. Harap melakukan pembayaran untuk layanan dari
+                                    <strong>LDX Data Center</strong>.
+                                @else
+                                    Ini adalah pengingat bahwa tagihan Anda akan jatuh tempo dalam <strong>7 hari</strong>. Harap melakukan pembayaran untuk layanan dari
+                                    <strong>LDX Data Center</strong> sebelum tanggal jatuh tempo.
+                                @endif
                             </p>
 
                             <!-- INFO BOX -->

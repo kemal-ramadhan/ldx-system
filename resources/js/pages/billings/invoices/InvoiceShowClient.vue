@@ -128,7 +128,7 @@ defineOptions({
                 </Link>
 
                 <Link :href="`/client/invoices/${invoice.id}/payment`"
-                    v-if="['sent', 'pending'].includes(invoice.status)"
+                    v-if="['sent', 'pending', 'overdue'].includes(invoice.status)"
                     class="inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm text-white hover:bg-primary/90 dark:text-gray-900">
                     <CreditCard class="mr-2 h-4 w-4" />
                     Pay this Invoice

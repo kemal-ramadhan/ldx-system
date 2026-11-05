@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Mail\InvoiceReminderMail;
 use App\Models\Invoice;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
 
@@ -23,170 +24,100 @@ class SendInvoiceReminders extends Command
      * =========================================
      */
     protected $description =
-        'Send invoice payment reminders';
+        'Send invoice reminders (H-7, due date) and mark overdue invoices';
 
     /**
      * =========================================
      * HANDLE
      * =========================================
+     * Each invoice gets at most one email per stage:
+     * - upcoming  : 7 days before due date (skipped when the
+     *               invoice was issued today, the invoice email
+     *               already informed the client)
+     * - due_today : on the due date
+     * - overdue   : the day after the due date, status -> overdue
      */
     public function handle(): void
     {
+        $this->info('Starting invoice reminders...');
 
-        $this->info(
-            'Starting invoice reminders...'
-        );
+        $today = now()->toDateString();
 
-        /**
-         * =========================================
-         * GET PENDING INVOICES
-         * =========================================
-         */
-        $invoices = Invoice::with([
-                'client',
-                'service',
-            ])
-            ->whereIn('status', [
-                'pending',
-                'sent',
-            ])
-            ->whereDate(
-                'due_date',
-                '<=',
-                now()->addDays(3)
-            )
+        $upcoming = Invoice::with(['client', 'service', 'items'])
+            ->whereIn('status', ['pending', 'sent'])
+            ->whereDate('due_date', now()->addDays(7)->toDateString())
+            ->whereDate('issue_date', '<', $today)
             ->get();
 
-        /**
-         * =========================================
-         * NO INVOICES
-         * =========================================
-         */
-        if ($invoices->count() === 0) {
+        $dueToday = Invoice::with(['client', 'service', 'items'])
+            ->whereIn('status', ['pending', 'sent'])
+            ->whereDate('due_date', $today)
+            ->get();
 
-            $this->warn(
-                'No invoices need reminders.'
-            );
+        $overdue = Invoice::with(['client', 'service', 'items'])
+            ->whereIn('status', ['pending', 'sent'])
+            ->whereDate('due_date', '<', $today)
+            ->get();
 
-            return;
+        foreach ($overdue as $invoice) {
+            $invoice->update(['status' => 'overdue']);
         }
 
-        /**
-         * =========================================
-         * LOOP INVOICES
-         * =========================================
-         */
-        foreach ($invoices as $invoice) {
+        $sent = 0;
 
-            /**
-             * =========================================
-             * CHECK EMAIL
-             * =========================================
-             */
-            if (
-                !$invoice->client?->company_email
-            ) {
-
-                $this->warn(
-                    'Client email not found for invoice: '
-                    . $invoice->invoice_number
-                );
-
-                continue;
+        foreach (['upcoming' => $upcoming, 'due_today' => $dueToday, 'overdue' => $overdue] as $type => $invoices) {
+            foreach ($invoices as $invoice) {
+                if ($this->sendReminder($invoice, $type)) {
+                    $sent++;
+                }
             }
+        }
 
-            /**
-             * =========================================
-             * GENERATE PDF
-             * =========================================
-             */
-            $invoice->load([
-                'client',
-                'service',
-                'items',
+        $this->info("Invoice reminders completed. {$sent} email(s) sent, {$overdue->count()} invoice(s) marked overdue.");
+    }
+
+    private function sendReminder(Invoice $invoice, string $type): bool
+    {
+        if (!$invoice->client?->company_email) {
+            $this->warn("Client email not found for invoice: {$invoice->invoice_number}");
+            return false;
+        }
+
+        try {
+            $logoSrc = 'data:image/png;base64,' . base64_encode(
+                file_get_contents(public_path('assets/logos/ldx-logo.png'))
+            );
+            $logoLdxSrc = 'data:image/png;base64,' . base64_encode(
+                file_get_contents(public_path('assets/logos/ldx.png'))
+            );
+
+            $pdf = Pdf::loadView('pdf.invoice', [
+                'invoice' => $invoice,
+                'logoSrc' => $logoSrc,
+                'logoLdxSrc' => $logoLdxSrc,
             ]);
 
-            $logoPath = public_path('assets/logos/ldx-logo.png');
-            $logoLdx = public_path('assets/logos/ldx.png');
+            $directory = storage_path('app/public/invoices');
 
-            $logoData = base64_encode(
-                file_get_contents($logoPath)
-            );
-
-            $logoDataLdx = base64_encode(
-                file_get_contents($logoLdx)
-            );
-
-            $logoSrc = 'data:image/png;base64,' . $logoData;
-            $logoLdxSrc = 'data:image/png;base64,' . $logoDataLdx;
-
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
-                'pdf.invoice',
-                [
-                    'invoice' => $invoice,
-                    'logoSrc' => $logoSrc,
-                    'logoLdxSrc' => $logoLdxSrc,
-                ]
-            );
-
-            $fileName =
-                $invoice->invoice_number . '.pdf';
-
-            $filePath =
-                storage_path(
-                    'app/public/invoices/' . $fileName
-                );
-
-            if (
-                !file_exists(
-                    storage_path('app/public/invoices')
-                )
-            ) {
-
-                mkdir(
-                    storage_path('app/public/invoices'),
-                    0777,
-                    true
-                );
+            if (!file_exists($directory)) {
+                mkdir($directory, 0777, true);
             }
 
-            file_put_contents(
-                $filePath,
-                $pdf->output()
+            $filePath = $directory . '/' . $invoice->invoice_number . '.pdf';
+
+            file_put_contents($filePath, $pdf->output());
+
+            Mail::to($invoice->client->company_email)->send(
+                new InvoiceReminderMail($invoice, $filePath, $type)
             );
 
-            /**
-             * =========================================
-             * SEND REMINDER EMAIL
-             * =========================================
-             */
-            Mail::to(
-                $invoice->client->company_email
-            )->send(
-                new InvoiceReminderMail(
-                    $invoice,
-                    $filePath
-                )
-            );
+            $this->info("Reminder ({$type}) sent: {$invoice->invoice_number}");
 
-            /**
-             * =========================================
-             * SUCCESS LOG
-             * =========================================
-             */
-            $this->info(
-                'Reminder sent: '
-                . $invoice->invoice_number
-            );
+            return true;
+        } catch (\Throwable $th) {
+            $this->error("Failed to send reminder ({$type}) for {$invoice->invoice_number}: {$th->getMessage()}");
+
+            return false;
         }
-
-        /**
-         * =========================================
-         * COMPLETE
-         * =========================================
-         */
-        $this->info(
-            'Invoice reminders completed.'
-        );
     }
 }

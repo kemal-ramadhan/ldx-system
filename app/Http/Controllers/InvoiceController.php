@@ -310,6 +310,8 @@ class InvoiceController extends Controller
 
     private function processPaymentSuccess(Invoice $invoice)
     {
+        $this->activateServiceOnFirstPayment($invoice);
+
         /**
          * =========================================
          * GENERATE PDF FOR PAYMENT RECEIVED
@@ -384,6 +386,47 @@ class InvoiceController extends Controller
                 )
             );
         }
+    }
+
+    /**
+     * =========================================
+     * ACTIVATE SERVICE ON FIRST PAYMENT
+     * =========================================
+     * Saat invoice pertama dari sebuah service dibayar,
+     * service yang masih berstatus "pending" otomatis
+     * diaktifkan. Service yang sudah aktif / status lain
+     * (suspended, terminated, dll) tidak diubah.
+     */
+    private function activateServiceOnFirstPayment(Invoice $invoice): void
+    {
+        if (!$invoice->service_id) {
+            return;
+        }
+
+        $service = \App\Models\Service::query()
+            ->whereKey($invoice->service_id)
+            ->lockForUpdate()
+            ->first();
+
+        if (!$service || $service->status !== 'pending') {
+            return;
+        }
+
+        $hasPreviousPaidInvoice = Invoice::query()
+            ->where('service_id', $service->id)
+            ->where('id', '!=', $invoice->id)
+            ->where('status', 'paid')
+            ->exists();
+
+        if ($hasPreviousPaidInvoice) {
+            return;
+        }
+
+        $service->update([
+            'status' => 'active',
+        ]);
+
+        $invoice->setRelation('service', $service);
     }
 
     /**

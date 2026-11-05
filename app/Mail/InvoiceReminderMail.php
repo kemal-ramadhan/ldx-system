@@ -17,17 +17,24 @@ class InvoiceReminderMail extends Mailable
     public $pdfPath;
 
     /**
+     * upcoming (H-7) | due_today (H-0) | overdue
+     */
+    public $type;
+
+    /**
      * =========================================
      * CONSTRUCTOR
      * =========================================
      */
     public function __construct(
         Invoice $invoice,
-        string $pdfPath
+        string $pdfPath,
+        string $type = 'upcoming'
     ) {
 
         $this->invoice = $invoice;
         $this->pdfPath = $pdfPath;
+        $this->type = $type;
     }
 
     /**
@@ -37,9 +44,15 @@ class InvoiceReminderMail extends Mailable
      */
     public function envelope(): Envelope
     {
+        $prefix = match ($this->type) {
+            'overdue' => 'Invoice Overdue',
+            'due_today' => 'Invoice Due Today',
+            default => 'Invoice Payment Reminder',
+        };
+
         return new Envelope(
             subject:
-                'Invoice Payment Reminder - '
+                $prefix . ' - '
                 . $this->invoice->invoice_number,
         );
     }

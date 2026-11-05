@@ -2,12 +2,10 @@
 
 namespace App\Console\Commands;
 
-use Carbon\Carbon;
-use App\Models\Invoice;
+use App\Http\Controllers\InvoiceController;
 use App\Models\Service;
-use App\Mail\InvoiceMail;
+use App\Services\ServiceInvoiceGenerator;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Mail;
 
 class GenerateInvoices extends Command
 {
@@ -25,7 +23,12 @@ class GenerateInvoices extends Command
      * =========================================
      */
     protected $description =
-        'Generate recurring invoices automatically';
+        'Generate recurring invoices for active services 7 days before their next due date';
+
+    /**
+     * Days before next_due_date the invoice is issued & emailed
+     */
+    private const DAYS_BEFORE_DUE = 7;
 
     /**
      * =========================================
@@ -34,309 +37,61 @@ class GenerateInvoices extends Command
      */
     public function handle(): void
     {
-
-        $this->info(
-            'Starting recurring invoice generation...'
-        );
+        $this->info('Starting recurring invoice generation...');
 
         /**
          * =========================================
-         * GET ACTIVE SERVICES
+         * ACTIVE SERVICES DUE WITHIN 7 DAYS
          * =========================================
          */
-        $services = Service::with('client')
-            ->where(
-                'status',
-                'active'
-            )
+        $services = Service::with(['client', 'serviceItems.product'])
+            ->where('status', 'active')
             ->whereDate(
                 'next_due_date',
                 '<=',
-                now()->toDateString()
+                now()->addDays(self::DAYS_BEFORE_DUE)->toDateString()
             )
             ->get();
 
-        /**
-         * =========================================
-         * NO SERVICES
-         * =========================================
-         */
-        if ($services->count() === 0) {
-
-            $this->warn(
-                'No services due today.'
-            );
-
+        if ($services->isEmpty()) {
+            $this->warn('No services due.');
             return;
         }
 
-        /**
-         * =========================================
-         * LOOP SERVICES
-         * =========================================
-         */
         foreach ($services as $service) {
 
             /**
-             * =========================================
-             * CHECK EXISTING INVOICE
-             * =========================================
+             * Skip when this period was already invoiced
+             * (e.g. generated manually from the service page)
              */
-            $existingInvoice = Invoice::where(
-                'service_id',
-                $service->id
-            )
-            ->whereMonth(
-                'issue_date',
-                now()->month
-            )
-            ->whereYear(
-                'issue_date',
-                now()->year
-            )
-            ->exists();
+            if (ServiceInvoiceGenerator::periodInvoiceExists($service)) {
+                $this->warn("Invoice already exists for service {$service->code} ({$service->next_due_date}).");
+                continue;
+            }
 
-            /**
-             * =========================================
-             * SKIP IF EXISTS
-             * =========================================
-             */
-            if ($existingInvoice) {
-
-                $this->warn(
-                    'Invoice already exists for service: '
-                    . $service->name
-                );
-
+            try {
+                $invoice = ServiceInvoiceGenerator::generate($service);
+            } catch (\Throwable $th) {
+                $this->error("Failed to generate invoice for service {$service->code}: {$th->getMessage()}");
                 continue;
             }
 
             /**
              * =========================================
-             * GENERATE INVOICE NUMBER
+             * SEND INVOICE EMAIL (H-7 notice)
              * =========================================
              */
-            $invoiceNumber =
-                'INV-'
-                . now()->format('Ymd')
-                . '-'
-                . strtoupper(
-                    uniqid()
-                );
+            try {
+                InvoiceController::deliverInvoiceEmail($invoice);
 
-            /**
-             * =========================================
-             * CREATE INVOICE
-             * =========================================
-             */
-            $invoice = Invoice::create([
-                'invoice_number' =>
-                    $invoiceNumber,
-                'client_id' =>
-                    $service->client_id,
-                'service_id' =>
-                    $service->id,
-                'issue_date' =>
-                    now(),
-                'due_date' =>
-                    now()->addDays(7),
-                'subtotal' =>
-                    $service->monthly_total,
-                'tax' => 0,
-                'total' =>
-                    $service->monthly_total,
-                'status' =>
-                    'sent',
-            ]);
+                $this->info("Invoice created & sent: {$invoice->invoice_number}");
+            } catch (\Throwable $th) {
+                $invoice->update(['status' => 'pending']);
 
-            /**
-             * =========================================
-             * UPDATE NEXT DUE DATE
-             * =========================================
-             */
-            $nextDate = Carbon::parse(
-                $service->next_due_date
-            );
-
-            switch ($service->billing_cycle) {
-
-                /**
-                 * =========================================
-                 * MONTHLY
-                 * =========================================
-                 */
-                case 'monthly':
-
-                    $nextDate->addMonth();
-
-                    break;
-
-                /**
-                 * =========================================
-                 * QUARTERLY
-                 * =========================================
-                 */
-                case 'quarterly':
-
-                    $nextDate->addMonths(3);
-
-                    break;
-
-                /**
-                 * =========================================
-                 * YEARLY
-                 * =========================================
-                 */
-                case 'yearly':
-
-                    $nextDate->addYear();
-
-                    break;
-
-                /**
-                 * =========================================
-                 * ONE TIME
-                 * =========================================
-                 */
-                case 'one_time':
-
-                    $service->update([
-                        'status' => 'inactive',
-                    ]);
-
-                    break;
+                $this->error("Invoice {$invoice->invoice_number} created, but email failed: {$th->getMessage()}");
             }
-
-            /**
-             * =========================================
-             * UPDATE SERVICE
-             * =========================================
-             */
-            if (
-                $service->billing_cycle !== 'one_time'
-            ) {
-
-                $service->update([
-                    'next_due_date' => $nextDate,
-                ]);
-            }
-
-            /**
-             * =========================================
-             * SEND EMAIL
-             * =========================================
-             */
-            /**
-             * =========================================
-             * GENERATE PDF
-             * =========================================
-             */
-            $logoPath = public_path('assets/logos/ldx-logo.png');
-            $logoLdx = public_path('assets/logos/ldx.png');
-
-            $logoData = base64_encode(
-                file_get_contents($logoPath)
-            );
-
-            $logoDataLdx = base64_encode(
-                file_get_contents($logoLdx)
-            );
-
-            $logoSrc = 'data:image/png;base64,' . $logoData;
-            $logoLdxSrc = 'data:image/png;base64,' . $logoDataLdx;
-
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
-                'pdf.invoice',
-                [
-                    'invoice' => $invoice,
-                    'logoSrc' => $logoSrc,
-                    'logoLdxSrc' => $logoLdxSrc,
-                ]
-            );
-
-            /**
-             * =========================================
-             * FILE NAME
-             * =========================================
-             */
-            $fileName =
-                $invoice->invoice_number . '.pdf';
-
-            /**
-             * =========================================
-             * STORAGE PATH
-             * =========================================
-             */
-            $filePath =
-                storage_path(
-                    'app/public/invoices/' . $fileName
-                );
-
-            /**
-             * =========================================
-             * CREATE DIRECTORY
-             * =========================================
-             */
-            if (
-                !file_exists(
-                    storage_path('app/public/invoices')
-                )
-            ) {
-
-                mkdir(
-                    storage_path('app/public/invoices'),
-                    0777,
-                    true
-                );
-            }
-
-            /**
-             * =========================================
-             * SAVE PDF
-             * =========================================
-             */
-            file_put_contents(
-                $filePath,
-                $pdf->output()
-            );
-
-            /**
-             * =========================================
-             * SEND EMAIL
-             * =========================================
-             */
-            if (
-                $service->client?->company_email
-            ) {
-
-                Mail::to(
-                    $service->client->company_email
-                )->send(
-                    new InvoiceMail(
-                        $invoice,
-                        $filePath
-                    )
-                );
-            }
-
-            /**
-             * =========================================
-             * SUCCESS MESSAGE
-             * =========================================
-             */
-            $this->info(
-                'Invoice created successfully: '
-                . $invoice->invoice_number
-            );
         }
 
-        /**
-         * =========================================
-         * DONE
-         * =========================================
-         */
-        $this->info(
-            'Recurring invoice generation completed.'
-        );
+        $this->info('Recurring invoice generation completed.');
     }
 }

@@ -38,7 +38,7 @@ const form = useForm({
     pph23_enabled: false,
     pph23_percentage: 2,
 
-    status: 'active',
+    status: 'pending',
 
     items: [
         {

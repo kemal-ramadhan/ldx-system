@@ -4,15 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\InvoiceController;
 use App\Models\Client;
-use App\Models\Invoice;
-use App\Models\InvoiceItem;
 use App\Models\Product;
 use App\Models\Rack;
 use App\Models\Service;
 use App\Models\ServiceItem;
+use App\Services\ServiceInvoiceGenerator;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -253,7 +250,10 @@ class ServiceController extends Controller
             'rack.room.locationDataCenter',
 
             'serviceItems.product',
-        ])->withCount('invoices')->findOrFail($id);
+        ])
+            ->withCount('invoices')
+            ->withExists(['invoices as has_paid_invoice' => fn ($q) => $q->where('status', 'paid')])
+            ->findOrFail($id);
 
         return Inertia::render('services/services/ServiceShow', [
 
@@ -509,131 +509,9 @@ class ServiceController extends Controller
      */
     public function generateInvoice(Service $service)
     {
-        DB::beginTransaction();
-
         try {
-            /**
-             * =========================================
-             * LOAD RELATIONS
-             * =========================================
-             */
-            $service->load([
-                'client',
-                'serviceItems.product',
-            ]);
-            /**
-             * =========================================
-             * VALIDATE SERVICE
-             * =========================================
-             */
-            if (
-                !in_array($service->status, ['pending', 'active'])
-            ) {
-
-                return back()->withErrors([
-                    'error' => 'Only pending or active services can generate invoices.'
-                ]);
-            }
-
-            /**
-             * =========================================
-             * CHECK ITEMS
-             * =========================================
-             */
-            if (
-                $service->serviceItems->isEmpty()
-            ) {
-
-                return back()->withErrors([
-                    'error' => 'Service has no items.'
-                ]);
-            }
-
-            /**
-             * =========================================
-             * GENERATE INVOICE NUMBER
-             * =========================================
-             */
-            $invoiceNumber = $this->generateInvoiceNumber();
-
-            /**
-             * =========================================
-             * CREATE INVOICE
-             * =========================================
-             */
-            $invoice = Invoice::create([
-                'invoice_number' => $invoiceNumber,
-                'client_id' => $service->client_id,
-                'service_id' => $service->id,
-                'issue_date' => now(),
-                'due_date' => $service->next_due_date,
-                'subtotal' => $service->monthly_total,
-                'ppn_enabled' => $service->ppn_enabled,
-                'ppn_percentage' => $service->ppn_percentage,
-                'ppn_amount' => $service->ppn_amount,
-                'pph23_enabled' => $service->pph23_enabled,
-                'pph23_percentage' => $service->pph23_percentage,
-                'pph23_amount' => $service->pph23_amount,
-                'total' => $service->total,
-                'status' => 'sent',
-                'created_by' => Auth::id(),
-            ]);
-
-            /**
-             * =========================================
-             * CREATE INVOICE ITEMS
-             * =========================================
-             */
-            foreach (
-                $service->serviceItems
-                as $item
-            ) {
-
-                InvoiceItem::create([
-                    'invoice_id' => $invoice->id,
-                    'product_id' => $item->product_id,
-                    'name' => $item->product?->name,
-                    'description' => $item->description,
-                    'quantity' => $item->quantity,
-                    'price' => $item->price,
-                    'total' => $item->subtotal,
-                ]);
-            }
-
-            /**
-             * =========================================
-             * UPDATE NEXT DUE DATE
-             * =========================================
-             */
-            $nextDueDate = Carbon::parse(
-                $service->next_due_date
-            );
-
-            switch ($service->billing_cycle) {
-                case 'monthly':
-                    $nextDueDate->addMonth();
-                    break;
-                case 'quarterly':
-                    $nextDueDate->addMonths(3);
-                    break;
-                case 'yearly':
-                    $nextDueDate->addYear();
-                    break;
-            }
-
-            /**
-             * First invoice activates a pending service
-             */
-            $service->update([
-                'next_due_date' => $nextDueDate,
-                'status' => 'active',
-            ]);
-
-            DB::commit();
+            $invoice = ServiceInvoiceGenerator::generate($service);
         } catch (\Throwable $th) {
-
-            DB::rollBack();
-
             return back()->withErrors([
                 'error' => $th->getMessage()
             ]);
@@ -662,51 +540,9 @@ class ServiceController extends Controller
             }
         })->afterResponse();
 
-        /**
-         * =========================================
-         * REDIRECT
-         * =========================================
-         */
         // ?generated=1 opens the success popup on the invoice page
         return redirect(
             "/admin/invoices/{$invoice->id}?generated=1"
-        );
-    }
-
-    /**
-     * =========================================
-     * GENERATE INVOICE NUMBER
-     * =========================================
-     */
-    private function generateInvoiceNumber()
-    {
-        $date = now()->format('Ym');
-
-        $lastInvoice = Invoice::query()->where(
-            'invoice_number',
-            'like',
-            "INV-{$date}-%"
-        )
-            ->latest('id')
-            ->first();
-
-        if ($lastInvoice) {
-
-            $lastNumber = (int) substr(
-                $lastInvoice->invoice_number,
-                -4
-            );
-
-            $newNumber = $lastNumber + 1;
-        } else {
-
-            $newNumber = 1;
-        }
-
-        return sprintf(
-            'INV-%s-%04d',
-            $date,
-            $newNumber
         );
     }
 }

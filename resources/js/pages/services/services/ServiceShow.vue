@@ -483,6 +483,10 @@ defineOptions({
                             <Receipt class="mr-2 h-4 w-4" />
                             {{ isGenerating ? 'Generating & Sending...' : 'Generate Invoice' }}
                         </button>
+
+                        <p v-if="service.status === 'pending'" class="mt-2 text-center text-xs text-muted-foreground">
+                            Alur: Generate Invoice → client bayar → Mark as Paid → Activate
+                        </p>
                     </div>
 
                 </div>
@@ -504,6 +508,12 @@ defineOptions({
                     {{ statusActions[pendingAction].description }}
                 </DialogDescription>
             </DialogHeader>
+
+            <div v-if="pendingAction === 'activate' && !service.has_paid_invoice"
+                class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300">
+                Belum ada invoice yang <strong>Paid</strong> untuk service ini.
+                Pastikan client sudah membayar sebelum mengaktifkan layanan.
+            </div>
 
             <div class="grid gap-2 rounded-lg border p-4 text-sm dark:border-gray-700">
                 <div class="flex justify-between gap-4">
@@ -540,7 +550,8 @@ defineOptions({
                     Invoice akan dibuat dengan status <strong>Sent</strong> dan langsung dikirim ke email client.
                     <template v-if="service.status === 'pending'">
                         <br><br>
-                        Service ini masih <strong>Pending</strong> dan akan otomatis menjadi <strong>Active</strong>.
+                        Service tetap <strong>Pending</strong>. Klik <strong>Activate</strong> setelah invoice dibayar (Paid)
+                        dan layanan sudah diinfokan ke client.
                     </template>
                 </DialogDescription>
             </DialogHeader>

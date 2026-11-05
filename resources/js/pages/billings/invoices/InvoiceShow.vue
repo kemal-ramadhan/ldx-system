@@ -190,7 +190,7 @@ const sendInvoice = () => {
 
                 <!-- Send Invoice Email -->
                 <button
-                    v-if="['sent', 'pending'].includes(invoice.status)"
+                    v-if="['sent', 'pending', 'overdue'].includes(invoice.status)"
                     @click="sendInvoice"
                     class="inline-flex items-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-700 hover:bg-blue-100"
                 >
