@@ -9,6 +9,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { computed } from 'vue';
 
 import ItemTaxFields from '@/components/ItemTaxFields.vue';
+import SearchSelect from '@/components/SearchSelect.vue';
 import { defaultItemTax, itemTaxFrom, taxSummary, type ItemTax } from '@/lib/tax';
 
 import {
@@ -72,6 +73,19 @@ const form = useForm<ServiceForm>({
         ...itemTaxFrom(item),
     })),
 });
+
+const billingCycleOptions = [
+    { value: 'monthly', label: 'Monthly' },
+    { value: 'quarterly', label: 'Quarterly' },
+    { value: 'yearly', label: 'Yearly' },
+];
+
+const statusOptions = [
+    { value: 'pending', label: 'Pending' },
+    { value: 'active', label: 'Active' },
+    { value: 'suspended', label: 'Suspended' },
+    { value: 'terminated', label: 'Terminated' },
+];
 
 const addItem = () => {
     form.items.push({
@@ -179,16 +193,8 @@ defineOptions({
                             <span class="text-red-500">*</span>
                         </Label>
 
-                        <select v-model="form.client_id"
-                            class="rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none dark:bg-white dark:text-gray-900">
-                            <option :value="null">
-                                Select Client
-                            </option>
-
-                            <option v-for="client in clients" :key="client.id" :value="client.id">
-                                {{ client.company_name }}
-                            </option>
-                        </select>
+                        <SearchSelect v-model="form.client_id" :options="clients" label="company_name"
+                            placeholder="Search Client" />
 
                         <InputError :message="errors.client_id" />
                     </div>
@@ -200,16 +206,7 @@ defineOptions({
                             <span class="text-red-500">*</span>
                         </Label>
 
-                        <select v-model="form.rack_id"
-                            class="rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none dark:bg-white dark:text-gray-900">
-                            <option :value="null">
-                                Select Rack
-                            </option>
-
-                            <option v-for="rack in racks" :key="rack.id" :value="rack.id">
-                                {{ rack.name }}
-                            </option>
-                        </select>
+                        <SearchSelect v-model="form.rack_id" :options="racks" label="name" placeholder="Search Rack" />
 
                         <InputError :message="errors.rack_id" />
                     </div>
@@ -232,20 +229,8 @@ defineOptions({
                             Billing Cycle
                         </Label>
 
-                        <select v-model="form.billing_cycle"
-                            class="rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none dark:bg-white dark:text-gray-900">
-                            <option value="monthly">
-                                Monthly
-                            </option>
-
-                            <option value="quarterly">
-                                Quarterly
-                            </option>
-
-                            <option value="yearly">
-                                Yearly
-                            </option>
-                        </select>
+                        <SearchSelect v-model="form.billing_cycle" :options="billingCycleOptions" label="label"
+                            value-key="value" placeholder="Select Billing Cycle" />
 
                         <InputError :message="errors.billing_cycle" />
                     </div>
@@ -289,24 +274,8 @@ defineOptions({
                             Status
                         </Label>
 
-                        <select v-model="form.status"
-                            class="rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none dark:bg-white dark:text-gray-900">
-                            <option value="pending">
-                                Pending
-                            </option>
-
-                            <option value="active">
-                                Active
-                            </option>
-
-                            <option value="suspended">
-                                Suspended
-                            </option>
-
-                            <option value="terminated">
-                                Terminated
-                            </option>
-                        </select>
+                        <SearchSelect v-model="form.status" :options="statusOptions" label="label" value-key="value"
+                            placeholder="Select Status" />
 
                         <InputError :message="errors.status" />
                     </div>
@@ -364,16 +333,8 @@ defineOptions({
                                 Product
                             </Label>
 
-                            <select v-model="item.product_id" @change="updateProduct(index)"
-                                class="rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none dark:bg-white dark:text-gray-900">
-                                <option :value="null">
-                                    Select Product
-                                </option>
-
-                                <option v-for="product in products" :key="product.id" :value="product.id">
-                                    {{ product.name }}
-                                </option>
-                            </select>
+                            <SearchSelect v-model="item.product_id" :options="products" label="name"
+                                placeholder="Search Product" @change="updateProduct(index)" />
 
                         </div>
 
