@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
+import { formatItemTax } from '@/lib/tax';
 
 const props = defineProps<{
     title: string;
@@ -207,6 +208,14 @@ defineOptions({
                                     </th>
 
                                     <th class="px-4 py-3">
+                                        PPN
+                                    </th>
+
+                                    <th class="px-4 py-3">
+                                        PPh 23
+                                    </th>
+
+                                    <th class="px-4 py-3">
                                         Subtotal
                                     </th>
                                 </tr>
@@ -225,6 +234,14 @@ defineOptions({
 
                                     <td class="px-4 py-3">
                                         Rp {{ Number(item.price).toLocaleString('id-ID') }}
+                                    </td>
+
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        {{ formatItemTax(item.ppn_enabled, item.ppn_percentage, item.ppn_amount) }}
+                                    </td>
+
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        {{ formatItemTax(item.pph23_enabled, item.pph23_percentage, item.pph23_amount) }}
                                     </td>
 
                                     <td class="px-4 py-3 font-medium">
@@ -269,6 +286,36 @@ defineOptions({
 
                             <span class="font-semibold">
                                 Rp {{ Number(service.monthly_total).toLocaleString('id-ID') }}
+                            </span>
+                        </div>
+
+                        <div v-if="Number(service.ppn_amount) > 0" class="flex items-center justify-between">
+                            <span class="text-sm text-muted-foreground">
+                                PPN
+                            </span>
+
+                            <span class="font-semibold">
+                                Rp {{ Number(service.ppn_amount).toLocaleString('id-ID') }}
+                            </span>
+                        </div>
+
+                        <div v-if="Number(service.pph23_amount) > 0" class="flex items-center justify-between">
+                            <span class="text-sm text-muted-foreground">
+                                PPh 23
+                            </span>
+
+                            <span class="font-semibold">
+                                Rp {{ Number(service.pph23_amount).toLocaleString('id-ID') }}
+                            </span>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-muted-foreground">
+                                Grand Total
+                            </span>
+
+                            <span class="font-semibold">
+                                Rp {{ Number(service.total).toLocaleString('id-ID') }}
                             </span>
                         </div>
 

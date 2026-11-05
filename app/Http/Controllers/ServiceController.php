@@ -9,6 +9,7 @@ use App\Models\Rack;
 use App\Models\Service;
 use App\Models\ServiceItem;
 use App\Services\ServiceInvoiceGenerator;
+use App\Services\TaxCalculator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -112,10 +113,6 @@ class ServiceController extends Controller
             'next_due_date' => 'required|date',
             'status' => 'required|in:pending,active,suspended,terminated',
 
-            'ppn_enabled' => 'nullable|boolean',
-            'ppn_percentage' => 'nullable|numeric|min:0|max:100',
-            'pph23_enabled' => 'nullable|boolean',
-            'pph23_percentage' => 'nullable|numeric|min:0|max:100',
 
             /**
              * =========================
@@ -126,37 +123,19 @@ class ServiceController extends Controller
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.qty' => 'required|numeric|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
+            'items.*.ppn_enabled' => 'nullable|boolean',
+            'items.*.ppn_percentage' => 'nullable|numeric|min:0|max:100',
+            'items.*.pph23_enabled' => 'nullable|boolean',
+            'items.*.pph23_percentage' => 'nullable|numeric|min:0|max:100',
         ]);
 
         DB::beginTransaction();
 
         try {
 
-            $subtotal = collect($validated['items'])->sum(function ($item) {
-                return $item['qty'] * $item['unit_price'];
-            });
+            $items = $this->buildItems($validated['items'], 'qty', 'unit_price');
 
-            $ppnEnabled = $request->boolean('ppn_enabled');
-
-            $ppnPercentage = $ppnEnabled
-                ? (float) ($validated['ppn_percentage'] ?? 0)
-                : 0;
-
-            $ppnAmount = $ppnEnabled
-                ? $subtotal * ($ppnPercentage / 100)
-                : 0;
-
-            $pph23Enabled = $request->boolean('pph23_enabled');
-
-            $pph23Percentage = $pph23Enabled
-                ? (float) ($validated['pph23_percentage'] ?? 0)
-                : 0;
-
-            $pph23Amount = $pph23Enabled
-                ? $subtotal * ($pph23Percentage / 100)
-                : 0;
-            
-            $total = $subtotal + $ppnAmount - $pph23Amount;
+            $summary = TaxCalculator::summary($items);
 
             /**
              * =========================
@@ -173,14 +152,14 @@ class ServiceController extends Controller
                 'start_date' => $validated['start_date'],
                 'end_date' => $validated['end_date'] ?? null,
                 'next_due_date' => $validated['next_due_date'],
-                'monthly_total' => $subtotal,
-                'ppn_enabled' => $ppnEnabled, 
-                'ppn_percentage' => $ppnPercentage,
-                'ppn_amount' => $ppnAmount,
-                'pph23_enabled' => $pph23Enabled, 
-                'pph23_percentage' => $pph23Percentage,
-                'pph23_amount' => $pph23Amount,
-                'total' => $total,
+                'monthly_total' => $summary['subtotal'],
+                'ppn_enabled' => $summary['ppn_enabled'],
+                'ppn_percentage' => $summary['ppn_percentage'],
+                'ppn_amount' => $summary['ppn_amount'],
+                'pph23_enabled' => $summary['pph23_enabled'],
+                'pph23_percentage' => $summary['pph23_percentage'],
+                'pph23_amount' => $summary['pph23_amount'],
+                'total' => $summary['total'],
                 'status' => $validated['status'],
             ]);
 
@@ -189,18 +168,9 @@ class ServiceController extends Controller
              * CREATE SERVICE ITEMS
              * =========================
              */
-            foreach ($validated['items'] as $item) {
-                $subtotal =
-                    $item['qty'] *
-                    $item['unit_price'];
-
-                ServiceItem::create([
+            foreach ($items as $item) {
+                ServiceItem::create($item + [
                     'service_id' => $service->id,
-                    'product_id' => $item['product_id'],
-                    'quantity' => $item['qty'],
-                    'price' => $item['unit_price'],
-                    'subtotal' => $subtotal,
-                    'description' => null
                 ]);
             }
 
@@ -217,6 +187,32 @@ class ServiceController extends Controller
                 'error' => $th->getMessage()
             ]);
         }
+    }
+
+    /**
+     * =========================================
+     * BUILD ITEMS WITH PER-ITEM TAX
+     * =========================================
+     */
+    private function buildItems(array $items, string $qtyKey, string $priceKey): array
+    {
+        return collect($items)->map(function ($item) use ($qtyKey, $priceKey) {
+            $subtotal = (float) $item[$qtyKey] * (float) $item[$priceKey];
+
+            return [
+                'product_id' => $item['product_id'],
+                'quantity' => $item[$qtyKey],
+                'price' => $item[$priceKey],
+                'subtotal' => $subtotal,
+                'description' => null,
+            ] + TaxCalculator::item(
+                $subtotal,
+                filter_var($item['ppn_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                $item['ppn_percentage'] ?? null,
+                filter_var($item['pph23_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                $item['pph23_percentage'] ?? null,
+            );
+        })->all();
     }
 
     private function generateServiceCode()
@@ -316,10 +312,6 @@ class ServiceController extends Controller
             'next_due_date' => 'required|date',
             'status' => 'required|in:pending,active,suspended,terminated',
 
-            'ppn_enabled' => 'nullable|boolean',
-            'ppn_percentage' => 'nullable|numeric|min:0|max:100',
-            'pph23_enabled' => 'nullable|boolean',
-            'pph23_percentage' => 'nullable|numeric|min:0|max:100',
 
             /**
              * =========================
@@ -330,37 +322,19 @@ class ServiceController extends Controller
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|numeric|min:1',
             'items.*.price' => 'required|numeric|min:0',
+            'items.*.ppn_enabled' => 'nullable|boolean',
+            'items.*.ppn_percentage' => 'nullable|numeric|min:0|max:100',
+            'items.*.pph23_enabled' => 'nullable|boolean',
+            'items.*.pph23_percentage' => 'nullable|numeric|min:0|max:100',
         ]);
 
         DB::beginTransaction();
 
         try {
 
-            $subtotal = collect($validated['items'])->sum(function ($item) {
-                return $item['quantity'] * $item['price'];
-            });
+            $items = $this->buildItems($validated['items'], 'quantity', 'price');
 
-            $ppnEnabled = $request->boolean('ppn_enabled');
-
-            $ppnPercentage = $ppnEnabled
-                ? (float) ($validated['ppn_percentage'] ?? 0)
-                : 0;
-
-            $ppnAmount = $ppnEnabled
-                ? $subtotal * ($ppnPercentage / 100)
-                : 0;
-
-            $pph23Enabled = $request->boolean('pph23_enabled');
-
-            $pph23Percentage = $pph23Enabled
-                ? (float) ($validated['pph23_percentage'] ?? 0)
-                : 0;
-
-            $pph23Amount = $pph23Enabled
-                ? $subtotal * ($pph23Percentage / 100)
-                : 0;
-            
-            $total = $subtotal + $ppnAmount - $pph23Amount;
+            $summary = TaxCalculator::summary($items);
 
             /**
              * =========================
@@ -376,14 +350,14 @@ class ServiceController extends Controller
                 'start_date' => $validated['start_date'],
                 'end_date' => $validated['end_date'] ?? null,
                 'next_due_date' => $validated['next_due_date'],
-                'monthly_total' => $subtotal,
-                'ppn_enabled' => $ppnEnabled,
-                'ppn_percentage' => $ppnPercentage,
-                'ppn_amount' => $ppnAmount,
-                'pph23_enabled' => $pph23Enabled,
-                'pph23_percentage' => $pph23Percentage,
-                'pph23_amount' => $pph23Amount,
-                'total' => $total,
+                'monthly_total' => $summary['subtotal'],
+                'ppn_enabled' => $summary['ppn_enabled'],
+                'ppn_percentage' => $summary['ppn_percentage'],
+                'ppn_amount' => $summary['ppn_amount'],
+                'pph23_enabled' => $summary['pph23_enabled'],
+                'pph23_percentage' => $summary['pph23_percentage'],
+                'pph23_amount' => $summary['pph23_amount'],
+                'total' => $summary['total'],
                 'status' => $validated['status'],
             ]);
 
@@ -399,16 +373,9 @@ class ServiceController extends Controller
              * INSERT NEW ITEMS
              * =========================
              */
-            foreach ($validated['items'] as $item) {
-                $subtotal =
-                    $item['quantity'] *
-                    $item['price'];
-                ServiceItem::create([
+            foreach ($items as $item) {
+                ServiceItem::create($item + [
                     'service_id' => $service->id,
-                    'product_id' => $item['product_id'],
-                    'quantity' => $item['quantity'],
-                    'price' => $item['price'],
-                    'subtotal' => $subtotal,
                 ]);
             }
 

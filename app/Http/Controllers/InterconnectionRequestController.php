@@ -14,6 +14,7 @@ use App\Models\Invoice;
 use App\Models\Product;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use App\Services\TaxCalculator;
 
 class InterconnectionRequestController extends Controller
 {
@@ -779,29 +780,35 @@ class InterconnectionRequestController extends Controller
             'products.*.id' => 'required|exists:products,id',
             'products.*.quantity' => 'required|integer|min:1',
             'billing_cycle' => 'required|in:one-time,monthly,yearly',
-            'ppn_enabled' => 'boolean',
-            'ppn_percentage' => 'nullable|numeric|min:0|max:100',
-            'pph23_enabled' => 'boolean',
-            'pph23_percentage' => 'nullable|numeric|min:0|max:100',
+            'products.*.ppn_enabled' => 'nullable|boolean',
+            'products.*.ppn_percentage' => 'nullable|numeric|min:0|max:100',
+            'products.*.pph23_enabled' => 'nullable|boolean',
+            'products.*.pph23_percentage' => 'nullable|numeric|min:0|max:100',
         ]);
 
         DB::transaction(function () use ($interconnection, $validated) {
-            $subtotal = 0;
             $serviceItems = [];
             $invoiceItems = [];
-            
+
             foreach ($validated['products'] as $productData) {
                 $product = Product::find($productData['id']);
                 $itemSubtotal = $product->base_price * $productData['quantity'];
-                $subtotal += $itemSubtotal;
-                
+
+                $tax = TaxCalculator::item(
+                    (float) $itemSubtotal,
+                    filter_var($productData['ppn_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                    $productData['ppn_percentage'] ?? null,
+                    filter_var($productData['pph23_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                    $productData['pph23_percentage'] ?? null,
+                );
+
                 $serviceItems[] = [
                     'product_id' => $product->id,
                     'description' => $product->name,
                     'quantity' => $productData['quantity'],
                     'price' => $product->base_price,
                     'subtotal' => $itemSubtotal,
-                ];
+                ] + $tax;
 
                 $invoiceItems[] = [
                     'product_id' => $product->id,
@@ -809,18 +816,10 @@ class InterconnectionRequestController extends Controller
                     'quantity' => $productData['quantity'],
                     'price' => $product->base_price,
                     'total' => $itemSubtotal,
-                ];
+                ] + $tax;
             }
 
-            $ppnEnabled = $validated['ppn_enabled'] ?? false;
-            $ppnPercentage = $ppnEnabled ? ($validated['ppn_percentage'] ?? 11) : 0;
-            $ppnAmount = $ppnEnabled ? ($subtotal * ($ppnPercentage / 100)) : 0;
-
-            $pph23Enabled = $validated['pph23_enabled'] ?? false;
-            $pph23Percentage = $pph23Enabled ? ($validated['pph23_percentage'] ?? 2) : 0;
-            $pph23Amount = $pph23Enabled ? ($subtotal * ($pph23Percentage / 100)) : 0;
-
-            $grandTotal = $subtotal + $ppnAmount - $pph23Amount;
+            $summary = TaxCalculator::summary($serviceItems);
 
             $serviceCode = 'SRV-' . now()->format('Ymd') . '-' . mt_rand(1000, 9999);
             $service = Service::create([
@@ -833,14 +832,14 @@ class InterconnectionRequestController extends Controller
                 'start_date' => now(),
                 'end_date' => $validated['billing_cycle'] == 'one-time' ? now() : null, 
                 'next_due_date' => $validated['billing_cycle'] == 'monthly' ? now()->addMonth() : ($validated['billing_cycle'] == 'yearly' ? now()->addYear() : null),
-                'ppn_enabled' => $ppnEnabled,
-                'ppn_percentage' => $ppnPercentage,
-                'ppn_amount' => $ppnAmount,
-                'pph23_enabled' => $pph23Enabled,
-                'pph23_percentage' => $pph23Percentage,
-                'pph23_amount' => $pph23Amount,
-                'monthly_total' => $grandTotal, 
-                'total' => $grandTotal,
+                'ppn_enabled' => $summary['ppn_enabled'],
+                'ppn_percentage' => $summary['ppn_percentage'],
+                'ppn_amount' => $summary['ppn_amount'],
+                'pph23_enabled' => $summary['pph23_enabled'],
+                'pph23_percentage' => $summary['pph23_percentage'],
+                'pph23_amount' => $summary['pph23_amount'],
+                'monthly_total' => $summary['subtotal'],
+                'total' => $summary['total'],
                 'status' => 'active',
             ]);
 
@@ -855,14 +854,14 @@ class InterconnectionRequestController extends Controller
                 'service_id' => $service->id,
                 'issue_date' => now(),
                 'due_date' => now()->addDays(14),
-                'subtotal' => $subtotal,
-                'ppn_enabled' => $ppnEnabled,
-                'ppn_percentage' => $ppnPercentage,
-                'ppn_amount' => $ppnAmount,
-                'pph23_enabled' => $pph23Enabled,
-                'pph23_percentage' => $pph23Percentage,
-                'pph23_amount' => $pph23Amount,
-                'total' => $grandTotal,
+                'subtotal' => $summary['subtotal'],
+                'ppn_enabled' => $summary['ppn_enabled'],
+                'ppn_percentage' => $summary['ppn_percentage'],
+                'ppn_amount' => $summary['ppn_amount'],
+                'pph23_enabled' => $summary['pph23_enabled'],
+                'pph23_percentage' => $summary['pph23_percentage'],
+                'pph23_amount' => $summary['pph23_amount'],
+                'total' => $summary['total'],
                 'status' => 'pending',
                 'created_by' => Auth::id(),
             ]);

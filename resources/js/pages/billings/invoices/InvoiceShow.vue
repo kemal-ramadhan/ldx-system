@@ -1,6 +1,7 @@
 ```vue
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
+import { formatItemTax } from '@/lib/tax';
 import { onMounted, ref } from 'vue';
 import {
     Dialog,
@@ -335,23 +336,23 @@ const sendInvoice = () => {
                         </span>
                     </div>
 
-                    <div class="flex justify-between">
+                    <div v-if="Number(invoice.ppn_amount) > 0" class="flex justify-between">
                         <span class="text-muted-foreground">
-                            PPn ({{ invoice.ppn_percentage }}%)
+                            PPN
                         </span>
 
                         <span class="font-medium">
                             {{ formatRupiah(invoice.ppn_amount) }}
                         </span>
                     </div>
-                    
-                    <div class="flex justify-between">
+
+                    <div v-if="Number(invoice.pph23_amount) > 0" class="flex justify-between">
                         <span class="text-muted-foreground">
-                            PPh23 ({{ invoice.pph23_percentage }}%)
+                            PPh 23
                         </span>
 
                         <span class="font-medium">
-                            {{ formatRupiah(invoice.pph23_amount) }}
+                            - {{ formatRupiah(invoice.pph23_amount) }}
                         </span>
                     </div>
 
@@ -399,6 +400,14 @@ const sendInvoice = () => {
                             </th>
 
                             <th class="px-5 py-3">
+                                PPN
+                            </th>
+
+                            <th class="px-5 py-3">
+                                PPh 23
+                            </th>
+
+                            <th class="px-5 py-3">
                                 Total
                             </th>
                         </tr>
@@ -426,6 +435,14 @@ const sendInvoice = () => {
 
                             <td class="px-5 py-4">
                                 {{ formatRupiah(item.price) }}
+                            </td>
+
+                            <td class="px-5 py-4 whitespace-nowrap">
+                                {{ formatItemTax(item.ppn_enabled, item.ppn_percentage, item.ppn_amount) }}
+                            </td>
+
+                            <td class="px-5 py-4 whitespace-nowrap">
+                                {{ formatItemTax(item.pph23_enabled, item.pph23_percentage, item.pph23_amount) }}
                             </td>
 
                             <td class="px-5 py-4 font-semibold">

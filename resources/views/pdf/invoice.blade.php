@@ -189,6 +189,14 @@
     text-align: right;
     font-weight: bold;
   }
+  table.items tbody td.tax {
+    font-size: 11.5px;
+    white-space: nowrap;
+  }
+  table.items tbody td.tax .tax-rate {
+    color: #6b7280;
+    font-size: 10.5px;
+  }
 
   /* ===== Bottom section (2 columns) ===== */
   table.bottom-table {
@@ -398,6 +406,8 @@
         <td>Service and description</td>
         <td class="num">Qty</td>
         <td class="num">Rate</td>
+        <td class="num">PPN</td>
+        <td class="num">PPh 23</td>
         <td class="num">Total</td>
       </tr>
     </thead>
@@ -407,6 +417,22 @@
           <td>{{ $item->name }}</td>
           <td>{{ $item->quantity }}</td>
           <td>{{ number_format($item->price, 0, ',', '.') }}</td>
+          <td class="tax">
+            @if($item->ppn_enabled)
+              {{ number_format($item->ppn_amount, 0, ',', '.') }}
+              <div class="tax-rate">({{ rtrim(rtrim(number_format($item->ppn_percentage, 2, ',', '.'), '0'), ',') }}%)</div>
+            @else
+              -
+            @endif
+          </td>
+          <td class="tax">
+            @if($item->pph23_enabled)
+              {{ number_format($item->pph23_amount, 0, ',', '.') }}
+              <div class="tax-rate">({{ rtrim(rtrim(number_format($item->pph23_percentage, 2, ',', '.'), '0'), ',') }}%)</div>
+            @else
+              -
+            @endif
+          </td>
           <td>{{ number_format($item->total, 0, ',', '.') }}</td>
         </tr>
         @endforeach
@@ -449,23 +475,27 @@
             <td class="t-label">Sub Total</td>
             <td class="t-value">Rp. {{ number_format($invoice->subtotal, 0, ',', '.') }}</td>
           </tr>
+          @if((float) $invoice->ppn_amount > 0)
           <tr>
               <td class="t-label">
-                  PPN ({{ $invoice->ppn_percentage }}%)
+                  PPN
               </td>
               <td class="t-value">
                   Rp. {{ number_format($invoice->ppn_amount, 0, ',', '.') }}
               </td>
           </tr>
+          @endif
 
+          @if((float) $invoice->pph23_amount > 0)
           <tr>
               <td class="t-label">
-                  PPH 23 ({{ $invoice->pph23_percentage }}%)
+                  PPh 23
               </td>
               <td class="t-value">
-                  Rp. {{ number_format($invoice->pph23_amount, 0, ',', '.') }}
+                  - Rp. {{ number_format($invoice->pph23_amount, 0, ',', '.') }}
               </td>
           </tr>
+          @endif
           <tr class="totals-divider">
             <td colspan="2"></td>
           </tr>

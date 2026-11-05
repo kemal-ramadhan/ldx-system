@@ -8,12 +8,15 @@ import { Spinner } from '@/components/ui/spinner';
 
 import { computed } from 'vue';
 
+import ItemTaxFields from '@/components/ItemTaxFields.vue';
+import { defaultItemTax, itemTaxFrom, taxSummary, type ItemTax } from '@/lib/tax';
+
 import {
     Plus,
     Trash2,
 } from 'lucide-vue-next';
 
-type ServiceItem = {
+type ServiceItem = ItemTax & {
     id: number | null;
     product_id: number | null;
     quantity: number;
@@ -30,10 +33,6 @@ type ServiceForm = {
     start_date: string;
     end_date: string;
     next_due_date: string;
-    ppn_enabled: boolean;
-    ppn_percentage: number;
-    pph23_enabled: boolean;
-    pph23_percentage: number;
     status: string;
     items: ServiceItem[];
 };
@@ -59,12 +58,6 @@ const form = useForm<ServiceForm>({
     end_date: props.service.end_date ?? '',
     next_due_date: props.service.next_due_date ?? '',
 
-    ppn_enabled: Boolean(props.service.ppn_enabled),
-    ppn_percentage: Number(props.service.ppn_percentage ?? 11),
-
-    pph23_enabled: Boolean(props.service.pph23_enabled),
-    pph23_percentage: Number(props.service.pph23_percentage ?? 2),
-
     status: props.service.status ?? 'pending',
 
     items: (props.service.service_items ?? []).map((item: any) => ({
@@ -76,6 +69,7 @@ const form = useForm<ServiceForm>({
             item.subtotal ??
             (Number(item.quantity ?? 1) * Number(item.price ?? 0))
         ),
+        ...itemTaxFrom(item),
     })),
 });
 
@@ -86,6 +80,7 @@ const addItem = () => {
         quantity: 1,
         price: 0,
         subtotal: 0,
+        ...defaultItemTax(),
     });
 };
 
@@ -117,43 +112,14 @@ const calculateSubtotal = (index: number) => {
  * =========================================
  */
 
-const subtotal = computed(() => {
-    return form.items.reduce((total, item) => {
-        return total +
-            Number(item.quantity) *
-            Number(item.price);
-    }, 0);
-});
-
-const ppnAmount = computed(() => {
-    if (!form.ppn_enabled) {
-        return 0;
-    }
-
-    return subtotal.value *
-        (Number(form.ppn_percentage) / 100);
-});
-
-const pph23Amount = computed(() => {
-    if (!form.pph23_enabled) {
-        return 0;
-    }
-
-    return subtotal.value *
-        (Number(form.pph23_percentage) / 100);
-});
-
-/**
- * PPN menambah invoice
- * PPh23 mengurangi pembayaran
- */
-const grandTotal = computed(() => {
-    return (
-        subtotal.value +
-        ppnAmount.value -
-        pph23Amount.value
-    );
-});
+const summary = computed(() =>
+    taxSummary(
+        form.items.map((item) => ({
+            subtotal: Number(item.quantity) * Number(item.price),
+            tax: item,
+        })),
+    ),
+);
 
 const updateService = () => {
     form.put(`/admin/services/${props.service.id}`);
@@ -457,159 +423,12 @@ defineOptions({
 
                         </div>
 
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- ========================================= -->
-            <!-- TAX CONFIGURATION -->
-            <!-- ========================================= -->
-
-            <div class="rounded-2xl border p-5">
-
-                <div class="mb-5">
-
-                    <h2 class="text-lg font-semibold">
-                        Tax Configuration
-                    </h2>
-
-                    <p class="text-sm text-muted-foreground">
-                        Configure applicable taxes for invoices generated from this service.
-                    </p>
-
-                </div>
-
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-
-                    <!-- PPN -->
-                    <div class="rounded-xl border p-4">
-
-                        <div class="flex items-start justify-between gap-4">
-
-                            <div>
-                                <h3 class="font-medium">
-                                    PPN
-                                </h3>
-
-                                <p class="mt-1 text-sm text-muted-foreground">
-                                    Apply Value Added Tax to this service.
-                                </p>
-                            </div>
-
-                            <!-- Toggle -->
-                            <button type="button" @click="form.ppn_enabled = !form.ppn_enabled" :class="[
-                                'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors',
-                                form.ppn_enabled
-                                    ? 'bg-primary'
-                                    : 'bg-gray-300 dark:bg-gray-700'
-                            ]">
-                                <span :class="[
-                                    'inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform',
-                                    form.ppn_enabled
-                                        ? 'translate-x-5'
-                                        : 'translate-x-0.5'
-                                ]"></span>
-                            </button>
-
-                        </div>
-
-                        <!-- PPN Percentage -->
-                        <div v-if="form.ppn_enabled" class="mt-4">
-
-                            <Label>
-                                PPN Percentage
-                            </Label>
-
-                            <div class="relative mt-2">
-
-                                <Input v-model="form.ppn_percentage" type="number" min="0" max="100" step="0.01"
-                                    placeholder="11" class="pr-10" />
-
-                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                                    %
-                                </span>
-
-                            </div>
-
-                            <p class="mt-1 text-xs text-muted-foreground">
-                                Example: 11%
-                            </p>
-
-                            <InputError :message="form.errors.ppn_percentage" />
-
-                        </div>
-
-                        <!-- Disabled -->
-                        <div v-else
-                            class="mt-4 rounded-lg bg-gray-50 px-3 py-2 text-sm text-muted-foreground dark:bg-gray-900">
-                            PPN is disabled for this service.
-                        </div>
-
-                    </div>
-
-                    <!-- PPh 23 -->
-                    <div class="rounded-xl border p-4">
-
-                        <div class="flex items-start justify-between gap-4">
-
-                            <div>
-                                <h3 class="font-medium">
-                                    PPh 23
-                                </h3>
-
-                                <p class="mt-1 text-sm text-muted-foreground">
-                                    Apply withholding tax for this service.
-                                </p>
-                            </div>
-
-                            <!-- Toggle -->
-                            <button type="button" @click="form.pph23_enabled = !form.pph23_enabled" :class="[
-                                'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors',
-                                form.pph23_enabled
-                                    ? 'bg-primary'
-                                    : 'bg-gray-300 dark:bg-gray-700'
-                            ]">
-                                <span :class="[
-                                    'inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform',
-                                    form.pph23_enabled
-                                        ? 'translate-x-5'
-                                        : 'translate-x-0.5'
-                                ]"></span>
-                            </button>
-
-                        </div>
-
-                        <!-- PPh 23 Percentage -->
-                        <div v-if="form.pph23_enabled" class="mt-4">
-
-                            <Label>
-                                PPh 23 Percentage
-                            </Label>
-
-                            <div class="relative mt-2">
-
-                                <Input v-model="form.pph23_percentage" type="number" min="0" max="100" step="0.01"
-                                    placeholder="2" class="pr-10" />
-
-                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                                    %
-                                </span>
-
-                            </div>
-
-                            <p class="mt-1 text-xs text-muted-foreground">
-                                Example: 2%
-                            </p>
-
-                            <InputError :message="form.errors.pph23_percentage" />
-
-                        </div>
-
-                        <!-- Disabled -->
-                        <div v-else
-                            class="mt-4 rounded-lg bg-gray-50 px-3 py-2 text-sm text-muted-foreground dark:bg-gray-900">
-                            PPh 23 is disabled for this service.
+                        <!-- Tax per item -->
+                        <div class="md:col-span-12">
+                            <ItemTaxFields :subtotal="Number(item.quantity) * Number(item.price)"
+                                v-model:ppn-enabled="item.ppn_enabled" v-model:ppn-percentage="item.ppn_percentage"
+                                v-model:pph23-enabled="item.pph23_enabled"
+                                v-model:pph23-percentage="item.pph23_percentage" />
                         </div>
 
                     </div>
@@ -630,7 +449,7 @@ defineOptions({
                     </h2>
 
                     <p class="text-sm text-muted-foreground">
-                        Summary of service price and applicable taxes
+                        Summary of service price and taxes from each item
                     </p>
 
                 </div>
@@ -645,49 +464,33 @@ defineOptions({
                         </span>
 
                         <span class="font-medium">
-                            Rp {{ subtotal.toLocaleString('id-ID') }}
+                            Rp {{ summary.subtotal.toLocaleString('id-ID') }}
                         </span>
 
                     </div>
 
                     <!-- PPN -->
-                    <div v-if="form.ppn_enabled" class="flex items-center justify-between">
+                    <div v-if="summary.ppn > 0" class="flex items-center justify-between">
 
-                        <div class="flex items-center gap-2">
-
-                            <span class="text-sm text-muted-foreground">
-                                PPN
-                            </span>
-
-                            <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium dark:bg-gray-800">
-                                {{ form.ppn_percentage }}%
-                            </span>
-
-                        </div>
+                        <span class="text-sm text-muted-foreground">
+                            PPN
+                        </span>
 
                         <span class="font-medium">
-                            + Rp {{ ppnAmount.toLocaleString('id-ID') }}
+                            + Rp {{ summary.ppn.toLocaleString('id-ID') }}
                         </span>
 
                     </div>
 
                     <!-- PPh 23 -->
-                    <div v-if="form.pph23_enabled" class="flex items-center justify-between">
+                    <div v-if="summary.pph23 > 0" class="flex items-center justify-between">
 
-                        <div class="flex items-center gap-2">
-
-                            <span class="text-sm text-muted-foreground">
-                                PPh 23
-                            </span>
-
-                            <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium dark:bg-gray-800">
-                                {{ form.pph23_percentage }}%
-                            </span>
-
-                        </div>
+                        <span class="text-sm text-muted-foreground">
+                            PPh 23
+                        </span>
 
                         <span class="font-medium">
-                            - Rp {{ pph23Amount.toLocaleString('id-ID') }}
+                            - Rp {{ summary.pph23.toLocaleString('id-ID') }}
                         </span>
 
                     </div>
@@ -709,7 +512,7 @@ defineOptions({
                         </div>
 
                         <span class="text-2xl font-bold">
-                            Rp {{ grandTotal.toLocaleString('id-ID') }}
+                            Rp {{ summary.total.toLocaleString('id-ID') }}
                         </span>
 
                     </div>

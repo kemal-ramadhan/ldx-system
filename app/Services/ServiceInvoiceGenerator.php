@@ -39,33 +39,46 @@ class ServiceInvoiceGenerator
 
         return DB::transaction(function () use ($service) {
 
+            $items = $service->serviceItems->map(function ($item) {
+                return [
+                    'product_id' => $item->product_id,
+                    'name' => $item->product?->name,
+                    'quantity' => $item->quantity,
+                    'price' => $item->price,
+                    'total' => (float) $item->subtotal,
+                ] + TaxCalculator::item(
+                    (float) $item->subtotal,
+                    (bool) $item->ppn_enabled,
+                    $item->ppn_percentage,
+                    (bool) $item->pph23_enabled,
+                    $item->pph23_percentage,
+                );
+            });
+
+            // header = sum of the items, so it always matches the item rows
+            $summary = TaxCalculator::summary($items, 'total');
+
             $invoice = Invoice::create([
                 'invoice_number' => self::generateInvoiceNumber(),
                 'client_id' => $service->client_id,
                 'service_id' => $service->id,
                 'issue_date' => now(),
                 'due_date' => $service->next_due_date,
-                'subtotal' => $service->monthly_total,
-                'ppn_enabled' => $service->ppn_enabled,
-                'ppn_percentage' => $service->ppn_percentage,
-                'ppn_amount' => $service->ppn_amount,
-                'pph23_enabled' => $service->pph23_enabled,
-                'pph23_percentage' => $service->pph23_percentage,
-                'pph23_amount' => $service->pph23_amount,
-                'total' => $service->total,
+                'subtotal' => $summary['subtotal'],
+                'ppn_enabled' => $summary['ppn_enabled'],
+                'ppn_percentage' => $summary['ppn_percentage'],
+                'ppn_amount' => $summary['ppn_amount'],
+                'pph23_enabled' => $summary['pph23_enabled'],
+                'pph23_percentage' => $summary['pph23_percentage'],
+                'pph23_amount' => $summary['pph23_amount'],
+                'total' => $summary['total'],
                 'status' => 'sent',
                 'created_by' => Auth::id(),
             ]);
 
-            foreach ($service->serviceItems as $item) {
-                InvoiceItem::create([
+            foreach ($items as $item) {
+                InvoiceItem::create($item + [
                     'invoice_id' => $invoice->id,
-                    'product_id' => $item->product_id,
-                    'name' => $item->product?->name,
-                    'description' => $item->description,
-                    'quantity' => $item->quantity,
-                    'price' => $item->price,
-                    'total' => $item->subtotal,
                 ]);
             }
 

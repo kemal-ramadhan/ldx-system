@@ -15,6 +15,17 @@ class ServiceItem extends Model
         'quantity',
         'price',
         'subtotal',
+        'ppn_enabled',
+        'ppn_percentage',
+        'ppn_amount',
+        'pph23_enabled',
+        'pph23_percentage',
+        'pph23_amount',
+    ];
+
+    protected $casts = [
+        'ppn_enabled' => 'boolean',
+        'pph23_enabled' => 'boolean',
     ];
 
     public function service()

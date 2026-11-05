@@ -4,6 +4,8 @@ import { Head, Link, useForm, router } from '@inertiajs/vue3'
 import { ArrowLeft, Plus, Trash2, Save } from 'lucide-vue-next'
 import Multiselect from 'vue-multiselect'
 import 'vue-multiselect/dist/vue-multiselect.min.css'
+import ItemTaxFields from '@/components/ItemTaxFields.vue'
+import { defaultItemTax, taxSummary, type ItemTax } from '@/lib/tax'
 
 const props = defineProps<{
     title: string;
@@ -28,43 +30,23 @@ defineOptions({
 
 const form = useForm({
     billing_cycle: 'monthly',
-    products: [] as Array<{ product: any; quantity: number }>,
-    ppn_enabled: false,
-    ppn_percentage: 11,
-    pph23_enabled: false,
-    pph23_percentage: 2,
+    products: [] as Array<{ product: any; quantity: number } & ItemTax>,
 });
 
 const addProduct = () => {
-    form.products.push({ product: null, quantity: 1 });
+    form.products.push({ product: null, quantity: 1, ...defaultItemTax() });
 };
 
 const removeProduct = (index: number) => {
     form.products.splice(index, 1);
 };
 
-const subtotal = computed(() => {
-    return form.products.reduce((total, p) => {
-        if (p.product) {
-            return total + (Number(p.product.base_price) * p.quantity);
-        }
-        return total;
-    }, 0);
-});
+const itemSubtotal = (p: { product: any; quantity: number }) =>
+    p.product ? Number(p.product.base_price) * Number(p.quantity) : 0;
 
-const ppnAmount = computed(() => {
-    if (!form.ppn_enabled) return 0;
-    return subtotal.value * (Number(form.ppn_percentage) / 100);
-});
-
-const pph23Amount = computed(() => {
-    if (!form.pph23_enabled) return 0;
-    return subtotal.value * (Number(form.pph23_percentage) / 100);
-});
-
-const grandTotal = computed(() => {
-    return subtotal.value + ppnAmount.value - pph23Amount.value;
-});
+const summary = computed(() =>
+    taxSummary(form.products.map((p) => ({ subtotal: itemSubtotal(p), tax: p }))),
+);
 
 const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -81,7 +63,11 @@ const submit = () => {
             .filter(p => p.product)
             .map(p => ({
                 id: p.product.id,
-                quantity: p.quantity
+                quantity: p.quantity,
+                ppn_enabled: p.ppn_enabled,
+                ppn_percentage: p.ppn_percentage,
+                pph23_enabled: p.pph23_enabled,
+                pph23_percentage: p.pph23_percentage,
             }))
     };
     
@@ -213,67 +199,11 @@ const submit = () => {
                                 <Trash2 class="w-5 h-5" />
                             </button>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Tax Configuration -->
-                <div class="rounded-xl border p-5 mt-6">
-                    <div class="mb-5">
-                        <h2 class="text-lg font-semibold">
-                            Tax Configuration
-                        </h2>
-                        <p class="text-sm text-muted-foreground">
-                            Configure applicable taxes for invoices generated from this service.
-                        </p>
-                    </div>
-
-                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <!-- PPN -->
-                        <div class="rounded-xl border p-4">
-                            <div class="flex items-start justify-between gap-4">
-                                <div>
-                                    <h3 class="font-medium">PPN</h3>
-                                    <p class="mt-1 text-sm text-muted-foreground">Apply Value Added Tax to this service.</p>
-                                </div>
-                                <button type="button" @click="form.ppn_enabled = !form.ppn_enabled" :class="['relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors', form.ppn_enabled ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-700']">
-                                    <span :class="['inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform', form.ppn_enabled ? 'translate-x-5' : 'translate-x-0.5']" />
-                                </button>
-                            </div>
-                            <div v-if="form.ppn_enabled" class="mt-4">
-                                <label class="block text-sm font-medium text-gray-700">PPN Percentage</label>
-                                <div class="relative mt-2">
-                                    <input v-model="form.ppn_percentage" type="number" min="0" max="100" step="0.01" placeholder="11" class="block w-full rounded-lg border-gray-300 py-2 pl-3 pr-10 text-sm focus:border-blue-500 focus:ring-blue-500" />
-                                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
-                                </div>
-                                <p class="text-sm text-red-500 mt-1" v-if="form.errors.ppn_percentage">{{ form.errors.ppn_percentage }}</p>
-                            </div>
-                            <div v-else class="mt-4 rounded-lg bg-gray-50 px-3 py-2 text-sm text-muted-foreground dark:bg-gray-900">
-                                PPN is disabled for this service.
-                            </div>
-                        </div>
-
-                        <!-- PPh 23 -->
-                        <div class="rounded-xl border p-4">
-                            <div class="flex items-start justify-between gap-4">
-                                <div>
-                                    <h3 class="font-medium">PPh 23</h3>
-                                    <p class="mt-1 text-sm text-muted-foreground">Apply withholding tax for this service.</p>
-                                </div>
-                                <button type="button" @click="form.pph23_enabled = !form.pph23_enabled" :class="['relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors', form.pph23_enabled ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-700']">
-                                    <span :class="['inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform', form.pph23_enabled ? 'translate-x-5' : 'translate-x-0.5']" />
-                                </button>
-                            </div>
-                            <div v-if="form.pph23_enabled" class="mt-4">
-                                <label class="block text-sm font-medium text-gray-700">PPh 23 Percentage</label>
-                                <div class="relative mt-2">
-                                    <input v-model="form.pph23_percentage" type="number" min="0" max="100" step="0.01" placeholder="2" class="block w-full rounded-lg border-gray-300 py-2 pl-3 pr-10 text-sm focus:border-blue-500 focus:ring-blue-500" />
-                                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
-                                </div>
-                                <p class="text-sm text-red-500 mt-1" v-if="form.errors.pph23_percentage">{{ form.errors.pph23_percentage }}</p>
-                            </div>
-                            <div v-else class="mt-4 rounded-lg bg-gray-50 px-3 py-2 text-sm text-muted-foreground dark:bg-gray-900">
-                                PPh 23 is disabled for this service.
-                            </div>
+                        <div class="w-full">
+                            <ItemTaxFields :subtotal="itemSubtotal(item)"
+                                v-model:ppn-enabled="item.ppn_enabled" v-model:ppn-percentage="item.ppn_percentage"
+                                v-model:pph23-enabled="item.pph23_enabled"
+                                v-model:pph23-percentage="item.pph23_percentage" />
                         </div>
                     </div>
                 </div>
@@ -284,25 +214,19 @@ const submit = () => {
                     <div class="flex flex-col gap-3">
                         <div class="flex items-center justify-between">
                             <span class="text-sm text-muted-foreground">Subtotal</span>
-                            <span class="font-medium">{{ formatCurrency(subtotal) }}</span>
+                            <span class="font-medium">{{ formatCurrency(summary.subtotal) }}</span>
                         </div>
-                        <div v-if="form.ppn_enabled" class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span class="text-sm text-muted-foreground">PPN</span>
-                                <span class="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium">{{ form.ppn_percentage }}%</span>
-                            </div>
-                            <span class="font-medium text-blue-600">+ {{ formatCurrency(ppnAmount) }}</span>
+                        <div v-if="summary.ppn > 0" class="flex items-center justify-between">
+                            <span class="text-sm text-muted-foreground">PPN</span>
+                            <span class="font-medium text-blue-600">+ {{ formatCurrency(summary.ppn) }}</span>
                         </div>
-                        <div v-if="form.pph23_enabled" class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span class="text-sm text-muted-foreground">PPh 23</span>
-                                <span class="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium">{{ form.pph23_percentage }}%</span>
-                            </div>
-                            <span class="font-medium text-red-600">- {{ formatCurrency(pph23Amount) }}</span>
+                        <div v-if="summary.pph23 > 0" class="flex items-center justify-between">
+                            <span class="text-sm text-muted-foreground">PPh 23</span>
+                            <span class="font-medium text-red-600">- {{ formatCurrency(summary.pph23) }}</span>
                         </div>
                         <div class="mt-2 flex items-center justify-between border-t pt-4">
                             <span class="font-semibold">Grand Total</span>
-                            <span class="text-lg font-bold text-gray-900">{{ formatCurrency(grandTotal) }}</span>
+                            <span class="text-lg font-bold text-gray-900">{{ formatCurrency(summary.total) }}</span>
                         </div>
                     </div>
                 </div>
