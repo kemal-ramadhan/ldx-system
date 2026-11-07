@@ -72,29 +72,61 @@ class VisitorController extends Controller
 
     public function storeGuest(Request $request)
     {
+        // max lengths follow the visitors table columns (string = 255)
         $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'email' => 'required|email',
-                'phone' => 'required|string|max:20',
-                'nik' => 'required|string|max:20',
-                'address' => 'required|string',
-                'company_name' => 'required|string|max:255',
-                'position_in_company' => 'required|string|max:255',
-                'type_of_visit' => 'required|string',
-                'visit_purpose' => 'required|string',
-                'visit_note' => 'nullable|string',
-                'visit_date' => 'required|date',
-            ]);
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'required|string|max:20',
+            'nik' => 'required|string|max:20',
+            'address' => 'required|string|max:255',
+            'company_name' => 'required|string|max:255',
+            'position_in_company' => 'required|string|max:255',
+            'type_of_visit' => 'required|string|max:255',
+            'visit_purpose' => 'required|string|max:255',
+            'visit_note' => 'nullable|string|max:255',
+            'visit_date' => 'required|date',
+            'agreement' => 'accepted',
+        ], [
+            'required' => ':attribute wajib diisi.',
+            'email' => 'Format :attribute tidak valid (contoh: nama@example.com).',
+            'max' => ':attribute maksimal :max karakter.',
+            'date' => ':attribute bukan tanggal yang valid.',
+            'accepted' => 'Anda harus menyetujui Peraturan dan Kebijakan Keamanan.',
+        ], [
+            'name' => 'Nama Lengkap',
+            'email' => 'Email',
+            'phone' => 'Nomor Telepon',
+            'nik' => 'Identitas (KTP/Paspor)',
+            'address' => 'Alamat',
+            'company_name' => 'Nama Perusahaan',
+            'position_in_company' => 'Posisi/Jabatan',
+            'type_of_visit' => 'Tujuan Kunjungan',
+            'visit_purpose' => 'Area yang Dikunjungi',
+            'visit_note' => 'Keperluan Khusus / Catatan',
+            'visit_date' => 'Tanggal Kunjungan',
+            'agreement' => 'Persetujuan',
+        ]);
 
+        unset($validated['agreement']);
+
+        try {
             $guest = Visitor::create([
                 ...$validated,
                 'checkin_time' => Carbon::now(),
                 'status' => 'checkin',
             ]);
+        } catch (\Throwable $e) {
+            report($e);
 
-            return redirect()
-                ->route('daftar.buku.tamu.lampiran', $guest->id)
-                ->with('success', 'Data berhasil disimpan');
+            // keep what the visitor typed so they don't have to refill
+            return back()
+                ->withInput()
+                ->withErrors(['general' => 'Data gagal disimpan, silakan coba kirim ulang.']);
+        }
+
+        return redirect()
+            ->route('daftar.buku.tamu.lampiran', $guest->id)
+            ->with('success', 'Data berhasil disimpan');
     }
 
     public function storeLampiran(Request $request, $id)

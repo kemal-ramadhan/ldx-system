@@ -401,7 +401,7 @@ const isFailedStatus = computed(() => {
 
     <Head :title="title" />
 
-    <div class="p-4">
+    <div class="p-4 text-foreground dark:scheme-dark">
 
         <!-- HEADER -->
 
@@ -409,7 +409,7 @@ const isFailedStatus = computed(() => {
 
             <div class="flex items-start gap-3">
 
-                <Link href="/admin/interconnections" class="rounded-xl border p-2 text-gray-500 hover:bg-gray-50">
+                <Link href="/admin/interconnections" class="rounded-xl border p-2 text-muted-foreground hover:bg-muted">
 
                     <ArrowLeft class="h-4 w-4" />
 
@@ -423,7 +423,7 @@ const isFailedStatus = computed(() => {
                             {{ item.request_number }}
                         </h1>
 
-                        <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+                        <span class="rounded-full bg-blue-50 dark:bg-blue-950/40 px-3 py-1 text-xs font-medium text-blue-700 dark:text-blue-300">
                             {{ statusLabel }}
                         </span>
 
@@ -445,18 +445,18 @@ const isFailedStatus = computed(() => {
                 'rejected',
                 'cancelled'
             ].includes(interconnection.status)
-        " class="mb-6 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+        " class="mb-6 rounded-2xl border border-border bg-card p-5 shadow-sm">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-500">
+                    <p class="text-sm font-medium text-muted-foreground">
                         Current Action
                     </p>
 
-                    <h3 class="mt-1 text-base font-semibold text-gray-900">
+                    <h3 class="mt-1 text-base font-semibold text-foreground">
                         {{ actionTitle }}
                     </h3>
 
-                    <p class="mt-1 text-sm text-gray-500">
+                    <p class="mt-1 text-sm text-muted-foreground">
                         {{ actionDescription }}
                     </p>
                 </div>
@@ -468,13 +468,13 @@ const isFailedStatus = computed(() => {
                         'waiting_destination_approval'
                     ">
                         <button type="button" @click="approveDestination"
-                            class="inline-flex items-center rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800">
+                            class="inline-flex items-center rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90">
                             Approve
                         </button>
 
                         <button type="button" @click="
                             openRejectModal('destination')
-                            " class="inline-flex items-center rounded-lg border border-red-200 px-4 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-50">
+                            " class="inline-flex items-center rounded-lg border border-red-200 dark:border-red-900/60 px-4 py-2.5 text-sm font-medium text-red-600 dark:text-red-300 transition hover:bg-red-50 dark:hover:bg-red-900/40">
                             Reject
                         </button>
                     </template>
@@ -485,13 +485,13 @@ const isFailedStatus = computed(() => {
                         'waiting_dc_approval'
                     ">
                         <button type="button" @click="approveDc"
-                            class="inline-flex items-center rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800">
+                            class="inline-flex items-center rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90">
                             Approve
                         </button>
 
                         <button type="button" @click="
                             openRejectModal('dc')
-                            " class="inline-flex items-center rounded-lg border border-red-200 px-4 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-50">
+                            " class="inline-flex items-center rounded-lg border border-red-200 dark:border-red-900/60 px-4 py-2.5 text-sm font-medium text-red-600 dark:text-red-300 transition hover:bg-red-50 dark:hover:bg-red-900/40">
                             Reject
                         </button>
                     </template>
@@ -502,7 +502,7 @@ const isFailedStatus = computed(() => {
                         'approved'
                     ">
                         <button type="button" @click="startInstallation"
-                            class="inline-flex items-center rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800">
+                            class="inline-flex items-center rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90">
                             Start Installation
                         </button>
                     </template>
@@ -513,7 +513,7 @@ const isFailedStatus = computed(() => {
                         'in_progress'
                     ">
                         <button type="button" @click="startTesting"
-                            class="inline-flex items-center rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800">
+                            class="inline-flex items-center rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90">
                             Start Testing
                         </button>
                     </template>
@@ -524,14 +524,14 @@ const isFailedStatus = computed(() => {
                         'testing'
                     ">
                         <button type="button" @click="completeInterconnection"
-                            class="inline-flex items-center rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800">
+                            class="inline-flex items-center rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90">
                             Complete
                         </button>
                     </template>
 
                     <!-- Cancel -->
                     <button type="button" @click="cancelRequest"
-                        class="inline-flex items-center rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50">
+                        class="inline-flex items-center rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-muted-foreground transition hover:bg-muted">
                         Cancel
                     </button>
 
@@ -543,15 +543,15 @@ const isFailedStatus = computed(() => {
 
                     <Link v-if="interconnection.invoice_id"
                         :href="`/admin/invoices/${interconnection.invoice_id}`"
-                        class="inline-flex items-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-700 transition hover:bg-blue-100">
+                        class="inline-flex items-center rounded-lg border border-blue-200 dark:border-blue-900/60 bg-blue-50 dark:bg-blue-950/40 px-4 py-2.5 text-sm font-medium text-blue-700 dark:text-blue-300 transition hover:bg-blue-100 dark:hover:bg-blue-900/40">
                         View Invoice
                     </Link>
                 </div>
             </div>
         </div>
 
-        <div v-if="isFailedStatus" class="rounded-2xl border border-red-100 bg-red-50 p-5">
-            <p class="text-sm font-semibold text-red-800">
+        <div v-if="isFailedStatus" class="rounded-2xl border border-red-100 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 p-5">
+            <p class="text-sm font-semibold text-red-800 dark:text-red-300">
                 Request {{
                     interconnection.status === 'rejected'
                         ? 'Rejected'
@@ -559,7 +559,7 @@ const isFailedStatus = computed(() => {
                 }}
             </p>
 
-            <p class="mt-1 text-sm text-red-700">
+            <p class="mt-1 text-sm text-red-700 dark:text-red-300">
                 {{
                     interconnection.rejection_reason ||
                     interconnection.notes ||
@@ -571,7 +571,7 @@ const isFailedStatus = computed(() => {
 
         <!-- CONNECTION -->
 
-        <div class="rounded-2xl border bg-white p-6 shadow-sm dark:bg-transparent">
+        <div class="rounded-2xl border bg-card p-6 shadow-sm dark:bg-transparent">
 
             <div class="grid grid-cols-1 items-center gap-8 lg:grid-cols-[1fr_auto_1fr]">
 
@@ -598,7 +598,7 @@ const isFailedStatus = computed(() => {
 
                         <div class="flex items-center gap-2">
 
-                            <MapPin class="h-4 w-4 text-gray-400" />
+                            <MapPin class="h-4 w-4 text-muted-foreground" />
 
                             <span>
                                 Rack {{ source.rack?.code || '-' }}
@@ -606,7 +606,7 @@ const isFailedStatus = computed(() => {
 
                         </div>
 
-                        <div class="rounded-xl bg-gray-50 p-4">
+                        <div class="rounded-xl bg-muted/50 p-4">
 
                             <p class="font-medium">
                                 {{ source.device?.divice_name || '-' }}
@@ -617,7 +617,7 @@ const isFailedStatus = computed(() => {
                             </p>
 
                             <div
-                                class="mt-3 inline-flex items-center rounded-lg bg-white px-3 py-2 text-xs font-medium shadow-sm">
+                                class="mt-3 inline-flex items-center rounded-lg bg-card px-3 py-2 text-xs font-medium shadow-sm">
 
                                 <Cable class="mr-2 h-4 w-4 text-blue-500" />
 
@@ -636,13 +636,13 @@ const isFailedStatus = computed(() => {
 
                 <div class="flex flex-col items-center gap-3">
 
-                    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
 
-                        <Cable class="h-5 w-5 text-gray-500" />
+                        <Cable class="h-5 w-5 text-muted-foreground" />
 
                     </div>
 
-                    <ArrowRight class="hidden h-5 w-5 text-gray-400 lg:block" />
+                    <ArrowRight class="hidden h-5 w-5 text-muted-foreground lg:block" />
 
                     <div class="text-center">
 
@@ -686,15 +686,15 @@ const isFailedStatus = computed(() => {
                         
                         <div class="mt-4 space-y-2 text-sm">
                             <div class="flex items-center gap-2">
-                                <MapPin class="h-4 w-4 text-gray-400" />
+                                <MapPin class="h-4 w-4 text-muted-foreground" />
                                 <span>Rack {{ item.external_rack_name || '-' }}</span>
                             </div>
 
-                            <div class="rounded-xl bg-gray-50 p-4">
+                            <div class="rounded-xl bg-muted/50 p-4">
                                 <p class="font-medium">{{ item.external_device_name || '-' }}</p>
                                 <p class="mt-1 text-xs text-muted-foreground">External Device</p>
 
-                                <div class="mt-3 inline-flex items-center rounded-lg bg-white px-3 py-2 text-xs font-medium shadow-sm">
+                                <div class="mt-3 inline-flex items-center rounded-lg bg-card px-3 py-2 text-xs font-medium shadow-sm">
                                     <Cable class="mr-2 h-4 w-4 text-green-500" />
                                     {{ item.external_port_name || '-' }}
                                 </div>
@@ -711,7 +711,7 @@ const isFailedStatus = computed(() => {
 
                             <div class="flex items-center gap-2">
 
-                                <MapPin class="h-4 w-4 text-gray-400" />
+                                <MapPin class="h-4 w-4 text-muted-foreground" />
 
                                 <span>
                                     Rack {{ destination.rack?.code || '-' }}
@@ -719,7 +719,7 @@ const isFailedStatus = computed(() => {
 
                             </div>
 
-                            <div class="rounded-xl bg-gray-50 p-4">
+                            <div class="rounded-xl bg-muted/50 p-4">
 
                                 <p class="font-medium">
                                     {{ destination.device?.divice_name || '-' }}
@@ -730,7 +730,7 @@ const isFailedStatus = computed(() => {
                                 </p>
 
                                 <div
-                                    class="mt-3 inline-flex items-center rounded-lg bg-white px-3 py-2 text-xs font-medium shadow-sm">
+                                    class="mt-3 inline-flex items-center rounded-lg bg-card px-3 py-2 text-xs font-medium shadow-sm">
 
                                     <Cable class="mr-2 h-4 w-4 text-green-500" />
 
@@ -752,7 +752,7 @@ const isFailedStatus = computed(() => {
 
         <!-- PROGRESS -->
 
-        <div class="mt-5 rounded-2xl border bg-white p-6 shadow-sm dark:bg-transparent">
+        <div class="mt-5 rounded-2xl border bg-card p-6 shadow-sm dark:bg-transparent">
 
             <div class="mb-6 flex items-center justify-between">
 
@@ -777,7 +777,7 @@ const isFailedStatus = computed(() => {
 
             <!-- BAR -->
 
-            <div class="mb-8 h-2 overflow-hidden rounded-full bg-gray-100">
+            <div class="mb-8 h-2 overflow-hidden rounded-full bg-muted">
 
                 <div class="h-full rounded-full bg-primary transition-all" :style="{
                     width: `${item.progress}%`
@@ -798,12 +798,12 @@ const isFailedStatus = computed(() => {
 
                         <Clock3 v-else-if="isCurrentStep(index)" class="h-5 w-5 shrink-0 text-blue-500" />
 
-                        <Circle v-else class="h-5 w-5 shrink-0 text-gray-300" />
+                        <Circle v-else class="h-5 w-5 shrink-0 text-muted-foreground/40" />
 
                         <span :class="[
                             'text-xs',
                             isCurrentStep(index)
-                                ? 'font-semibold text-gray-900'
+                                ? 'font-semibold text-foreground'
                                 : 'text-muted-foreground'
                         ]">
                             {{ step.label }}
@@ -822,7 +822,7 @@ const isFailedStatus = computed(() => {
 
         <div class="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
 
-            <div class="rounded-2xl border bg-white p-6 shadow-sm dark:bg-transparent">
+            <div class="rounded-2xl border bg-card p-6 shadow-sm dark:bg-transparent">
 
                 <h2 class="mb-5 text-sm font-semibold">
                     Request Information
@@ -866,12 +866,12 @@ const isFailedStatus = computed(() => {
 
                     </div>
 
-                    <div v-if="interconnection.rejection_reason" class="rounded-xl border border-red-100 bg-red-50 p-4">
-                        <p class="text-sm font-medium text-red-800">
+                    <div v-if="interconnection.rejection_reason" class="rounded-xl border border-red-100 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 p-4">
+                        <p class="text-sm font-medium text-red-800 dark:text-red-300">
                             Rejection Reason
                         </p>
 
-                        <p class="mt-1 text-sm text-red-700">
+                        <p class="mt-1 text-sm text-red-700 dark:text-red-300">
                             {{ interconnection.rejection_reason }}
                         </p>
                     </div>
@@ -881,7 +881,7 @@ const isFailedStatus = computed(() => {
             </div>
 
 
-            <div class="rounded-2xl border bg-white p-6 shadow-sm dark:bg-transparent">
+            <div class="rounded-2xl border bg-card p-6 shadow-sm dark:bg-transparent">
 
                 <h2 class="mb-5 text-sm font-semibold">
                     Description
@@ -898,35 +898,35 @@ const isFailedStatus = computed(() => {
     </div>
 
 
-    <div v-if="rejectModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-        <div class="w-full max-w-lg rounded-2xl bg-white shadow-xl">
-            <div class="border-b border-gray-100 px-6 py-5">
-                <h3 class="text-lg font-semibold text-gray-900">
+    <div v-if="rejectModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 text-foreground dark:scheme-dark dark:bg-black/60">
+        <div class="w-full max-w-lg rounded-2xl border bg-card shadow-xl">
+            <div class="border-b border-border px-6 py-5">
+                <h3 class="text-lg font-semibold text-foreground">
                     Reject Interconnection
                 </h3>
 
-                <p class="mt-1 text-sm text-gray-500">
+                <p class="mt-1 text-sm text-muted-foreground">
                     Please provide a reason for rejecting this request.
                 </p>
             </div>
 
             <div class="px-6 py-5">
-                <label class="mb-2 block text-sm font-medium text-gray-700">
+                <label class="mb-2 block text-sm font-medium text-foreground">
                     Rejection Reason
                 </label>
 
                 <textarea v-model="rejectForm.rejection_reason" rows="5"
-                    class="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
+                    class="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
                     placeholder="Enter rejection reason..." />
 
-                <p v-if="rejectForm.errors.rejection_reason" class="mt-2 text-sm text-red-600">
+                <p v-if="rejectForm.errors.rejection_reason" class="mt-2 text-sm text-red-600 dark:text-red-300">
                     {{ rejectForm.errors.rejection_reason }}
                 </p>
             </div>
 
-            <div class="flex justify-end gap-2 border-t border-gray-100 px-6 py-4">
+            <div class="flex justify-end gap-2 border-t border-border px-6 py-4">
                 <button type="button" @click="rejectModal = false"
-                    class="rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50">
+                    class="rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted">
                     Cancel
                 </button>
 

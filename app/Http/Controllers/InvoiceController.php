@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Mail\InvoiceMail;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Models\Product;
+use App\Services\TaxCalculator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
@@ -450,6 +452,7 @@ class InvoiceController extends Controller
         return Inertia::render('billings/invoices/InvoiceShow', [
             'title' => 'Invoice Detail',
             'invoice' => $invoice,
+            'can_edit' => self::isEditable($invoice),
         ]);
     }
 
@@ -486,19 +489,154 @@ class InvoiceController extends Controller
         );
     }
     /**
-     * Show the form for editing the specified resource.
+     * Statuses whose invoice can still be corrected.
+     * paid / waiting (proof uploaded) / processed / cancelled are locked.
      */
-    public function edit(string $id)
+    public const EDITABLE_STATUSES = ['draft', 'pending', 'sent', 'overdue', 'rejected'];
+
+    public static function isEditable(Invoice $invoice): bool
     {
-        //
+        return in_array($invoice->status, self::EDITABLE_STATUSES, true);
     }
 
     /**
-     * Update the specified resource in storage.
+     * =========================================
+     * EDIT INVOICE
+     * =========================================
+     */
+    public function edit(string $id)
+    {
+        $invoice = Invoice::with([
+            'client',
+            'service',
+            'items.product',
+        ])->findOrFail($id);
+
+        if (!self::isEditable($invoice)) {
+            return redirect("/admin/invoices/{$invoice->id}")
+                ->with('error', "Invoice with status \"{$invoice->status}\" cannot be edited.");
+        }
+
+        return Inertia::render('billings/invoices/InvoiceEdit', [
+            'title' => 'Edit Invoice',
+            'invoice' => $invoice,
+            'products' => Product::query()
+                ->where('status', 'active')
+                ->orderBy('name', 'asc')
+                ->get([
+                    'id',
+                    'name',
+                    'base_price',
+                    'unit',
+                    'billing_type',
+                ]),
+        ]);
+    }
+
+    /**
+     * =========================================
+     * UPDATE INVOICE
+     * =========================================
+     * Invoice number, client & service stay as they are.
      */
     public function update(Request $request, string $id)
     {
-        //
+        $validated = $request->validate([
+            'issue_date' => 'required|date',
+            'due_date' => 'required|date|after_or_equal:issue_date',
+            'notes' => 'nullable|string',
+            'terms' => 'nullable|string',
+
+            'items' => 'required|array|min:1',
+            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.quantity' => 'required|numeric|min:1',
+            'items.*.price' => 'required|numeric|min:0',
+            'items.*.ppn_enabled' => 'nullable|boolean',
+            'items.*.ppn_percentage' => 'nullable|numeric|min:0|max:100',
+            'items.*.pph23_enabled' => 'nullable|boolean',
+            'items.*.pph23_percentage' => 'nullable|numeric|min:0|max:100',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            // lock so a payment confirmed meanwhile is not overwritten
+            $invoice = Invoice::query()->lockForUpdate()->findOrFail($id);
+
+            if (!self::isEditable($invoice)) {
+                DB::rollBack();
+
+                return redirect("/admin/invoices/{$invoice->id}")
+                    ->with('error', "Invoice with status \"{$invoice->status}\" cannot be edited.");
+            }
+
+            $productNames = Product::query()
+                ->whereIn('id', collect($validated['items'])->pluck('product_id'))
+                ->pluck('name', 'id');
+
+            $items = collect($validated['items'])->map(function ($item) use ($productNames) {
+                $total = (float) $item['quantity'] * (float) $item['price'];
+
+                return [
+                    'product_id' => $item['product_id'],
+                    'name' => $productNames[$item['product_id']] ?? null,
+                    'quantity' => $item['quantity'],
+                    'price' => $item['price'],
+                    'total' => $total,
+                ] + TaxCalculator::item(
+                    $total,
+                    filter_var($item['ppn_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                    $item['ppn_percentage'] ?? null,
+                    filter_var($item['pph23_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                    $item['pph23_percentage'] ?? null,
+                );
+            });
+
+            $summary = TaxCalculator::summary($items, 'total');
+
+            $status = $invoice->status;
+
+            // new due date in the future -> no longer overdue
+            if (
+                $status === 'overdue' &&
+                \Illuminate\Support\Carbon::parse($validated['due_date'])->startOfDay()->gte(today())
+            ) {
+                $status = 'sent';
+            }
+
+            $invoice->update([
+                'issue_date' => $validated['issue_date'],
+                'due_date' => $validated['due_date'],
+                'notes' => $validated['notes'] ?? null,
+                'terms' => $validated['terms'] ?? null,
+                'subtotal' => $summary['subtotal'],
+                'ppn_enabled' => $summary['ppn_enabled'],
+                'ppn_percentage' => $summary['ppn_percentage'],
+                'ppn_amount' => $summary['ppn_amount'],
+                'pph23_enabled' => $summary['pph23_enabled'],
+                'pph23_percentage' => $summary['pph23_percentage'],
+                'pph23_amount' => $summary['pph23_amount'],
+                'total' => $summary['total'],
+                'status' => $status,
+            ]);
+
+            $invoice->items()->delete();
+
+            foreach ($items as $item) {
+                $invoice->items()->create($item);
+            }
+
+            DB::commit();
+        } catch (\Throwable $th) {
+            DB::rollBack();
+
+            return back()->withErrors([
+                'error' => $th->getMessage(),
+            ]);
+        }
+
+        // ?edited=1 opens the "resend to client?" popup on the detail page
+        return redirect("/admin/invoices/{$invoice->id}?edited=1");
     }
 
     /**

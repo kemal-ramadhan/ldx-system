@@ -27,19 +27,19 @@ defineOptions({
 const statusClass = (status: string) => {
 
     const classes: Record<string, string> = {
-        draft: 'bg-gray-100 text-gray-700',
-        submitted: 'bg-blue-100 text-blue-700',
-        waiting_destination_approval: 'bg-yellow-100 text-yellow-700',
-        waiting_dc_approval: 'bg-orange-100 text-orange-700',
-        approved: 'bg-green-100 text-green-700',
-        in_progress: 'bg-indigo-100 text-indigo-700',
-        testing: 'bg-purple-100 text-purple-700',
-        completed: 'bg-emerald-100 text-emerald-700',
-        rejected: 'bg-red-100 text-red-700',
-        cancelled: 'bg-gray-100 text-gray-500',
+        draft: 'bg-muted text-foreground',
+        submitted: 'bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300',
+        waiting_destination_approval: 'bg-yellow-100 dark:bg-yellow-950/40 text-yellow-700 dark:text-yellow-300',
+        waiting_dc_approval: 'bg-orange-100 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300',
+        approved: 'bg-green-100 dark:bg-green-950/40 text-green-700 dark:text-green-300',
+        in_progress: 'bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300',
+        testing: 'bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300',
+        completed: 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300',
+        rejected: 'bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-300',
+        cancelled: 'bg-muted text-muted-foreground',
     }
 
-    return classes[status] ?? 'bg-gray-100 text-gray-700'
+    return classes[status] ?? 'bg-muted text-foreground'
 }
 
 const formatStatus = (status: string) => {
@@ -55,7 +55,7 @@ const formatStatus = (status: string) => {
 
     <Head :title="title" />
 
-    <div class="p-4">
+    <div class="p-4 text-foreground dark:scheme-dark">
 
         <!-- HEADER -->
 
@@ -74,7 +74,7 @@ const formatStatus = (status: string) => {
             </div>
 
             <Link href="/admin/interconnections/create"
-                class="inline-flex items-center rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary/90">
+                class="inline-flex items-center rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90">
 
                 <Plus class="mr-2 h-4 w-4" />
 
@@ -89,9 +89,9 @@ const formatStatus = (status: string) => {
 
         <div v-if="props.interconnections.data.length === 0" class="rounded-2xl border border-dashed p-12 text-center">
 
-            <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
+            <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
 
-                <Cable class="h-6 w-6 text-gray-400" />
+                <Cable class="h-6 w-6 text-muted-foreground" />
 
             </div>
 
@@ -108,11 +108,11 @@ const formatStatus = (status: string) => {
 
         <!-- TABLE -->
 
-        <div v-else class="overflow-hidden rounded-2xl border bg-white shadow-sm dark:bg-transparent">
+        <div v-else class="overflow-hidden rounded-2xl border bg-card shadow-sm dark:bg-transparent">
 
-            <table class="min-w-full divide-y divide-gray-200">
+            <table class="min-w-full divide-y divide-border">
 
-                <thead class="bg-gray-50">
+                <thead class="bg-muted/50">
 
                     <tr class="text-left text-xs font-semibold text-muted-foreground">
 
@@ -144,9 +144,9 @@ const formatStatus = (status: string) => {
 
                 </thead>
 
-                <tbody class="divide-y divide-gray-100">
+                <tbody class="divide-y divide-border">
 
-                    <tr v-for="item in props.interconnections.data" :key="item.id" class="hover:bg-gray-50/70">
+                    <tr v-for="item in props.interconnections.data" :key="item.id" class="hover:bg-muted/50">
 
                         <!-- REQUEST -->
 
@@ -185,7 +185,7 @@ const formatStatus = (status: string) => {
 
                                 </div>
 
-                                <ArrowRight class="h-4 w-4 shrink-0 text-gray-400" />
+                                <ArrowRight class="h-4 w-4 shrink-0 text-muted-foreground" />
 
                                 <div class="min-w-0" v-if="item.destination_type === 'external'">
 
@@ -272,7 +272,7 @@ const formatStatus = (status: string) => {
 
                                 </div>
 
-                                <div class="h-1.5 overflow-hidden rounded-full bg-gray-100">
+                                <div class="h-1.5 overflow-hidden rounded-full bg-muted">
 
                                     <div class="h-full rounded-full bg-primary transition-all" :style="{
                                         width: `${item.progress}%`
@@ -292,7 +292,7 @@ const formatStatus = (status: string) => {
                             <div class="flex justify-end">
 
                                 <Link :href="`/admin/interconnections/${item.id}`"
-                                    class="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                                    class="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
                                     title="View">
 
                                     <Eye class="h-4 w-4" />

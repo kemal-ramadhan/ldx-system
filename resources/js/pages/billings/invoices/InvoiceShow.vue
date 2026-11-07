@@ -24,6 +24,7 @@ import {
     Download,
     CheckCircle2,
     Trash2,
+    Pencil,
 } from 'lucide-vue-next';
 import DeleteInvoiceDialog from '@/components/vanila/invoice/DeleteInvoiceDialog.vue';
 
@@ -35,6 +36,7 @@ import DeleteInvoiceDialog from '@/components/vanila/invoice/DeleteInvoiceDialog
 const props = defineProps<{
     title: string;
     invoice: any;
+    can_edit?: boolean;
 }>();
 
 /**
@@ -87,14 +89,45 @@ const statusColor = (status: string) => {
 const showGeneratedDialog = ref(false);
 const openDeleteDialog = ref(false);
 
+/**
+ * =========================================
+ * EDITED POPUP (from Edit Invoice > Save)
+ * =========================================
+ * Ask whether the revised invoice should be resent to the client.
+ */
+const showEditedDialog = ref(false);
+const resending = ref(false);
+
+const resendRevisedInvoice = () => {
+    router.post(
+        `/admin/invoices/${props.invoice.id}/send`,
+        {},
+        {
+            preserveScroll: true,
+            onStart: () => (resending.value = true),
+            onFinish: () => {
+                resending.value = false;
+                showEditedDialog.value = false;
+            },
+        },
+    );
+};
+
 onMounted(() => {
     const url = new URL(window.location.href);
 
     if (url.searchParams.has('generated')) {
         showGeneratedDialog.value = true;
+    }
 
-        // remove the flag so a refresh doesn't show the popup again
+    if (url.searchParams.has('edited')) {
+        showEditedDialog.value = true;
+    }
+
+    // remove the flags so a refresh doesn't show the popup again
+    if (url.searchParams.has('generated') || url.searchParams.has('edited')) {
         url.searchParams.delete('generated');
+        url.searchParams.delete('edited');
         window.history.replaceState(window.history.state, '', url.toString());
     }
 });
@@ -187,6 +220,16 @@ const sendInvoice = () => {
                         ? 'See Payment' 
                         : 'Mark as Paid' 
                     }}
+                </Link>
+
+                <!-- Edit Invoice (not for paid / waiting) -->
+                <Link
+                    v-if="can_edit"
+                    :href="`/admin/invoices/${invoice.id}/edit`"
+                    class="inline-flex items-center rounded-lg border px-4 py-2 text-sm hover:bg-muted"
+                >
+                    <Pencil class="mr-2 h-4 w-4" />
+                    Edit
                 </Link>
 
                 <!-- Send Invoice Email -->
@@ -503,6 +546,63 @@ const sendInvoice = () => {
                 <Button class="w-full bg-primary text-white hover:bg-primary/90 dark:text-gray-900"
                     @click="showGeneratedDialog = false">
                     OK
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+
+    <!-- Edited: resend to client? -->
+    <Dialog v-model:open="showEditedDialog">
+        <DialogContent class="sm:max-w-md">
+            <div class="flex flex-col items-center gap-3 pt-2 text-center">
+                <div class="flex h-14 w-14 items-center justify-center rounded-full bg-green-100 dark:bg-green-950/40">
+                    <CheckCircle2 class="h-8 w-8 text-green-600 dark:text-green-400" />
+                </div>
+                <DialogHeader class="items-center space-y-2">
+                    <DialogTitle class="text-center">
+                        Invoice berhasil diperbarui
+                    </DialogTitle>
+                    <DialogDescription class="text-center">
+                        Perubahan pada invoice <strong>{{ invoice.invoice_number }}</strong> sudah disimpan.
+                        Kirim ulang invoice revisi ke client supaya client mengetahui perubahannya?
+                    </DialogDescription>
+                </DialogHeader>
+            </div>
+
+            <div class="grid gap-2 rounded-lg border p-4 text-sm">
+                <div class="flex justify-between gap-4">
+                    <span class="text-muted-foreground">Client</span>
+                    <span class="font-medium text-right">{{ invoice.client?.company_name || '-' }}</span>
+                </div>
+                <div class="flex justify-between gap-4">
+                    <span class="text-muted-foreground">Email</span>
+                    <span class="inline-flex items-center gap-1 font-medium text-right">
+                        <Mail class="h-3.5 w-3.5 text-muted-foreground" />
+                        {{ invoice.client?.company_email || '-' }}
+                    </span>
+                </div>
+                <div class="flex justify-between gap-4">
+                    <span class="text-muted-foreground">Due Date</span>
+                    <span class="font-medium">{{ invoice.due_date || '-' }}</span>
+                </div>
+                <div class="flex justify-between gap-4 border-t pt-2">
+                    <span class="text-muted-foreground">Total Baru</span>
+                    <span class="font-semibold">{{ formatRupiah(invoice.total) }}</span>
+                </div>
+            </div>
+
+            <p v-if="!invoice.client?.company_email"
+                class="rounded-lg bg-yellow-50 px-3 py-2 text-xs text-yellow-800 dark:bg-yellow-950/40 dark:text-yellow-300">
+                Client belum memiliki email, invoice tidak bisa dikirim. Lengkapi email client terlebih dahulu.
+            </p>
+
+            <DialogFooter class="gap-2 sm:gap-2">
+                <Button variant="outline" :disabled="resending" @click="showEditedDialog = false">
+                    Nanti Saja
+                </Button>
+                <Button :disabled="resending || !invoice.client?.company_email" @click="resendRevisedInvoice">
+                    <Mail class="mr-2 h-4 w-4" />
+                    {{ resending ? 'Mengirim...' : 'Kirim Ulang ke Client' }}
                 </Button>
             </DialogFooter>
         </DialogContent>

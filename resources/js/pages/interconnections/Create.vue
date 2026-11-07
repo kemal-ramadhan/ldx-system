@@ -305,13 +305,13 @@ const submit = () => {
 
     <Head :title="title" />
 
-    <div class="p-4">
+    <div class="p-4 text-foreground dark:scheme-dark">
 
         <!-- HEADER -->
 
         <div class="mb-6 flex items-center gap-3">
 
-            <Link href="/admin/interconnections" class="rounded-xl border p-2 text-gray-500 hover:bg-gray-50">
+            <Link href="/admin/interconnections" class="rounded-xl border p-2 text-muted-foreground hover:bg-muted">
 
                 <ArrowLeft class="h-4 w-4" />
 
@@ -334,7 +334,7 @@ const submit = () => {
 
         <!-- REQUESTER -->
 
-        <div class="mb-5 rounded-2xl border bg-white p-6 shadow-sm dark:bg-transparent">
+        <div class="mb-5 rounded-2xl border bg-card p-6 shadow-sm dark:bg-transparent">
 
             <div class="mb-5">
 
@@ -383,11 +383,11 @@ const submit = () => {
 
             <!-- SOURCE -->
 
-            <div class="rounded-2xl border bg-white p-6 shadow-sm dark:bg-transparent">
+            <div class="rounded-2xl border bg-card p-6 shadow-sm dark:bg-transparent">
 
                 <div class="mb-6 flex items-center gap-3">
 
-                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300">
 
                         <Cable class="h-5 w-5" />
 
@@ -445,7 +445,7 @@ const submit = () => {
 
                         <select v-model="form.source_rack_id" @change="changeSourceRack"
                             :disabled="!form.source_client_id"
-                            class="w-full rounded-xl border bg-background px-4 py-3 text-sm disabled:cursor-not-allowed disabled:bg-gray-50">
+                            class="w-full rounded-xl border bg-background px-4 py-3 text-sm disabled:cursor-not-allowed disabled:bg-muted">
 
                             <option value="">
                                 Select Rack
@@ -470,7 +470,7 @@ const submit = () => {
 
                         <select v-model="form.source_device_id" @change="changeSourceDevice"
                             :disabled="!form.source_rack_id"
-                            class="w-full rounded-xl border bg-background px-4 py-3 text-sm disabled:cursor-not-allowed disabled:bg-gray-50">
+                            class="w-full rounded-xl border bg-background px-4 py-3 text-sm disabled:cursor-not-allowed disabled:bg-muted">
 
                             <option value="">
                                 Select Device
@@ -494,7 +494,7 @@ const submit = () => {
                         </label>
 
                         <select v-model="form.source_port_id" :disabled="!form.source_device_id"
-                            class="w-full rounded-xl border bg-background px-4 py-3 text-sm disabled:cursor-not-allowed disabled:bg-gray-50">
+                            class="w-full rounded-xl border bg-background px-4 py-3 text-sm disabled:cursor-not-allowed disabled:bg-muted">
 
                             <option value="">
                                 Select Available Port
@@ -522,11 +522,11 @@ const submit = () => {
 
             <!-- DESTINATION -->
 
-            <div class="rounded-2xl border bg-white p-6 shadow-sm dark:bg-transparent">
+            <div class="rounded-2xl border bg-card p-6 shadow-sm dark:bg-transparent">
 
                 <div class="mb-6 flex items-center gap-3">
 
-                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-green-50 text-green-600">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-green-50 dark:bg-green-950/40 text-green-600 dark:text-green-300">
 
                         <Cable class="h-5 w-5" />
 
@@ -594,7 +594,7 @@ const submit = () => {
 
                         <select v-model="form.destination_rack_id" @change="changeDestinationRack"
                             :disabled="!form.destination_client_id"
-                            class="w-full rounded-xl border bg-background px-4 py-3 text-sm disabled:cursor-not-allowed disabled:bg-gray-50">
+                            class="w-full rounded-xl border bg-background px-4 py-3 text-sm disabled:cursor-not-allowed disabled:bg-muted">
 
                             <option value="">
                                 Select Rack
@@ -619,7 +619,7 @@ const submit = () => {
 
                         <select v-model="form.destination_device_id" @change="changeDestinationDevice"
                             :disabled="!form.destination_rack_id"
-                            class="w-full rounded-xl border bg-background px-4 py-3 text-sm disabled:cursor-not-allowed disabled:bg-gray-50">
+                            class="w-full rounded-xl border bg-background px-4 py-3 text-sm disabled:cursor-not-allowed disabled:bg-muted">
 
                             <option value="">
                                 Select Device
@@ -643,7 +643,7 @@ const submit = () => {
                         </label>
 
                         <select v-model="form.destination_port_id" :disabled="!form.destination_device_id"
-                            class="w-full rounded-xl border bg-background px-4 py-3 text-sm disabled:cursor-not-allowed disabled:bg-gray-50">
+                            class="w-full rounded-xl border bg-background px-4 py-3 text-sm disabled:cursor-not-allowed disabled:bg-muted">
 
                             <option value="">
                                 Select Available Port
@@ -683,8 +683,8 @@ const submit = () => {
                                 @click="form.external_location = location" :class="[
                                     'rounded-xl border px-4 py-3 text-sm font-medium transition-all',
                                     form.external_location === location
-                                        ? 'border-primary bg-primary text-white dark:text-gray-900'
-                                        : 'border-input bg-background hover:bg-muted dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:bg-transparent'
+                                        ? 'border-primary bg-primary text-primary-foreground'
+                                        : 'border-input bg-background hover:bg-muted dark:bg-transparent'
                                 ]">
                                 {{ location }}
                             </button>
@@ -748,7 +748,7 @@ const submit = () => {
 
         <!-- CONNECTION DETAILS -->
 
-        <div class="mt-5 rounded-2xl border bg-white p-6 shadow-sm dark:bg-transparent">
+        <div class="mt-5 rounded-2xl border bg-card p-6 shadow-sm dark:bg-transparent">
 
             <div class="mb-6">
 
@@ -912,12 +912,12 @@ const submit = () => {
         <div class="mt-5 flex justify-end gap-3">
 
             <Link href="/admin/interconnections"
-                class="inline-flex items-center rounded-xl border px-5 py-2.5 text-sm font-medium hover:bg-gray-50">
+                class="inline-flex items-center rounded-xl border px-5 py-2.5 text-sm font-medium hover:bg-muted">
                 Cancel
             </Link>
 
             <button type="button" @click="submit" :disabled="form.processing"
-                class="inline-flex items-center rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-primary/90 disabled:opacity-50">
+                class="inline-flex items-center rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-50">
 
                 <Save class="mr-2 h-4 w-4" />
 

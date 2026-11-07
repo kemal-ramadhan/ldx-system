@@ -80,51 +80,50 @@ const submit = () => {
 </script>
 
 <style>
-/* Adjust multiselect for better contrast */
-.multiselect__tags {
+/* vue-multiselect follows the app theme tokens (light & dark) */
+.add-cost-page .multiselect__tags {
     border-radius: 0.5rem;
-    border-color: #d1d5db;
+    border-color: var(--input);
+    background-color: var(--background);
+    color: var(--foreground);
     padding-top: 0.5rem;
     min-height: 2.5rem;
 }
-.dark .multiselect__tags {
-    background-color: #1f2937;
-    border-color: #374151;
-    color: #f9fafb;
-}
-.dark .multiselect__input {
+.add-cost-page .multiselect__input,
+.add-cost-page .multiselect__single {
     background-color: transparent;
-    color: #f9fafb;
+    color: var(--foreground);
 }
-.dark .multiselect__single {
-    background-color: transparent;
-    color: #f9fafb;
+.add-cost-page .multiselect__placeholder {
+    color: var(--muted-foreground);
 }
-.dark .multiselect__content-wrapper {
-    background-color: #1f2937;
-    border-color: #374151;
+.add-cost-page .multiselect__content-wrapper {
+    background-color: var(--popover);
+    border-color: var(--border);
+    color: var(--popover-foreground);
 }
-.dark .multiselect__option {
-    color: #f9fafb;
+.add-cost-page .multiselect__option {
+    color: var(--popover-foreground);
 }
-.dark .multiselect__option--highlight {
-    background-color: #3b82f6;
-    color: #ffffff;
+.add-cost-page .multiselect__option--highlight {
+    background-color: var(--accent);
+    color: var(--accent-foreground);
 }
-.dark .multiselect__option--selected {
-    background-color: #374151;
-    color: #ffffff;
+.add-cost-page .multiselect__option--selected,
+.add-cost-page .multiselect__option--selected.multiselect__option--highlight {
+    background-color: var(--muted);
+    color: var(--foreground);
 }
 </style>
 
 <template>
     <Head :title="title" />
 
-    <div class="p-4">
+    <div class="add-cost-page p-4 text-foreground dark:scheme-dark">
         <!-- HEADER -->
         <div class="mb-6 flex items-start justify-between">
             <div class="flex items-start gap-3">
-                <Link :href="`/admin/interconnections/${interconnection.id}`" class="rounded-xl border p-2 text-gray-500 hover:bg-gray-50">
+                <Link :href="`/admin/interconnections/${interconnection.id}`" class="rounded-xl border p-2 text-muted-foreground hover:bg-muted">
                     <ArrowLeft class="h-4 w-4" />
                 </Link>
                 <div>
@@ -138,12 +137,12 @@ const submit = () => {
             </div>
         </div>
 
-        <div class="rounded-2xl border bg-white p-6 shadow-sm dark:bg-transparent">
+        <div class="rounded-2xl border bg-card p-6 shadow-sm dark:bg-transparent">
             <form @submit.prevent="submit" class="space-y-6">
                 
                 <div class="space-y-2">
-                    <label class="block text-sm font-medium text-gray-700">Billing Cycle</label>
-                    <select v-model="form.billing_cycle" class="mt-1 block w-full md:w-1/3 rounded-lg border-gray-300 py-2 pl-3 pr-10 text-base focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm">
+                    <label class="block text-sm font-medium text-foreground">Billing Cycle</label>
+                    <select v-model="form.billing_cycle" class="mt-1 block w-full md:w-1/3 rounded-lg border border-input bg-background py-2 pl-3 pr-10 text-base focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm">
                         <option value="one-time">One-Time</option>
                         <option value="monthly">Monthly</option>
                         <option value="yearly">Yearly</option>
@@ -153,19 +152,19 @@ const submit = () => {
 
                 <div class="space-y-4">
                     <div class="flex items-center justify-between border-b pb-3">
-                        <h3 class="text-base font-semibold text-gray-900">Products & Costs</h3>
-                        <button type="button" @click="addProduct" class="inline-flex items-center rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-gray-800">
+                        <h3 class="text-base font-semibold text-foreground">Products & Costs</h3>
+                        <button type="button" @click="addProduct" class="inline-flex items-center rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90">
                             <Plus class="w-4 h-4 mr-2" /> Add Product
                         </button>
                     </div>
 
-                    <div v-if="form.products.length === 0" class="text-center py-8 text-sm text-gray-500 rounded-lg border border-dashed">
+                    <div v-if="form.products.length === 0" class="text-center py-8 text-sm text-muted-foreground rounded-lg border border-dashed">
                         No products added. Click "Add Product" to include costs.
                     </div>
 
-                    <div v-for="(item, index) in form.products" :key="index" class="flex flex-wrap gap-4 items-start bg-gray-50 p-4 rounded-xl border">
+                    <div v-for="(item, index) in form.products" :key="index" class="flex flex-wrap gap-4 items-start bg-muted/50 p-4 rounded-xl border">
                         <div class="flex-1 min-w-[250px] space-y-1">
-                            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400">Product</label>
+                            <label class="block text-xs font-medium text-muted-foreground">Product</label>
                             <Multiselect
                                 v-model="item.product"
                                 :options="products"
@@ -182,12 +181,12 @@ const submit = () => {
                             </Multiselect>
                         </div>
                         <div class="w-32 space-y-1">
-                            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400">Quantity</label>
-                            <input type="number" min="1" v-model="item.quantity" class="block w-full h-[40px] rounded-lg border border-[#d1d5db] bg-white dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 px-3 text-sm focus:border-blue-500 focus:ring-blue-500" />
+                            <label class="block text-xs font-medium text-muted-foreground">Quantity</label>
+                            <input type="number" min="1" v-model="item.quantity" class="block w-full h-[40px] rounded-lg border border-input bg-background px-3 text-sm focus:border-blue-500 focus:ring-blue-500" />
                         </div>
                         <div class="w-40 space-y-1">
-                            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400">Subtotal</label>
-                            <div class="flex items-center h-[40px] text-sm font-medium text-gray-900 dark:text-gray-200">
+                            <label class="block text-xs font-medium text-muted-foreground">Subtotal</label>
+                            <div class="flex items-center h-[40px] text-sm font-medium text-foreground">
                                 <span v-if="item.product">
                                     {{ formatCurrency(Number(item.product.base_price) * item.quantity) }}
                                 </span>
@@ -195,7 +194,7 @@ const submit = () => {
                             </div>
                         </div>
                         <div class="pt-5">
-                            <button type="button" @click="removeProduct(index)" class="inline-flex items-center justify-center h-[40px] w-[40px] rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition">
+                            <button type="button" @click="removeProduct(index)" class="inline-flex items-center justify-center h-[40px] w-[40px] rounded-lg text-red-600 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 transition">
                                 <Trash2 class="w-5 h-5" />
                             </button>
                         </div>
@@ -209,7 +208,7 @@ const submit = () => {
                 </div>
 
                 <!-- Summary -->
-                <div class="rounded-xl border p-5 mt-6 bg-gray-50 dark:bg-transparent">
+                <div class="rounded-xl border p-5 mt-6 bg-muted/50 dark:bg-transparent">
                     <h2 class="text-lg font-semibold mb-4">Invoice Summary</h2>
                     <div class="flex flex-col gap-3">
                         <div class="flex items-center justify-between">
@@ -218,15 +217,15 @@ const submit = () => {
                         </div>
                         <div v-if="summary.ppn > 0" class="flex items-center justify-between">
                             <span class="text-sm text-muted-foreground">PPN</span>
-                            <span class="font-medium text-blue-600">+ {{ formatCurrency(summary.ppn) }}</span>
+                            <span class="font-medium text-blue-600 dark:text-blue-300">+ {{ formatCurrency(summary.ppn) }}</span>
                         </div>
                         <div v-if="summary.pph23 > 0" class="flex items-center justify-between">
                             <span class="text-sm text-muted-foreground">PPh 23</span>
-                            <span class="font-medium text-red-600">- {{ formatCurrency(summary.pph23) }}</span>
+                            <span class="font-medium text-red-600 dark:text-red-300">- {{ formatCurrency(summary.pph23) }}</span>
                         </div>
                         <div class="mt-2 flex items-center justify-between border-t pt-4">
                             <span class="font-semibold">Grand Total</span>
-                            <span class="text-lg font-bold text-gray-900">{{ formatCurrency(summary.total) }}</span>
+                            <span class="text-lg font-bold text-foreground">{{ formatCurrency(summary.total) }}</span>
                         </div>
                     </div>
                 </div>

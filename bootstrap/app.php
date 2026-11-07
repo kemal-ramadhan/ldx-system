@@ -30,5 +30,15 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Guest book left open too long -> session/CSRF expired (419).
+        // Send the visitor back to the form with their input instead of an error page.
+        // (Laravel converts TokenMismatchException to a 419 HttpException before render callbacks)
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpException $e, $request) {
+            if ($e->getStatusCode() === 419 && $request->routeIs('create.buku.tamu')) {
+                return redirect()
+                    ->route('daftar.buku.tamu')
+                    ->withInput($request->except('_token'))
+                    ->withErrors(['general' => 'Sesi Anda sudah habis. Data Anda masih tersimpan di form, silakan klik "Daftar Kunjungan" lagi.']);
+            }
+        });
     })->create();

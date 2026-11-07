@@ -4,6 +4,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import {
     Search,
     Eye,
+    Pencil,
     Receipt,
     Trash2,
 } from 'lucide-vue-next';
@@ -20,6 +21,9 @@ import {
  * DELETE INVOICE
  * =========================================
  */
+// keep in sync with InvoiceController::EDITABLE_STATUSES
+const EDITABLE_STATUSES = ['draft', 'pending', 'sent', 'overdue', 'rejected'];
+
 const deleteTarget = ref<any>(null);
 const openDeleteDialog = ref(false);
 
@@ -376,6 +380,15 @@ defineOptions({
                                     >
                                         <Eye class="mr-2 h-4 w-4" />
                                         View
+                                    </Link>
+
+                                    <Link
+                                        v-if="EDITABLE_STATUSES.includes(invoice.status)"
+                                        :href="`/admin/invoices/${invoice.id}/edit`"
+                                        class="inline-flex items-center rounded-lg border px-3 py-2 text-sm hover:bg-muted"
+                                        title="Edit invoice"
+                                    >
+                                        <Pencil class="h-4 w-4" />
                                     </Link>
 
                                     <button
