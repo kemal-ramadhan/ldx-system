@@ -179,7 +179,7 @@ onBeforeUnmount(clearEditPreview)
                 <div class="flex gap-2">
                     <button
                         @click="openAdd = true"
-                        class="inline-flex items-center justify-center rounded-md border border-transparent bg-primary dark:text-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary/90">
+                        class="inline-flex items-center justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90">
                         <Plus class="w-4 h-4 mr-2" />
                         Tambah Gambar
                     </button>
@@ -189,9 +189,9 @@ onBeforeUnmount(clearEditPreview)
             <!-- Empty State -->
             <div
                 v-if="!images.length"
-                class="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed py-14 text-center dark:border-gray-700"
+                class="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed py-14 text-center"
             >
-                <div class="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-400 dark:bg-gray-800">
+                <div class="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
                     <ImageOff class="h-6 w-6" />
                 </div>
                 <div>
@@ -209,7 +209,7 @@ onBeforeUnmount(clearEditPreview)
                 <div
                     v-for="(img, i) in images"
                     :key="img.id"
-                    class="group overflow-hidden rounded-xl border bg-white transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-900"
+                    class="group overflow-hidden rounded-xl border bg-card transition-shadow hover:shadow-md"
                 >
                     <div class="relative">
                         <button type="button" class="block w-full cursor-zoom-in" @click="openLightbox(i)">
@@ -227,7 +227,7 @@ onBeforeUnmount(clearEditPreview)
                             <button
                                 type="button"
                                 @click="startEdit(img)"
-                                class="rounded-md bg-white/90 p-1.5 text-green-600 shadow hover:bg-white cursor-pointer"
+                                class="rounded-md bg-white/90 p-1.5 text-green-600 dark:text-green-300 shadow hover:bg-white cursor-pointer"
                                 title="Edit"
                             >
                                 <Pencil class="h-3.5 w-3.5" />
@@ -274,7 +274,7 @@ onBeforeUnmount(clearEditPreview)
                         type="button"
                         :disabled="addForm.processing || !addForm.images.length"
                         @click="submitAdd"
-                        class="bg-primary text-white hover:bg-primary/90 dark:text-gray-900"
+                        class="bg-primary text-primary-foreground hover:bg-primary/90"
                     >
                         <Spinner v-if="addForm.processing" class="mr-2 h-4 w-4" />
                         Simpan {{ addForm.images.length ? `(${addForm.images.length})` : '' }}
@@ -300,7 +300,7 @@ onBeforeUnmount(clearEditPreview)
                             <img
                                 :src="editingImage.url"
                                 :alt="editingImage.file_name"
-                                :class="['aspect-video w-full rounded-lg border object-cover dark:border-gray-700', editPreviewUrl ? 'opacity-50' : '']"
+                                :class="['aspect-video w-full rounded-lg border object-cover', editPreviewUrl ? 'opacity-50' : '']"
                             />
                         </div>
 
@@ -323,11 +323,11 @@ onBeforeUnmount(clearEditPreview)
                             </div>
                             <label
                                 v-else
-                                class="flex aspect-video w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-gray-300 text-center hover:border-gray-400 dark:border-gray-600"
+                                class="flex aspect-video w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-input text-center hover:border-gray-400"
                             >
-                                <Upload class="h-5 w-5 text-gray-400" />
-                                <span class="text-xs text-gray-500">Pilih gambar pengganti</span>
-                                <span class="text-[11px] text-gray-400">opsional · maks 5MB</span>
+                                <Upload class="h-5 w-5 text-muted-foreground" />
+                                <span class="text-xs text-muted-foreground">Pilih gambar pengganti</span>
+                                <span class="text-[11px] text-muted-foreground">opsional · maks 5MB</span>
                                 <input type="file" accept=".png,.jpg,.jpeg,.webp" class="hidden" @change="handleEditFile" />
                             </label>
                         </div>
@@ -336,8 +336,8 @@ onBeforeUnmount(clearEditPreview)
                     <div class="grid gap-2">
                         <Label for="caption">Caption</Label>
                         <Input id="caption" v-model="editForm.caption" placeholder="Contoh: Tampak depan rack" />
-                        <p v-if="editForm.errors.caption" class="text-sm text-red-600">{{ editForm.errors.caption }}</p>
-                        <p v-if="editForm.errors.image" class="text-sm text-red-600">{{ editForm.errors.image }}</p>
+                        <p v-if="editForm.errors.caption" class="text-sm text-red-600 dark:text-red-300">{{ editForm.errors.caption }}</p>
+                        <p v-if="editForm.errors.image" class="text-sm text-red-600 dark:text-red-300">{{ editForm.errors.image }}</p>
                     </div>
 
                     <DialogFooter class="gap-2">
@@ -345,7 +345,7 @@ onBeforeUnmount(clearEditPreview)
                         <Button
                             type="submit"
                             :disabled="editForm.processing"
-                            class="bg-primary text-white hover:bg-primary/90 dark:text-gray-900"
+                            class="bg-primary text-primary-foreground hover:bg-primary/90"
                         >
                             <Spinner v-if="editForm.processing" class="mr-2 h-4 w-4" />
                             Simpan Perubahan
@@ -368,7 +368,7 @@ onBeforeUnmount(clearEditPreview)
                     v-if="deleteTarget"
                     :src="deleteTarget.url"
                     :alt="deleteTarget.file_name"
-                    class="aspect-video w-full rounded-lg border object-cover dark:border-gray-700"
+                    class="aspect-video w-full rounded-lg border object-cover"
                 />
                 <DialogFooter class="gap-2">
                     <Button variant="secondary" @click="openDelete = false">Batal</Button>

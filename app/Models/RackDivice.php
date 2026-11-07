@@ -24,6 +24,12 @@ class RackDivice extends Model
         'ip_address',
         'total_unit',
         'status',
+        'installed_at',
+    ];
+
+    protected $casts = [
+        // serialized in app timezone (Asia/Jakarta) so the UI shows the real local time
+        'installed_at' => 'datetime:Y-m-d H:i',
     ];
 
     /**

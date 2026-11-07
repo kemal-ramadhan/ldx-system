@@ -173,7 +173,7 @@ const updateOwner = () => {
 
                         <DialogTrigger as-child>
                             <button
-                                class="inline-flex items-center justify-center rounded-md border border-transparent bg-primary dark:text-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary/90">
+                                class="inline-flex items-center justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90">
                                 <Plus class="w-4 h-4 mr-2" />
                                 Add Owner
                             </button>
@@ -248,7 +248,7 @@ const updateOwner = () => {
                                         Status
                                     </Label>
 
-                                    <select v-model="ownerForm.status" class="rounded-md border px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-white">
+                                    <select v-model="ownerForm.status" class="rounded-md border px-3 py-2 text-sm dark:text-white">
                                         <option value="active">
                                             Active
                                         </option>
@@ -290,13 +290,13 @@ const updateOwner = () => {
                 <div class="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
                     <!-- EMPTY STATE -->
                     <div v-if="!props.rack?.client_racks?.length"
-                        class="flex flex-col items-center justify-center rounded-2xl border border-dashed bg-gray-50 dark:bg-gray-900 dark:border-gray-700 px-6 py-14 text-center">
+                        class="flex flex-col items-center justify-center rounded-2xl border border-dashed bg-muted/50 px-6 py-14 text-center">
 
-                        <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-800">
-                            <Plus class="h-8 w-8 text-gray-500" />
+                        <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                            <Plus class="h-8 w-8 text-muted-foreground" />
                         </div>
 
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                        <h3 class="text-lg font-semibold text-foreground">
                             No Owner Assigned
                         </h3>
 
@@ -306,34 +306,34 @@ const updateOwner = () => {
                         </p>
 
                         <button @click="openAddOwner = true"
-                            class="mt-5 inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90">
+                            class="mt-5 inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
                             <Plus class="mr-2 h-4 w-4" />
                             Add Owner
                         </button>
                     </div>
                     <div v-for="member in props.rack?.client_racks || []" :key="member.id"
-                        class="relative rounded-2xl border bg-white dark:bg-gray-900 dark:border-gray-800 p-4 shadow-sm">
+                        class="relative rounded-2xl border bg-card p-4 shadow-sm">
                         <!-- More Menu -->
                         <div class="absolute right-4 top-4">
 
-                            <button @click="toggleMenu(member.id)" class="rounded-lg p-2 transition hover:bg-gray-100 dark:hover:bg-gray-800">
-                                <MoreHorizontal class="h-5 w-5 text-gray-500" />
+                            <button @click="toggleMenu(member.id)" class="rounded-lg p-2 transition hover:bg-muted">
+                                <MoreHorizontal class="h-5 w-5 text-muted-foreground" />
                             </button>
 
                             <!-- DROPDOWN -->
                             <div v-if="openMenu === member.id"
-                                class="absolute right-0 top-12 z-20 w-44 overflow-hidden rounded-xl border bg-white dark:bg-gray-900 dark:border-gray-800 shadow-lg">
+                                class="absolute right-0 top-12 z-20 w-44 overflow-hidden rounded-xl border bg-card shadow-lg">
 
                                 <!-- DETAIL -->
                                 <button
-                                    class="flex w-full items-center gap-2 px-4 py-3 text-sm transition hover:bg-gray-50 dark:hover:bg-gray-800">
+                                    class="flex w-full items-center gap-2 px-4 py-3 text-sm transition hover:bg-muted">
                                     <Eye class="h-4 w-4" />
                                     Detail
                                 </button>
 
                                 <!-- UPDATE -->
                                 <button @click="editOwner(member)"
-                                    class="flex w-full items-center gap-2 px-4 py-3 text-sm transition hover:bg-gray-50 dark:hover:bg-gray-800">
+                                    class="flex w-full items-center gap-2 px-4 py-3 text-sm transition hover:bg-muted">
                                     <Pencil class="h-4 w-4" />
                                     Update
                                 </button>
@@ -353,7 +353,7 @@ const updateOwner = () => {
                         <div class="flex items-start gap-3">
                             <!-- Avatar -->
                             <div
-                                class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-300 dark:bg-gray-800 text-sm font-medium text-gray-600 dark:text-gray-300">
+                                class="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-sm font-medium text-muted-foreground">
                                 {{
                                     member.client?.company_name
                                         .split(' ')
@@ -364,7 +364,7 @@ const updateOwner = () => {
 
                             <!-- Info -->
                             <div class="pr-10">
-                                <p class="font-medium text-gray-900 dark:text-gray-100">
+                                <p class="font-medium text-foreground">
                                     {{ member.client?.company_name }}
 
                                     <span class="text-sm text-muted-foreground">
@@ -400,7 +400,7 @@ const updateOwner = () => {
 
     <div v-if="openEditOwner" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
 
-        <div class="w-full max-w-2xl rounded-2xl bg-white dark:bg-gray-900 shadow-xl p-6 border dark:border-gray-800">
+        <div class="w-full max-w-2xl rounded-2xl bg-card shadow-xl p-6 border">
 
             <!-- HEADER -->
             <div class="mb-6 flex items-center justify-between">
@@ -415,7 +415,7 @@ const updateOwner = () => {
                     </p>
                 </div>
 
-                <button @click="openEditOwner = false" class="rounded-lg p-2 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800">
+                <button @click="openEditOwner = false" class="rounded-lg p-2 hover:bg-muted">
                     ✕
                 </button>
             </div>
@@ -424,36 +424,36 @@ const updateOwner = () => {
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 
                 <div>
-                    <label class="mb-2 block text-sm font-medium dark:text-gray-300">
+                    <label class="mb-2 block text-sm font-medium">
                         Rent Units
                     </label>
 
-                    <input v-model="ownerForm.rented_units" type="number" class="w-full rounded-lg border px-4 py-2 dark:bg-gray-800 dark:border-gray-700 dark:text-white" />
+                    <input v-model="ownerForm.rented_units" type="number" class="w-full rounded-lg border px-4 py-2 dark:text-white" />
                 </div>
 
                 <div>
-                    <label class="mb-2 block text-sm font-medium dark:text-gray-300">
+                    <label class="mb-2 block text-sm font-medium">
                         Monthly Fee
                     </label>
 
-                    <input v-model="ownerForm.monthly_fee" type="number" class="w-full rounded-lg border px-4 py-2 dark:bg-gray-800 dark:border-gray-700 dark:text-white" />
+                    <input v-model="ownerForm.monthly_fee" type="number" class="w-full rounded-lg border px-4 py-2 dark:text-white" />
                 </div>
 
                 <div>
-                    <label class="mb-2 block text-sm font-medium dark:text-gray-300">
+                    <label class="mb-2 block text-sm font-medium">
                         Start Date
                     </label>
 
                     <input v-model="ownerForm.rental_start_date" type="date"
-                        class="w-full rounded-lg border px-4 py-2 dark:bg-gray-800 dark:border-gray-700 dark:text-white" />
+                        class="w-full rounded-lg border px-4 py-2 dark:text-white" />
                 </div>
 
                 <div>
-                    <label class="mb-2 block text-sm font-medium dark:text-gray-300">
+                    <label class="mb-2 block text-sm font-medium">
                         End Date
                     </label>
 
-                    <input v-model="ownerForm.rental_end_date" type="date" class="w-full rounded-lg border px-4 py-2 dark:bg-gray-800 dark:border-gray-700 dark:text-white" />
+                    <input v-model="ownerForm.rental_end_date" type="date" class="w-full rounded-lg border px-4 py-2 dark:text-white" />
                 </div>
 
             </div>
@@ -461,11 +461,11 @@ const updateOwner = () => {
             <!-- ACTION -->
             <div class="mt-6 flex justify-end gap-2">
 
-                <button @click="openEditOwner = false" class="rounded-lg border px-4 py-2 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">
+                <button @click="openEditOwner = false" class="rounded-lg border px-4 py-2">
                     Cancel
                 </button>
 
-                <button @click="updateOwner" class="rounded-lg bg-primary px-4 py-2 text-white dark:text-gray-900">
+                <button @click="updateOwner" class="rounded-lg bg-primary px-4 py-2 text-primary-foreground">
                     Update Owner
                 </button>
 

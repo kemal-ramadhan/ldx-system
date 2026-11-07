@@ -120,7 +120,7 @@ const formatSeconds = (sec: number = 0) => {
 </script>
 
 <template>
-    <div class="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-6">
+    <div class="rounded-2xl border border-slate-200/80 bg-card p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-6">
         <!-- Header Telemetri & Realtime Controls -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 pb-5 dark:border-slate-800">
             <div class="flex items-center gap-3">
@@ -163,7 +163,7 @@ const formatSeconds = (sec: number = 0) => {
                         'inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all shadow-sm cursor-pointer',
                         props.autoRefresh
                             ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/40 dark:text-emerald-400'
-                            : 'border-slate-200 bg-white text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400'
+                            : 'border-slate-200 bg-card text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400'
                     ]"
                 >
                     <Radio :class="['h-3.5 w-3.5', props.autoRefresh ? 'animate-pulse text-emerald-500' : 'text-slate-400']" />
@@ -350,7 +350,7 @@ const formatSeconds = (sec: number = 0) => {
 
                         <div class="flex items-center gap-1.5">
                             <!-- Time Filter Pills -->
-                            <div class="flex items-center rounded-lg border border-slate-200 bg-white p-0.5 text-[11px] font-medium dark:border-slate-800 dark:bg-slate-900">
+                            <div class="flex items-center rounded-lg border border-slate-200 bg-card p-0.5 text-[11px] font-medium dark:border-slate-800 dark:bg-slate-900">
                                 <button
                                     type="button"
                                     @click="emit('changeTimeFilter', 'session')"
@@ -421,7 +421,7 @@ const formatSeconds = (sec: number = 0) => {
 
                         <div class="space-y-3 text-xs">
                             <!-- PLN Box -->
-                            <div class="rounded-xl border border-slate-200/80 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900">
+                            <div class="rounded-xl border border-slate-200/80 bg-card p-3.5 dark:border-slate-800 dark:bg-slate-900">
                                 <div class="flex items-center justify-between font-semibold text-slate-800 dark:text-slate-200 mb-2">
                                     <span class="flex items-center gap-1.5">
                                         <Zap class="h-4 w-4 text-amber-500" />
@@ -448,7 +448,7 @@ const formatSeconds = (sec: number = 0) => {
                             </div>
 
                             <!-- UPS Box -->
-                            <div class="rounded-xl border border-slate-200/80 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900">
+                            <div class="rounded-xl border border-slate-200/80 bg-card p-3.5 dark:border-slate-800 dark:bg-slate-900">
                                 <div class="flex items-center justify-between font-semibold text-slate-800 dark:text-slate-200 mb-2">
                                     <span class="flex items-center gap-1.5">
                                         <Zap class="h-4 w-4 text-cyan-500" />

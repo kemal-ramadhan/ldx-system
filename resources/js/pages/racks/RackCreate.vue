@@ -115,7 +115,7 @@ defineOptions({
 <template>
     <Head :title="title" />
 
-    <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+    <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4 dark:scheme-dark">
         <h1 class="text-xl font-bold">Create Rack</h1>
 
         <Form @submit.prevent="createRack" v-slot="{ errors, processing }" class="flex flex-col gap-3">
@@ -168,8 +168,8 @@ defineOptions({
                         <button type="button" @click="form.status = 'active'" :class="[
                             'rounded-md border px-4 py-2 text-sm font-medium transition-all',
                             form.status === 'active'
-                                ? 'border-primary bg-primary text-white dark:text-gray-900'
-                                : 'border-input bg-background hover:bg-muted dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:bg-transparent'
+                                ? 'border-primary bg-primary text-primary-foreground'
+                                : 'border-input bg-background hover:bg-muted dark:bg-transparent'
                         ]">
                             Active
                         </button>
@@ -177,8 +177,8 @@ defineOptions({
                         <button type="button" @click="form.status = 'inactive'" :class="[
                             'rounded-md border px-4 py-2 text-sm font-medium transition-all',
                             form.status === 'inactive'
-                                ? 'border-primary bg-primary text-white dark:text-gray-900'
-                                : 'border-input bg-background hover:bg-muted dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:bg-transparent'
+                                ? 'border-primary bg-primary text-primary-foreground'
+                                : 'border-input bg-background hover:bg-muted dark:bg-transparent'
                         ]">
                             Inactive
                         </button>
@@ -186,8 +186,8 @@ defineOptions({
                         <button type="button" @click="form.status = 'maintenance'" :class="[
                             'rounded-md border px-4 py-2 text-sm font-medium transition-all',
                             form.status === 'maintenance'
-                                ? 'border-primary bg-primary text-white dark:text-gray-900'
-                                : 'border-input bg-background hover:bg-muted dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:bg-transparent'
+                                ? 'border-primary bg-primary text-primary-foreground'
+                                : 'border-input bg-background hover:bg-muted dark:bg-transparent'
                         ]">
                             Maintenance
                         </button>
@@ -195,8 +195,8 @@ defineOptions({
                         <button type="button" @click="form.status = 'full'" :class="[
                             'rounded-md border px-4 py-2 text-sm font-medium transition-all',
                             form.status === 'full'
-                                ? 'border-primary bg-primary text-white dark:text-gray-900'
-                                : 'border-input bg-background hover:bg-muted dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:bg-transparent'
+                                ? 'border-primary bg-primary text-primary-foreground'
+                                : 'border-input bg-background hover:bg-muted dark:bg-transparent'
                         ]">
                             Full
                         </button>
@@ -228,7 +228,7 @@ defineOptions({
                                 variant="outline"
                                 size="sm"
                                 @click="openConnectModal"
-                                class="border-cyan-300 bg-white text-cyan-700 hover:bg-cyan-50 dark:border-cyan-800 dark:bg-slate-900 dark:text-cyan-300 dark:hover:bg-slate-800"
+                                class="border-cyan-300 bg-card text-cyan-700 hover:bg-cyan-50 dark:border-cyan-800 dark:bg-slate-900 dark:text-cyan-300 dark:hover:bg-slate-800"
                             >
                                 <Thermometer class="mr-1.5 h-3.5 w-3.5 text-orange-500" />
                                 {{ form.api_suhu ? 'Ganti Koneksi API Suhu' : 'Connect To API Suhu' }}
@@ -258,7 +258,7 @@ defineOptions({
                                 type="text"
                                 name="api_suhu"
                                 placeholder="Contoh: 4A-2 (atau pilih melalui tombol Connect To API Suhu di samping)"
-                                class="bg-white dark:bg-slate-900 font-mono text-xs"
+                                class="bg-card dark:bg-slate-900 font-mono text-xs"
                             />
                         </div>
 
@@ -285,14 +285,14 @@ defineOptions({
                     <Label for="description">Description <span class="text-red-500">*</span></Label>
                     <textarea id="description" v-model="form.description" required :tabindex="3"
                         autocomplete="description" name="description" placeholder="Rack description"
-                        class="w-full rounded-md border border-gray-300 bg-white py-2 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none resize-none h-24 dark:bg-transparent dark:text-gray-300 dark:border-gray-700"></textarea>
+                        class="w-full rounded-md border border-input bg-card py-2 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none resize-none h-24 dark:bg-transparent"></textarea>
                     <InputError :message="form.errors.description" />
                 </div>
 
                 <div class="grid md:col-span-2 gap-3 w-full">
                     <Label for="room_id">Location<span class="text-red-500">*</span></Label>
                     <select id="room_id" v-model="form.room_id" required
-                        class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700">
+                        class="rounded-lg border border-input bg-card px-4 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none">
                         <option value="">Location Room</option>
                         <option v-for="item in rooms" :key="item.id" :value="item.id">
                             {{ item.location_data_center?.name }} - {{ item.name }}
@@ -304,12 +304,12 @@ defineOptions({
 
             <div class="flex items-center justify-end gap-4">
                 <Button type="button"
-                    class="bg-gray-300 text-gray-700 hover:bg-gray-400 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                    class="bg-muted text-foreground hover:bg-muted/80"
                     @click="$inertia.visit('/admin/racks')">
                     Cancel
                 </Button>
                 <Button type="submit" :disabled="form.processing"
-                    class="bg-primary text-white hover:bg-primary/90 disabled:bg-gray-300 disabled:text-gray-500 dark:text-gray-900">
+                    class="bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground">
                     <Spinner v-if="form.processing" class="mr-2 h-4 w-4" />
                     {{ form.processing ? 'Creating...' : 'Create Rack' }}
                 </Button>
@@ -324,7 +324,7 @@ defineOptions({
             class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
             @click.self="closeConnectModal"
         >
-            <div class="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
+            <div class="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-2xl border border-slate-200 bg-card shadow-2xl dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
                 <!-- Modal Header -->
                 <div class="flex items-center justify-between border-b border-slate-100 p-5 dark:border-slate-800">
                     <div class="flex items-center gap-2.5">
@@ -356,14 +356,14 @@ defineOptions({
                             v-model="apiSearchQuery"
                             type="text"
                             placeholder="Cari ID Rack (contoh: 4A-2, 2A-1)..."
-                            class="w-full rounded-lg border border-slate-200 bg-white py-1.5 pl-9 pr-3 text-xs text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                            class="w-full rounded-lg border border-slate-200 bg-card py-1.5 pl-9 pr-3 text-xs text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                         />
                     </div>
                     <button
                         type="button"
                         @click="fetchApiRacks"
                         :disabled="isLoadingApiRacks"
-                        class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+                        class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-card px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
                     >
                         <RefreshCw :class="['h-3.5 w-3.5', isLoadingApiRacks ? 'animate-spin' : '']" />
                         Refresh API
@@ -373,13 +373,13 @@ defineOptions({
                 <!-- Modal Body: Daftar Rack -->
                 <div class="flex-1 overflow-y-auto p-4 space-y-2">
                     <div v-if="isLoadingApiRacks" class="flex flex-col items-center justify-center py-12 text-slate-500">
-                        <Spinner class="h-7 w-7 text-blue-600 mb-2" />
+                        <Spinner class="h-7 w-7 text-blue-600 dark:text-blue-300 mb-2" />
                         <span class="text-xs">Menghubungkan ke API LDX Suhu Monitoring...</span>
                     </div>
 
                     <div v-else-if="apiErrorMessage" class="rounded-xl border border-rose-200 bg-rose-50 p-4 text-xs text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/30 dark:text-rose-300">
                         <div class="flex items-center gap-2 font-semibold">
-                            <AlertCircle class="h-4 w-4 text-rose-600" />
+                            <AlertCircle class="h-4 w-4 text-rose-600 dark:text-rose-300" />
                             Gagal Memuat Data
                         </div>
                         <p class="mt-1">{{ apiErrorMessage }}</p>
@@ -397,7 +397,7 @@ defineOptions({
                             'group flex cursor-pointer items-center justify-between rounded-xl border p-3 transition-all',
                             form.api_suhu === r.rack
                                 ? 'border-cyan-500 bg-cyan-50/70 shadow-sm dark:border-cyan-600 dark:bg-cyan-950/30'
-                                : 'border-slate-200 bg-white hover:border-blue-400 hover:bg-slate-50/80 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-600'
+                                : 'border-slate-200 bg-card hover:border-blue-400 hover:bg-slate-50/80 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-600'
                         ]"
                     >
                         <div class="flex items-center gap-3">

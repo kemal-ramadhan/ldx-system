@@ -415,6 +415,8 @@ class RackController extends Controller
             'total_unit' => ['required', 'integer', 'min:1'],
 
             'status' => ['required', 'in:active,inactive,maintenance'],
+
+            'installed_at' => ['nullable', 'date'],
         ]);
 
         DB::beginTransaction();
@@ -537,6 +539,9 @@ class RackController extends Controller
                 'total_unit' => $validated['total_unit'],
 
                 'status' => $validated['status'],
+
+                // empty = installed now
+                'installed_at' => $validated['installed_at'] ?? now(),
             ]);
 
             /**
@@ -995,6 +1000,8 @@ class RackController extends Controller
             'ip_address' => ['nullable', 'string'],
 
             'status' => ['required', 'in:active,inactive,maintenance'],
+
+            'installed_at' => ['required', 'date'],
         ]);
 
         $device->update($validated);

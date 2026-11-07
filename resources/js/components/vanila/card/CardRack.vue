@@ -96,7 +96,7 @@ const weightPercent = computed(() => {
     <div class="grid grid-cols-1 gap-4 lg:grid-cols-3 p-4">
         <!-- LEFT CONTENT -->
         <div
-            class="lg:col-span-2 rounded-3xl bg-gray-900 p-6 text-white shadow-lg"
+            class="lg:col-span-2 rounded-3xl bg-gray-900 p-6 text-white shadow-lg dark:bg-zinc-900 dark:ring-1 dark:ring-white/10"
         >
             <!-- HEADER -->
             <div class="flex items-start justify-between">
@@ -111,7 +111,7 @@ const weightPercent = computed(() => {
                 </div>
 
                 <div
-                    class="rounded-full bg-white px-4 py-2 text-xs font-bold text-slate-800"
+                    class="rounded-full bg-white px-4 py-2 text-xs font-bold text-slate-800 dark:bg-white/15 dark:text-white"
                 >
                     {{ usagePercent }}%
                 </div>
@@ -126,7 +126,7 @@ const weightPercent = computed(() => {
             <!-- PROGRESS -->
             <div class="mt-2">
                 <div
-                    class="h-5 w-full overflow-hidden rounded-full bg-white/70"
+                    class="h-5 w-full overflow-hidden rounded-full bg-white/70 dark:bg-white/20"
                 >
                     <div
                         class="h-full rounded-full bg-red-500 transition-all duration-500"
@@ -138,7 +138,7 @@ const weightPercent = computed(() => {
             <!-- INFO BOX -->
             <div class="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div
-                    class="rounded-2xl bg-white p-6 text-slate-900 shadow"
+                    class="rounded-2xl bg-white p-6 text-slate-900 shadow dark:bg-white/10 dark:text-white dark:shadow-none"
                 >
                     <p class="text-sm font-medium">
                         Unit Tersedia
@@ -150,7 +150,7 @@ const weightPercent = computed(() => {
                 </div>
 
                 <div
-                    class="rounded-2xl bg-white p-6 text-slate-900 shadow"
+                    class="rounded-2xl bg-white p-6 text-slate-900 shadow dark:bg-white/10 dark:text-white dark:shadow-none"
                 >
                     <p class="text-sm font-medium">
                         Unit Terpakai
@@ -175,7 +175,7 @@ const weightPercent = computed(() => {
         <div class="flex flex-col gap-4">
             <!-- OWNERS -->
             <div
-                class="rounded-3xl bg-gray-900 p-6 text-white shadow-lg"
+                class="rounded-3xl bg-gray-900 p-6 text-white shadow-lg dark:bg-zinc-900 dark:ring-1 dark:ring-white/10"
             >
                 <p class="text-sm font-medium opacity-90">
                     Owned by
@@ -188,7 +188,7 @@ const weightPercent = computed(() => {
 
             <!-- POWER -->
             <div
-                class="rounded-3xl bg-gray-900 p-6 text-white shadow-lg flex flex-col justify-between"
+                class="rounded-3xl bg-gray-900 p-6 text-white shadow-lg dark:bg-zinc-900 dark:ring-1 dark:ring-white/10 flex flex-col justify-between"
             >
                 <div class="flex items-center justify-between">
                     <p class="text-sm font-medium opacity-90 flex items-center gap-2">
@@ -251,7 +251,7 @@ const weightPercent = computed(() => {
 
             <!-- WEIGHT -->
             <div
-                class="rounded-3xl bg-gray-900 p-6 text-white shadow-lg"
+                class="rounded-3xl bg-gray-900 p-6 text-white shadow-lg dark:bg-zinc-900 dark:ring-1 dark:ring-white/10"
             >
                 <div class="flex items-center justify-between">
                     <p class="text-sm font-medium opacity-90">
@@ -271,7 +271,7 @@ const weightPercent = computed(() => {
                 <!-- WEIGHT PROGRESS -->
                 <div class="mt-3">
                     <div
-                        class="h-4 w-full overflow-hidden rounded-full bg-white/70"
+                        class="h-4 w-full overflow-hidden rounded-full bg-white/70 dark:bg-white/20"
                     >
                         <div
                             class="h-full rounded-full bg-yellow-400 transition-all duration-500"

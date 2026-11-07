@@ -60,6 +60,43 @@ const openManagePorts = (device: any) => {
 }
 
 /**
+ * =========================
+ * TANGGAL PASANG (installed_at)
+ * =========================
+ * Server sends "YYYY-MM-DD HH:mm" (Asia/Jakarta); <input type="datetime-local"> needs "YYYY-MM-DDTHH:mm".
+ */
+const pad = (n: number) => String(n).padStart(2, '0')
+
+const nowLocal = () => {
+    const d = new Date()
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+const toInputDateTime = (value: string | null) => {
+    if (!value) return ''
+    // ISO string (UTC, e.g. created_at) -> local time; "YYYY-MM-DD HH:mm" -> as is
+    if (/[zZ]|[+-]\d{2}:\d{2}$/.test(value)) {
+        const d = new Date(value)
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+    }
+    return value.replace(' ', 'T').slice(0, 16)
+}
+
+const formatInstalledAt = (device: any) => {
+    const raw = toInputDateTime(device.installed_at ?? device.created_at)
+    if (!raw) return { date: '-', time: '' }
+    const [datePart, timePart] = raw.split('T')
+    const [y, m, d] = datePart.split('-').map(Number)
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
+    return { date: `${pad(d)} ${months[m - 1]} ${y}`, time: `${timePart} WIB` }
+}
+
+const openAddDeviceModal = () => {
+    deviceForm.installed_at = nowLocal()
+    openAddDevice.value = true
+}
+
+/**
  * FORM
  */
 const deviceForm = useForm({
@@ -74,6 +111,7 @@ const deviceForm = useForm({
     ip_address: '',
     total_unit: '',
     status: 'active',
+    installed_at: '',
 })
 
 const openGeneratePorts = ref(false)
@@ -225,6 +263,8 @@ const editForm = useForm({
     ip_address: '',
 
     status: 'active',
+
+    installed_at: '',
 })
 
 const openEditModal = (device: any) => {
@@ -245,6 +285,8 @@ const openEditModal = (device: any) => {
     editForm.ip_address = device.ip_address
 
     editForm.status = device.status
+
+    editForm.installed_at = toInputDateTime(device.installed_at ?? device.created_at)
 
     openEdit.value = true
 }
@@ -379,8 +421,8 @@ const refreshSelectedDevice = () => {
                 </p>
             </div>
 
-            <button @click="openAddDevice = true"
-                class="inline-flex items-center justify-center rounded-md border border-transparent bg-primary dark:text-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary/90">
+            <button @click="openAddDeviceModal()"
+                class="inline-flex items-center justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90">
                 <Plus class="w-4 h-4 mr-2" />
                 Add Device
             </button>
@@ -389,31 +431,31 @@ const refreshSelectedDevice = () => {
         <!-- SEARCH -->
         <div class="relative mb-6">
 
-            <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 
             <input v-model="search" type="text" placeholder="Search device..."
-                class="w-full rounded-xl border px-10 py-3 text-sm dark:bg-gray-900 dark:border-gray-800 dark:text-gray-100" />
+                class="w-full rounded-xl border px-10 py-3 text-sm" />
         </div>
 
         <!-- EMPTY -->
-        <div v-if="filteredDevices.length === 0" class="rounded-2xl border border-dashed p-10 text-center dark:border-gray-800">
-            <h3 class="text-lg font-medium dark:text-gray-200">
+        <div v-if="filteredDevices.length === 0" class="rounded-2xl border border-dashed p-10 text-center">
+            <h3 class="text-lg font-medium">
                 No devices found
             </h3>
 
-            <p class="mt-2 text-sm text-muted-foreground dark:text-gray-400">
+            <p class="mt-2 text-sm text-muted-foreground">
                 Add your first device to this rack
             </p>
         </div>
 
         <!-- TABLE -->
-        <div class="rounded-2xl border bg-white dark:bg-gray-900 dark:border-gray-800 shadow-sm overflow-x-auto">
+        <div class="rounded-2xl border bg-card shadow-sm overflow-x-auto">
 
-            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+            <table class="min-w-full divide-y divide-border">
 
                 <!-- HEAD -->
-                <thead class="bg-gray-50 dark:bg-gray-800/50">
-                    <tr class="text-left text-sm font-semibold text-muted-foreground dark:text-gray-400">
+                <thead class="bg-muted/50">
+                    <tr class="text-left text-sm font-semibold text-muted-foreground">
 
                         <th class="px-4 py-3">
                             Device
@@ -439,6 +481,10 @@ const refreshSelectedDevice = () => {
                             Weight
                         </th>
 
+                        <th class="px-4 py-3 whitespace-nowrap">
+                            Tanggal Pasang
+                        </th>
+
                         <th class="px-4 py-3">
                             Status
                         </th>
@@ -451,9 +497,9 @@ const refreshSelectedDevice = () => {
                 </thead>
 
                 <!-- BODY -->
-                <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                <tbody class="divide-y divide-border">
 
-                    <tr v-for="device in filteredDevices" :key="device.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                    <tr v-for="device in filteredDevices" :key="device.id" class="hover:bg-muted">
 
                         <!-- DEVICE -->
                         <td class="px-4 py-3">
@@ -515,16 +561,26 @@ const refreshSelectedDevice = () => {
 
                         </td>
 
+                        <!-- TANGGAL PASANG -->
+                        <td class="px-4 py-3 whitespace-nowrap">
+
+                            <div class="flex flex-col">
+                                <span class="text-sm">{{ formatInstalledAt(device).date }}</span>
+                                <span class="text-xs text-muted-foreground">{{ formatInstalledAt(device).time }}</span>
+                            </div>
+
+                        </td>
+
                         <!-- STATUS -->
                         <td class="px-4 py-3">
 
                             <span :class="[
                                 'inline-flex rounded-full px-3 py-1 text-xs font-medium',
                                 device.status === 'active'
-                                    ? 'bg-green-100 text-green-700'
+                                    ? 'bg-green-100 dark:bg-green-950/40 text-green-700 dark:text-green-300'
                                     : device.status === 'maintenance'
-                                        ? 'bg-yellow-100 text-yellow-700'
-                                        : 'bg-gray-100 text-gray-700'
+                                        ? 'bg-yellow-100 dark:bg-yellow-950/40 text-yellow-700 dark:text-yellow-300'
+                                        : 'bg-muted text-foreground'
                             ]">
                                 {{ device.status }}
                             </span>
@@ -542,12 +598,12 @@ const refreshSelectedDevice = () => {
                                     <Network class="w-4 h-4" />
                                 </button>
 
-                                <button @click="openEditModal(device)" class="rounded-lg p-2 hover:bg-gray-100">
+                                <button @click="openEditModal(device)" class="rounded-lg p-2 hover:bg-muted">
                                     <Pencil class="w-4 h-4" />
                                 </button>
 
                                 <button type="button" @click="deleteDevice(device.id)"
-                                    class="rounded-lg p-2 text-red-500 hover:bg-red-50">
+                                    class="rounded-lg p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/40">
                                     <Trash2 class="w-4 h-4" />
                                 </button>
 
@@ -567,7 +623,7 @@ const refreshSelectedDevice = () => {
         <div v-if="openAddDevice"
             class="absolute md:fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
 
-            <div class="w-full max-w-3xl rounded-2xl bg-white dark:bg-gray-900 shadow-xl">
+            <div class="w-full max-w-3xl rounded-2xl bg-card shadow-xl">
 
                 <!-- HEADER -->
                 <div class="flex items-center justify-between border-b p-5">
@@ -582,7 +638,7 @@ const refreshSelectedDevice = () => {
                         </p>
                     </div>
 
-                    <button @click="openAddDevice = false" class="rounded-lg p-2 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800">
+                    <button @click="openAddDevice = false" class="rounded-lg p-2 hover:bg-muted">
                         <X class="w-5 h-5" />
                     </button>
 
@@ -597,7 +653,7 @@ const refreshSelectedDevice = () => {
                             Client
                         </label>
 
-                        <select v-model="deviceForm.client_id" class="w-full rounded-xl border px-4 py-3 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
+                        <select v-model="deviceForm.client_id" class="w-full rounded-xl border px-4 py-3 text-sm"
                             required>
                             <option value="">
                                 Select Client
@@ -618,7 +674,7 @@ const refreshSelectedDevice = () => {
                         </label>
 
                         <input v-model="deviceForm.divice_name" type="text"
-                            class="w-full rounded-xl border px-4 py-3 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100" placeholder="Device name" required />
+                            class="w-full rounded-xl border px-4 py-3 text-sm" placeholder="Device name" required />
                     </div>
 
                     <!-- TYPE -->
@@ -628,7 +684,7 @@ const refreshSelectedDevice = () => {
                         </label>
 
                         <input v-model="deviceForm.divice_type" type="text" placeholder="Server / Router / Switch"
-                            class="w-full rounded-xl border px-4 py-3 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100" />
+                            class="w-full rounded-xl border px-4 py-3 text-sm" />
                     </div>
 
                     <!-- MODEL -->
@@ -637,7 +693,7 @@ const refreshSelectedDevice = () => {
                             Model
                         </label>
 
-                        <input v-model="deviceForm.model" type="text" class="w-full rounded-xl border px-4 py-3 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
+                        <input v-model="deviceForm.model" type="text" class="w-full rounded-xl border px-4 py-3 text-sm"
                             placeholder="Model Divice" />
                     </div>
 
@@ -648,7 +704,7 @@ const refreshSelectedDevice = () => {
                         </label>
 
                         <input v-model="deviceForm.serial_number" type="text"
-                            class="w-full rounded-xl border px-4 py-3 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100" placeholder="Serial Number" />
+                            class="w-full rounded-xl border px-4 py-3 text-sm" placeholder="Serial Number" />
                     </div>
 
                     <!-- POWER -->
@@ -658,7 +714,7 @@ const refreshSelectedDevice = () => {
                         </label>
 
                         <input v-model="deviceForm.power_usage" type="number"
-                            class="w-full rounded-xl border px-4 py-3 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100" placeholder="100 Ampere (A)" />
+                            class="w-full rounded-xl border px-4 py-3 text-sm" placeholder="100 Ampere (A)" />
                     </div>
 
                     <!-- WEIGHT -->
@@ -668,7 +724,7 @@ const refreshSelectedDevice = () => {
                         </label>
 
                         <input v-model="deviceForm.weight_usage" type="number"
-                            class="w-full rounded-xl border px-4 py-3 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100" placeholder="2 Kg (Kilogram)" />
+                            class="w-full rounded-xl border px-4 py-3 text-sm" placeholder="2 Kg (Kilogram)" />
                     </div>
 
                     <!-- IP -->
@@ -678,7 +734,7 @@ const refreshSelectedDevice = () => {
                         </label>
 
                         <input v-model="deviceForm.ip_address" type="text"
-                            class="w-full rounded-xl border px-4 py-3 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100" placeholder="162.000.000.00" />
+                            class="w-full rounded-xl border px-4 py-3 text-sm" placeholder="162.000.000.00" />
                     </div>
 
                     <!-- DESCRIPTION -->
@@ -688,7 +744,25 @@ const refreshSelectedDevice = () => {
                         </label>
 
                         <textarea v-model="deviceForm.description" rows="4"
-                            class="w-full rounded-xl border px-4 py-3 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100" />
+                            class="w-full rounded-xl border px-4 py-3 text-sm" />
+                    </div>
+
+                    <!-- TANGGAL PASANG -->
+                    <div class="md:col-span-2">
+                        <label class="mb-2 block text-sm font-medium">
+                            Tanggal &amp; Jam Pasang
+                        </label>
+
+                        <input v-model="deviceForm.installed_at" type="datetime-local"
+                            class="w-full rounded-xl border px-4 py-3 text-sm" />
+
+                        <p class="mt-1 text-xs text-muted-foreground">
+                            Default waktu sekarang. Ubah jika device dipasang di waktu lain.
+                        </p>
+
+                        <p v-if="deviceForm.errors.installed_at" class="mt-1 text-xs text-red-500">
+                            {{ deviceForm.errors.installed_at }}
+                        </p>
                     </div>
 
                     <!-- TOTAL UNIT -->
@@ -698,19 +772,19 @@ const refreshSelectedDevice = () => {
                         </label>
 
                         <input v-model="deviceForm.total_unit" type="number"
-                            class="w-full rounded-xl border px-4 py-3 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100" required placeholder="2" />
+                            class="w-full rounded-xl border px-4 py-3 text-sm" required placeholder="2" />
                     </div>
 
                     <!-- FOOTER -->
                     <div class="md:col-span-2 flex justify-end gap-3">
 
                         <button type="button" @click="openAddDevice = false"
-                            class="rounded-xl border px-4 py-2 text-sm dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">
+                            class="rounded-xl border px-4 py-2 text-sm">
                             Cancel
                         </button>
 
                         <button type="submit" :disabled="deviceForm.processing"
-                            class="rounded-xl bg-primary px-5 py-2 text-sm text-white dark:text-gray-900">
+                            class="rounded-xl bg-primary px-5 py-2 text-sm text-primary-foreground">
                             {{
                                 deviceForm.processing
                                     ? 'Saving...'
@@ -731,7 +805,7 @@ const refreshSelectedDevice = () => {
     <!-- UPDATE MODAL -->
     <div v-if="openEdit" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
 
-        <div class="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
+        <div class="w-full max-w-2xl rounded-2xl bg-card p-6 shadow-xl">
 
             <!-- HEADER -->
             <div class="mb-6 flex items-center justify-between">
@@ -746,7 +820,7 @@ const refreshSelectedDevice = () => {
                     </p>
                 </div>
 
-                <button @click="openEdit = false" class="rounded-lg p-2 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800">
+                <button @click="openEdit = false" class="rounded-lg p-2 hover:bg-muted">
                     ✕
                 </button>
 
@@ -765,7 +839,7 @@ const refreshSelectedDevice = () => {
                         </label>
 
                         <input v-model="editForm.divice_name" type="text"
-                            class="w-full rounded-xl border px-4 py-3 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100" required />
+                            class="w-full rounded-xl border px-4 py-3 text-sm" required />
 
                     </div>
 
@@ -777,7 +851,7 @@ const refreshSelectedDevice = () => {
                         </label>
 
                         <input v-model="editForm.divice_type" type="text"
-                            class="w-full rounded-xl border px-4 py-3 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100" />
+                            class="w-full rounded-xl border px-4 py-3 text-sm" />
 
                     </div>
 
@@ -789,7 +863,7 @@ const refreshSelectedDevice = () => {
                         </label>
 
                         <input v-model="editForm.model" type="text"
-                            class="w-full rounded-xl border px-4 py-3 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100" />
+                            class="w-full rounded-xl border px-4 py-3 text-sm" />
 
                     </div>
 
@@ -801,7 +875,7 @@ const refreshSelectedDevice = () => {
                         </label>
 
                         <input v-model="editForm.serial_number" type="text"
-                            class="w-full rounded-xl border px-4 py-3 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100" />
+                            class="w-full rounded-xl border px-4 py-3 text-sm" />
 
                     </div>
 
@@ -813,7 +887,7 @@ const refreshSelectedDevice = () => {
                         </label>
 
                         <input v-model="editForm.power_usage" type="number"
-                            class="w-full rounded-xl border px-4 py-3 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100" />
+                            class="w-full rounded-xl border px-4 py-3 text-sm" />
 
                     </div>
 
@@ -825,7 +899,7 @@ const refreshSelectedDevice = () => {
                         </label>
 
                         <input v-model="editForm.weight_usage" type="number"
-                            class="w-full rounded-xl border px-4 py-3 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100" />
+                            class="w-full rounded-xl border px-4 py-3 text-sm" />
 
                     </div>
 
@@ -837,7 +911,7 @@ const refreshSelectedDevice = () => {
                         </label>
 
                         <input v-model="editForm.ip_address" type="text"
-                            class="w-full rounded-xl border px-4 py-3 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100" />
+                            class="w-full rounded-xl border px-4 py-3 text-sm" />
 
                     </div>
 
@@ -848,7 +922,7 @@ const refreshSelectedDevice = () => {
                             Status
                         </label>
 
-                        <select v-model="editForm.status" class="w-full rounded-xl border px-4 py-3 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100">
+                        <select v-model="editForm.status" class="w-full rounded-xl border px-4 py-3 text-sm">
                             <option value="active">
                                 Active
                             </option>
@@ -863,16 +937,32 @@ const refreshSelectedDevice = () => {
                         </select>
 
                     </div>
+
+                    <!-- TANGGAL PASANG -->
+                    <div class="col-span-2">
+
+                        <label class="mb-2 block text-sm font-medium">
+                            Tanggal &amp; Jam Pasang <span class="text-red-500">*</span>
+                        </label>
+
+                        <input v-model="editForm.installed_at" type="datetime-local" required
+                            class="w-full rounded-xl border px-4 py-3 text-sm" />
+
+                        <p v-if="editForm.errors.installed_at" class="mt-1 text-xs text-red-500">
+                            {{ editForm.errors.installed_at }}
+                        </p>
+
+                    </div>
                 </div>
 
                 <!-- ACTION -->
                 <div class="flex justify-end gap-3 pt-4">
 
-                    <button type="button" @click="openEdit = false" class="rounded-xl border px-4 py-2 text-sm dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">
+                    <button type="button" @click="openEdit = false" class="rounded-xl border px-4 py-2 text-sm">
                         Cancel
                     </button>
 
-                    <button type="submit" class="rounded-xl bg-primary px-4 py-2 text-sm text-white dark:text-gray-900">
+                    <button type="submit" class="rounded-xl bg-primary px-4 py-2 text-sm text-primary-foreground">
                         Update Device
                     </button>
 
@@ -893,14 +983,14 @@ const refreshSelectedDevice = () => {
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="openPorts = false"></div>
 
         <!-- Modal -->
-        <div class="relative w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900">
+        <div class="relative w-full max-w-4xl overflow-hidden rounded-2xl bg-card shadow-2xl">
 
             <!-- Header -->
             <div class="flex items-center justify-between border-b px-6 py-5">
                 <div>
                     <div class="flex items-center gap-3">
                         <div
-                            class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/40">
+                            class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:text-blue-300 dark:bg-blue-950/40">
                             <Network class="h-5 w-5" />
                         </div>
 
@@ -917,13 +1007,13 @@ const refreshSelectedDevice = () => {
                 </div>
 
                 <button type="button" @click="openPorts = false"
-                    class="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800">
+                    class="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground">
                     <X class="h-5 w-5" />
                 </button>
             </div>
 
             <!-- Summary -->
-            <div class="border-b bg-gray-50/70 px-6 py-4 dark:bg-gray-800/40">
+            <div class="border-b bg-muted/50 px-6 py-4">
                 <div class="flex items-center justify-between">
 
                     <div class="flex items-center gap-6">
@@ -943,7 +1033,7 @@ const refreshSelectedDevice = () => {
                                 Available
                             </p>
 
-                            <p class="mt-1 text-lg font-semibold text-green-600">
+                            <p class="mt-1 text-lg font-semibold text-green-600 dark:text-green-300">
                                 {{
                                     selectedDevice.ports?.filter(
                                         (port: any) =>
@@ -958,7 +1048,7 @@ const refreshSelectedDevice = () => {
                                 Connected
                             </p>
 
-                            <p class="mt-1 text-lg font-semibold text-blue-600">
+                            <p class="mt-1 text-lg font-semibold text-blue-600 dark:text-blue-300">
                                 {{
                                     selectedDevice.ports?.filter(
                                         (port: any) =>
@@ -973,14 +1063,14 @@ const refreshSelectedDevice = () => {
                     <div class="flex items-center gap-2">
 
                         <button type="button" @click="openGenerateModal"
-                            class="inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium hover:bg-white dark:hover:bg-gray-800">
+                            class="inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium hover:bg-card">
                             <Settings2 class="h-4 w-4" />
 
                             Generate
                         </button>
 
                         <button type="button" @click="openAddPort = true"
-                            class="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary/90">
+                            class="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90">
                             <Plus class="h-4 w-4" />
 
                             Add Port
@@ -997,8 +1087,8 @@ const refreshSelectedDevice = () => {
                 <div v-if="!selectedDevice.ports?.length"
                     class="flex flex-col items-center justify-center rounded-2xl border border-dashed py-16 text-center">
                     <div
-                        class="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
-                        <Network class="h-6 w-6 text-gray-400" />
+                        class="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                        <Network class="h-6 w-6 text-muted-foreground" />
                     </div>
 
                     <h3 class="text-sm font-semibold">
@@ -1011,7 +1101,7 @@ const refreshSelectedDevice = () => {
                     </p>
 
                     <button type="button" @click="openGenerateModal"
-                        class="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white">
+                        class="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
                         <Settings2 class="h-4 w-4" />
                         Generate Ports
                     </button>
@@ -1021,7 +1111,7 @@ const refreshSelectedDevice = () => {
                 <div v-else class="overflow-hidden rounded-xl border">
                     <table class="w-full text-sm">
 
-                        <thead class="bg-gray-50 dark:bg-gray-800">
+                        <thead class="bg-muted/50">
                             <tr>
                                 <th class="px-4 py-3 text-left font-medium">
                                     Port
@@ -1048,7 +1138,7 @@ const refreshSelectedDevice = () => {
                         <tbody class="divide-y">
 
                             <tr v-for="port in selectedDevice.ports" :key="port.id"
-                                class="hover:bg-gray-50/70 dark:hover:bg-gray-800/50">
+                                class="hover:bg-muted/50">
 
                                 <!-- Port -->
                                 <td class="px-4 py-3">
@@ -1056,7 +1146,7 @@ const refreshSelectedDevice = () => {
                                     <div class="flex items-center gap-3">
 
                                         <div
-                                            class="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                                            class="flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                                             <Cable class="h-4 w-4" />
                                         </div>
 
@@ -1105,7 +1195,7 @@ const refreshSelectedDevice = () => {
                                     </span>
 
                                     <span v-else
-                                        class="inline-flex rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                                        class="inline-flex rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
                                         Disabled
                                     </span>
 
@@ -1117,7 +1207,7 @@ const refreshSelectedDevice = () => {
                                     <div class="flex justify-end gap-1">
 
                                         <button type="button" @click="editPort(port)"
-                                            class="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800">
+                                            class="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground">
                                             <Pencil class="h-4 w-4" />
                                         </button>
 
@@ -1149,7 +1239,7 @@ const refreshSelectedDevice = () => {
     <div v-if="openGeneratePorts" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="openGeneratePorts = false"></div>
 
-        <div class="relative w-full max-w-md rounded-2xl bg-white shadow-2xl dark:bg-gray-900">
+        <div class="relative w-full max-w-md rounded-2xl bg-card shadow-2xl">
 
             <div class="flex items-center justify-between border-b px-6 py-5">
 
@@ -1164,7 +1254,7 @@ const refreshSelectedDevice = () => {
                 </div>
 
                 <button type="button" @click="openGeneratePorts = false"
-                    class="rounded-lg p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+                    class="rounded-lg p-2 text-muted-foreground hover:bg-muted">
                     <X class="h-5 w-5" />
                 </button>
 
@@ -1196,7 +1286,7 @@ const refreshSelectedDevice = () => {
                     </Label>
 
                     <select v-model="generatePortForm.port_type"
-                        class="w-full rounded-xl border bg-background px-4 py-3 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100">
+                        class="w-full rounded-xl border bg-background px-4 py-3 text-sm">
                         <option value="ethernet">
                             Ethernet
                         </option>
@@ -1239,12 +1329,12 @@ const refreshSelectedDevice = () => {
                 <div class="flex justify-end gap-2 pt-2">
 
                     <button type="button" @click="openGeneratePorts = false"
-                        class="rounded-xl border px-4 py-2 text-sm dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">
+                        class="rounded-xl border px-4 py-2 text-sm">
                         Cancel
                     </button>
 
                     <button type="submit" :disabled="generatePortForm.processing"
-                        class="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white dark:text-gray-900 disabled:opacity-50">
+                        class="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50">
                         <Spinner v-if="generatePortForm.processing" class="h-4 w-4" />
 
                         Generate
@@ -1264,7 +1354,7 @@ const refreshSelectedDevice = () => {
     <div v-if="openAddPort" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="openAddPort = false"></div>
 
-        <div class="relative w-full max-w-md rounded-2xl bg-white shadow-2xl dark:bg-gray-900">
+        <div class="relative w-full max-w-md rounded-2xl bg-card shadow-2xl">
 
             <div class="flex items-center justify-between border-b px-6 py-5">
 
@@ -1279,7 +1369,7 @@ const refreshSelectedDevice = () => {
                 </div>
 
                 <button type="button" @click="openAddPort = false"
-                    class="rounded-lg p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+                    class="rounded-lg p-2 text-muted-foreground hover:bg-muted">
                     <X class="h-5 w-5" />
                 </button>
 
@@ -1321,7 +1411,7 @@ const refreshSelectedDevice = () => {
                     </Label>
 
                     <select v-model="portForm.port_type"
-                        class="w-full rounded-xl border bg-background px-4 py-3 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100">
+                        class="w-full rounded-xl border bg-background px-4 py-3 text-sm">
                         <option value="ethernet">
                             Ethernet
                         </option>
@@ -1368,7 +1458,7 @@ const refreshSelectedDevice = () => {
                     </Label>
 
                     <textarea v-model="portForm.description" rows="3"
-                        class="w-full rounded-xl border bg-background px-4 py-3 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
+                        class="w-full rounded-xl border bg-background px-4 py-3 text-sm"
                         placeholder="Optional description..."></textarea>
 
                 </div>
@@ -1376,12 +1466,12 @@ const refreshSelectedDevice = () => {
                 <!-- Actions -->
                 <div class="flex justify-end gap-2 pt-2">
 
-                    <button type="button" @click="openAddPort = false" class="rounded-xl border px-4 py-2 text-sm dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">
+                    <button type="button" @click="openAddPort = false" class="rounded-xl border px-4 py-2 text-sm">
                         Cancel
                     </button>
 
                     <button type="submit" :disabled="portForm.processing"
-                        class="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white dark:text-gray-900 disabled:opacity-50">
+                        class="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50">
                         <Spinner v-if="portForm.processing" class="h-4 w-4" />
 
                         Save Port
@@ -1401,7 +1491,7 @@ const refreshSelectedDevice = () => {
     <div v-if="openEditPort" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="openEditPort = false"></div>
 
-        <div class="relative w-full max-w-md rounded-2xl bg-white shadow-2xl dark:bg-gray-900">
+        <div class="relative w-full max-w-md rounded-2xl bg-card shadow-2xl">
 
             <div class="flex items-center justify-between border-b px-6 py-5">
 
@@ -1416,7 +1506,7 @@ const refreshSelectedDevice = () => {
                 </div>
 
                 <button type="button" @click="openEditPort = false"
-                    class="rounded-lg p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+                    class="rounded-lg p-2 text-muted-foreground hover:bg-muted">
                     <X class="h-5 w-5" />
                 </button>
 
@@ -1451,7 +1541,7 @@ const refreshSelectedDevice = () => {
                     </Label>
 
                     <select v-model="editPortForm.port_type"
-                        class="w-full rounded-xl border bg-background px-4 py-3 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100">
+                        class="w-full rounded-xl border bg-background px-4 py-3 text-sm">
                         <option value="ethernet">
                             Ethernet
                         </option>
@@ -1496,7 +1586,7 @@ const refreshSelectedDevice = () => {
                     </Label>
 
                     <select v-model="editPortForm.status"
-                        class="w-full rounded-xl border bg-background px-4 py-3 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100">
+                        class="w-full rounded-xl border bg-background px-4 py-3 text-sm">
                         <option value="available">
                             Available
                         </option>
@@ -1518,12 +1608,12 @@ const refreshSelectedDevice = () => {
 
                 <div class="flex justify-end gap-2 pt-2">
 
-                    <button type="button" @click="openEditPort = false" class="rounded-xl border px-4 py-2 text-sm dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">
+                    <button type="button" @click="openEditPort = false" class="rounded-xl border px-4 py-2 text-sm">
                         Cancel
                     </button>
 
                     <button type="submit" :disabled="editPortForm.processing"
-                        class="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white dark:text-gray-900 disabled:opacity-50">
+                        class="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50">
                         <Spinner v-if="editPortForm.processing" class="h-4 w-4" />
 
                         Update Port

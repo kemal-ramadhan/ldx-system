@@ -1,8 +1,8 @@
 <template>
-  <div class="rounded-2xl overflow-hidden">
+  <div class="rounded-2xl overflow-hidden dark:scheme-dark">
 
     <!-- Tab Bar -->
-    <div class="flex items-center gap-1 bg-gray-50 dark:bg-gray-900 rounded-xl m-3 p-1.5 overflow-x-auto">
+    <div class="flex items-center gap-1 bg-muted/50 rounded-xl m-3 p-1.5 overflow-x-auto">
       <button
         v-for="tab in tabs"
         :key="tab.key"
@@ -10,8 +10,8 @@
         :class="[
           'px-4 py-2 rounded-lg text-sm transition-all whitespace-nowrap cursor-pointer',
           activeTab === tab.key
-            ? 'bg-gray-900 text-white font-medium dark:bg-gray-700 shadow-sm'
-            : 'text-gray-500 hover:bg-white hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white'
+            ? 'bg-primary text-primary-foreground font-medium shadow-sm'
+            : 'text-muted-foreground hover:bg-card hover:text-foreground dark:hover:text-white'
         ]"
       >
         {{ tab.label }}
@@ -20,8 +20,8 @@
           :class="[
             'ml-1 text-xs rounded-full px-2 py-0.5',
             activeTab === tab.key
-              ? 'bg-white/25 text-white'
-              : 'bg-gray-200 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
+              ? 'bg-primary-foreground/20 text-primary-foreground'
+              : 'bg-muted text-muted-foreground'
           ]"
         >
           {{ tab.badge }}

@@ -113,7 +113,7 @@ defineOptions({
     <Head :title="props.title" />
 
     <div
-        class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4"
+        class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4 dark:scheme-dark"
     >
     <div class="flex flex-nowrap justify-between items-center">
         <div class="flex flex-col gap-2">
@@ -134,7 +134,7 @@ defineOptions({
             </button>
             <Link
                 href="/admin/racks/create"
-                class="w-full inline-flex items-center justify-center rounded-md border border-transparent bg-primary dark:text-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-primary/50 disabled:hover:bg-primary/50"
+                class="w-full inline-flex items-center justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-primary/50 disabled:hover:bg-primary/50"
             >
                 <Plus class="w-4 h-4 mr-2" />
                 Add Rack
@@ -149,13 +149,13 @@ defineOptions({
                 v-model="search"
                 type="text"
                 placeholder="Search racks..."
-                class="w-full rounded-xl border bg-white py-2.5 pl-10 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:bg-transparent"
+                class="w-full rounded-xl border bg-card py-2.5 pl-10 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:bg-transparent"
             />
-            <Search class="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <Search class="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
         </div>
         <select
             v-model="room"
-            class="rounded-xl border bg-white px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:bg-transparent"
+            class="rounded-xl border bg-card px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:bg-transparent"
         >
             <option value="">All Rooms</option>
 
@@ -170,7 +170,7 @@ defineOptions({
      </div>
     <!-- table -->
     <div class="flex w-full items-center rounded-md border overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
+        <table class="min-w-full divide-y divide-border">
             <thead>
                 <tr class="text-left text-sm font-semibold text-muted-foreground">
                     <th class="px-4 py-2 w-10">
@@ -178,7 +178,7 @@ defineOptions({
                             type="checkbox"
                             :checked="isAllSelected"
                             @change="toggleAll"
-                            class="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4"
+                            class="rounded border-input text-primary focus:ring-primary h-4 w-4"
                         />
                     </th>
                     <th class="px-4 py-2">Code</th>
@@ -205,7 +205,7 @@ defineOptions({
                             type="checkbox"
                             v-model="selectedIds"
                             :value="rack.id"
-                            class="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4"
+                            class="rounded border-input text-primary focus:ring-primary h-4 w-4"
                         />
                     </td>
                     <td class="px-4 py-2">{{ rack.code }}</td>
@@ -228,10 +228,10 @@ defineOptions({
                     <td class="px-4 py-2">
                         <span
                             :class="`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                rack.status === 'active' ? 'bg-green-100 text-green-800' :
-                                rack.status === 'inactive' ? 'bg-gray-100 text-gray-800' :
-                                rack.status === 'maintenance' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-red-100 text-red-800'
+                                rack.status === 'active' ? 'bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-300' :
+                                rack.status === 'inactive' ? 'bg-muted text-foreground' :
+                                rack.status === 'maintenance' ? 'bg-yellow-100 dark:bg-yellow-950/40 text-yellow-800 dark:text-yellow-300' :
+                                'bg-red-100 dark:bg-red-950/40 text-red-800 dark:text-red-300'
                             }`"
                         >
                             {{ rack.status }}
@@ -270,14 +270,14 @@ defineOptions({
             <Link
                 v-if="props.racks.prev_page_url"
                 :href="props.racks.prev_page_url"
-                class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                class="inline-flex items-center rounded-md border border-input bg-card px-4 py-2 text-sm font-medium text-foreground shadow-sm hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             >
                 Previous
             </Link>
             <Link
                 v-if="props.racks.next_page_url"
                 :href="props.racks.next_page_url"
-                class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                class="inline-flex items-center rounded-md border border-input bg-card px-4 py-2 text-sm font-medium text-foreground shadow-sm hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             >
                 Next
             </Link>
