@@ -69,7 +69,7 @@ class ProductController extends Controller
             'name' => 'required|string|max:150',
             'description' => 'nullable|string',
             'unit' => 'required|string|max:50',
-            'base_price' => 'required|numeric|min:0',
+            'base_price' => 'required|numeric|min:0|decimal:0,2',
             'billing_type' => 'required|in:recurring,one_time',
             'status' => 'required|in:active,inactive',
         ]);
@@ -129,7 +129,7 @@ class ProductController extends Controller
             'name' => 'required|string|max:150',
             'description' => 'nullable|string',
             'unit' => 'required|string|max:50',
-            'base_price' => 'required|numeric|min:0',
+            'base_price' => 'required|numeric|min:0|decimal:0,2',
             'billing_type' => 'required|in:recurring,one_time',
             'status' => 'required|in:active,inactive',
         ]);

@@ -1,3 +1,5 @@
+import { formatNumber as formatMoney } from '@/lib/money';
+
 /**
  * Per-item tax (PPN / PPh 23) — mirrors app/Services/TaxCalculator.php
  *
@@ -60,5 +62,5 @@ export const taxSummary = (rows: { subtotal: number; tax: ItemTax }[]) => {
 /** "11% · Rp 110.000" or "-" for item tables. */
 export const formatItemTax = (enabled: any, percentage: any, amount: any) =>
     enabled
-        ? `${Number(percentage)}% · Rp ${Number(amount).toLocaleString('id-ID')}`
+        ? `${Number(percentage)}% · Rp ${formatMoney(Number(amount))}`
         : '-';

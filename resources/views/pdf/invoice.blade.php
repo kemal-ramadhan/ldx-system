@@ -416,10 +416,10 @@
         <tr>
           <td>{{ $item->name }}</td>
           <td>{{ $item->quantity }}</td>
-          <td>{{ number_format($item->price, 0, ',', '.') }}</td>
+          <td>{{ \App\Support\Money::format($item->price) }}</td>
           <td class="tax">
             @if($item->ppn_enabled)
-              {{ number_format($item->ppn_amount, 0, ',', '.') }}
+              {{ \App\Support\Money::format($item->ppn_amount) }}
               <div class="tax-rate">({{ rtrim(rtrim(number_format($item->ppn_percentage, 2, ',', '.'), '0'), ',') }}%)</div>
             @else
               -
@@ -427,13 +427,13 @@
           </td>
           <td class="tax">
             @if($item->pph23_enabled)
-              {{ number_format($item->pph23_amount, 0, ',', '.') }}
+              {{ \App\Support\Money::format($item->pph23_amount) }}
               <div class="tax-rate">({{ rtrim(rtrim(number_format($item->pph23_percentage, 2, ',', '.'), '0'), ',') }}%)</div>
             @else
               -
             @endif
           </td>
-          <td>{{ number_format($item->total, 0, ',', '.') }}</td>
+          <td>{{ \App\Support\Money::format($item->total) }}</td>
         </tr>
         @endforeach
     </tbody>
@@ -473,7 +473,7 @@
         <table class="totals-table">
           <tr>
             <td class="t-label">Sub Total</td>
-            <td class="t-value">Rp. {{ number_format($invoice->subtotal, 0, ',', '.') }}</td>
+            <td class="t-value">Rp. {{ \App\Support\Money::format($invoice->subtotal) }}</td>
           </tr>
           @if((float) $invoice->ppn_amount > 0)
           <tr>
@@ -481,7 +481,7 @@
                   PPN
               </td>
               <td class="t-value">
-                  Rp. {{ number_format($invoice->ppn_amount, 0, ',', '.') }}
+                  Rp. {{ \App\Support\Money::format($invoice->ppn_amount) }}
               </td>
           </tr>
           @endif
@@ -492,7 +492,7 @@
                   PPh 23
               </td>
               <td class="t-value">
-                  - Rp. {{ number_format($invoice->pph23_amount, 0, ',', '.') }}
+                  - Rp. {{ \App\Support\Money::format($invoice->pph23_amount) }}
               </td>
           </tr>
           @endif
@@ -501,7 +501,7 @@
           </tr>
           <tr>
             <td class="grand-label">Grand Total</td>
-            <td class="grand-value">Rp. {{ number_format($invoice->total, 0, ',', '.') }}</td>
+            <td class="grand-value">Rp. {{ \App\Support\Money::format($invoice->total) }}</td>
           </tr>
         </table>
       </td>

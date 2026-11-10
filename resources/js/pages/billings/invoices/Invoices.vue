@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatRupiah as formatMoneyRp } from '@/lib/money';
 import { Head, Link, router } from '@inertiajs/vue3';
 
 import {
@@ -95,13 +96,7 @@ const formatRupiah = (
     value: number
 ) => {
 
-    return new Intl.NumberFormat(
-        'id-ID',
-        {
-            style: 'currency',
-            currency: 'IDR',
-        }
-    ).format(value || 0);
+    return formatMoneyRp(value || 0);
 };
 
 /**

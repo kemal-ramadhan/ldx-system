@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatNumber as formatMoney } from '@/lib/money';
 import { Head, Link, router } from '@inertiajs/vue3';
 import {
     Search,
@@ -153,7 +154,7 @@ defineOptions({
 
                         <!-- Monthly -->
                         <td class="px-4 py-3">
-                            Rp {{ Number(service.monthly_total).toLocaleString('id-ID') }}
+                            Rp {{ formatMoney(Number(service.monthly_total)) }}
                         </td>
 
                         <!-- Due -->

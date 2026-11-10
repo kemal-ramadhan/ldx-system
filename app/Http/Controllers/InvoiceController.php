@@ -97,7 +97,7 @@ class InvoiceController extends Controller
          */
         $request->validate([
             'payment_method' => 'required|string|max:255',
-            'amount' => 'required|numeric|min:0',
+            'amount' => 'required|numeric|min:0|decimal:0,2',
             'paid_at' => 'required|date',
             'reference_number' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
@@ -550,7 +550,7 @@ class InvoiceController extends Controller
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|numeric|min:1',
-            'items.*.price' => 'required|numeric|min:0',
+            'items.*.price' => 'required|numeric|min:0|decimal:0,2',
             'items.*.ppn_enabled' => 'nullable|boolean',
             'items.*.ppn_percentage' => 'nullable|numeric|min:0|max:100',
             'items.*.pph23_enabled' => 'nullable|boolean',

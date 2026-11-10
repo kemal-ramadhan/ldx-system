@@ -1,14 +1,11 @@
 <script setup lang="ts">
+import { formatRupiah as formatMoneyRp } from '@/lib/money';
 const props = defineProps<{
     racks: any[]
 }>()
 
 const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        maximumFractionDigits: 0,
-    }).format(value)
+    return formatMoneyRp(value)
 }
 
 const statusColor = (status: string) => {

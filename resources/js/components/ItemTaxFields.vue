@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatNumber as formatMoney } from '@/lib/money';
 import { computed } from 'vue';
 
 import { Input } from '@/components/ui/input';
@@ -66,7 +67,7 @@ const knobClass = (on: boolean) => [
                 </div>
 
                 <span class="text-sm text-muted-foreground">
-                    + Rp {{ ppnAmount.toLocaleString('id-ID') }}
+                    + Rp {{ formatMoney(ppnAmount) }}
                 </span>
             </template>
 
@@ -89,7 +90,7 @@ const knobClass = (on: boolean) => [
                 </div>
 
                 <span class="text-sm text-muted-foreground">
-                    - Rp {{ pph23Amount.toLocaleString('id-ID') }}
+                    - Rp {{ formatMoney(pph23Amount) }}
                 </span>
             </template>
 

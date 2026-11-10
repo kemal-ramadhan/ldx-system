@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatNumber as formatMoney } from '@/lib/money';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
@@ -73,7 +74,7 @@ const summary = computed(() =>
     taxSummary(form.items.map((item) => ({ subtotal: itemSubtotal(item), tax: item }))),
 );
 
-const rupiah = (value: number) => `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
+const rupiah = (value: number) => `Rp ${formatMoney(Number(value || 0))}`;
 
 const itemError = (index: number, field: string) =>
     (form.errors as Record<string, string>)[`items.${index}.${field}`];
@@ -235,14 +236,20 @@ defineOptions({
                         <!-- Price -->
                         <div class="grid gap-2 md:col-span-2">
                             <Label>Price</Label>
-                            <Input v-model="item.price" type="number" min="0" />
+                            <Input v-model="item.price" type="number" min="0" step="0.01" />
+                            <p class="text-xs text-muted-foreground">
+                                = Rp {{ formatMoney(item.price) }}
+                            </p>
+                            <p class="text-[11px] leading-snug text-muted-foreground">
+                                Boleh desimal (maks. 2 angka), pakai titik. Contoh: 1500000.50
+                            </p>
                             <InputError :message="itemError(index, 'price')" />
                         </div>
 
                         <!-- Subtotal -->
                         <div class="grid gap-2 md:col-span-3">
                             <Label>Subtotal</Label>
-                            <Input :model-value="itemSubtotal(item).toLocaleString('id-ID')" readonly />
+                            <Input :model-value="formatMoney(itemSubtotal(item))" readonly />
                         </div>
 
                         <!-- Remove -->

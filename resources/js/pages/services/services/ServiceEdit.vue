@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatNumber as formatMoney } from '@/lib/money';
 import { Head, Form, useForm } from '@inertiajs/vue3';
 
 import { Button } from '@/components/ui/button';
@@ -356,7 +357,13 @@ defineOptions({
                                 Price
                             </Label>
 
-                            <Input v-model="item.price" type="number" min="0" @input="calculateSubtotal(index)" />
+                            <Input v-model="item.price" type="number" min="0" step="0.01" @input="calculateSubtotal(index)" />
+                            <p class="text-xs text-muted-foreground">
+                                = Rp {{ formatMoney(item.price) }}
+                            </p>
+                            <p class="text-[11px] leading-snug text-muted-foreground">
+                                Boleh desimal (maks. 2 angka), pakai titik. Contoh: 1500000.50
+                            </p>
 
                         </div>
 
@@ -367,9 +374,9 @@ defineOptions({
                                 Subtotal
                             </Label>
 
-                            <Input :model-value="Number(
+                            <Input :model-value="formatMoney(Number(
                                 item.quantity * item.price
-                            ).toLocaleString('id-ID')
+                            ))
                                 " readonly />
 
                         </div>
@@ -425,7 +432,7 @@ defineOptions({
                         </span>
 
                         <span class="font-medium">
-                            Rp {{ summary.subtotal.toLocaleString('id-ID') }}
+                            Rp {{ formatMoney(summary.subtotal) }}
                         </span>
 
                     </div>
@@ -438,7 +445,7 @@ defineOptions({
                         </span>
 
                         <span class="font-medium">
-                            + Rp {{ summary.ppn.toLocaleString('id-ID') }}
+                            + Rp {{ formatMoney(summary.ppn) }}
                         </span>
 
                     </div>
@@ -451,7 +458,7 @@ defineOptions({
                         </span>
 
                         <span class="font-medium">
-                            - Rp {{ summary.pph23.toLocaleString('id-ID') }}
+                            - Rp {{ formatMoney(summary.pph23) }}
                         </span>
 
                     </div>
@@ -473,7 +480,7 @@ defineOptions({
                         </div>
 
                         <span class="text-2xl font-bold">
-                            Rp {{ summary.total.toLocaleString('id-ID') }}
+                            Rp {{ formatMoney(summary.total) }}
                         </span>
 
                     </div>

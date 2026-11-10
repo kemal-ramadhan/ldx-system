@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatRupiah as formatMoneyRp } from '@/lib/money';
 import { ref, computed } from 'vue'
 import { Head, Link, useForm, router } from '@inertiajs/vue3'
 import { ArrowLeft, Plus, Trash2, Save } from 'lucide-vue-next'
@@ -49,10 +50,7 @@ const summary = computed(() =>
 );
 
 const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-    }).format(amount);
+    return formatMoneyRp(amount);
 };
 
 const submit = () => {

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatNumber as formatMoney } from '@/lib/money';
 import { Head, router, useForm } from '@inertiajs/vue3'
 import { computed, ref } from 'vue'
 import {
@@ -223,7 +224,7 @@ const verifyPayment = () => {
                     </p>
 
                     <h3 class="mt-1 font-semibold text-primary">
-                        Rp {{ Number(invoice.total).toLocaleString('id-ID') }}
+                        Rp {{ formatMoney(Number(invoice.total)) }}
                     </h3>
                 </div>
 
@@ -269,7 +270,7 @@ const verifyPayment = () => {
                             Amount
                         </p>
                         <p class="font-semibold text-primary">
-                            Rp {{ Number(clientPayment.amount).toLocaleString('id-ID') }}
+                            Rp {{ formatMoney(Number(clientPayment.amount)) }}
                         </p>
                     </div>
 
@@ -363,8 +364,12 @@ const verifyPayment = () => {
                             Amount
                         </label>
 
-                        <input type="number" placeholder="0" v-model="form.amount"
+                        <input type="number" placeholder="0" v-model="form.amount" min="0" step="0.01"
                             class="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white" />
+
+                        <p class="mt-1 text-xs text-muted-foreground">
+                            = Rp {{ formatMoney(form.amount) }} · Boleh desimal (maks. 2 angka) pakai titik, contoh: 1500000.50
+                        </p>
 
                         <p v-if="form.errors.amount" class="mt-1 text-sm text-red-500">
                             {{ form.errors.amount }}

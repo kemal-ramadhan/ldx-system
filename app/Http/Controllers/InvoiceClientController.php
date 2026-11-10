@@ -127,7 +127,7 @@ class InvoiceClientController extends Controller
          */
         $request->validate([
             'payment_method' => 'required|string|max:255',
-            'amount' => 'required|numeric|min:0',
+            'amount' => 'required|numeric|min:0|decimal:0,2',
             'notes' => 'nullable|string',
             'proof' => 'nullable|image|max:2048',
         ]);

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatNumber as formatMoney } from '@/lib/money';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { formatItemTax } from '@/lib/tax';
 import { ref } from 'vue';
@@ -345,7 +346,7 @@ defineOptions({
                                     </td>
 
                                     <td class="px-4 py-3">
-                                        Rp {{ Number(item.price).toLocaleString('id-ID') }}
+                                        Rp {{ formatMoney(Number(item.price)) }}
                                     </td>
 
                                     <td class="px-4 py-3 whitespace-nowrap">
@@ -357,7 +358,7 @@ defineOptions({
                                     </td>
 
                                     <td class="px-4 py-3 font-medium">
-                                        Rp {{ Number(item.subtotal).toLocaleString('id-ID') }}
+                                        Rp {{ formatMoney(Number(item.subtotal)) }}
                                     </td>
                                 </tr>
 
@@ -397,7 +398,7 @@ defineOptions({
                             </span>
 
                             <span class="font-semibold">
-                                Rp {{ Number(service.monthly_total).toLocaleString('id-ID') }}
+                                Rp {{ formatMoney(Number(service.monthly_total)) }}
                             </span>
                         </div>
                         
@@ -407,7 +408,7 @@ defineOptions({
                             </span>
 
                             <span class="font-semibold">
-                                Rp {{ Number(service.ppn_amount).toLocaleString('id-ID') }}
+                                Rp {{ formatMoney(Number(service.ppn_amount)) }}
                             </span>
                         </div>
                         
@@ -417,7 +418,7 @@ defineOptions({
                             </span>
 
                             <span class="font-semibold">
-                                Rp {{ Number(service.pph23_amount).toLocaleString('id-ID') }}
+                                Rp {{ formatMoney(Number(service.pph23_amount)) }}
                             </span>
                         </div>
 
@@ -427,7 +428,7 @@ defineOptions({
                             </span>
 
                             <span class="font-semibold">
-                                Rp {{ Number(service.total).toLocaleString('id-ID') }}
+                                Rp {{ formatMoney(Number(service.total)) }}
                             </span>
                         </div>
 
@@ -591,7 +592,7 @@ defineOptions({
                 </div>
                 <div class="flex justify-between gap-4 border-t pt-2 dark:border-gray-700">
                     <span class="text-muted-foreground">Total</span>
-                    <span class="font-semibold">Rp {{ Number(service.total).toLocaleString('id-ID') }}</span>
+                    <span class="font-semibold">Rp {{ formatMoney(Number(service.total)) }}</span>
                 </div>
             </div>
 

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatRupiah as formatMoneyRp } from '@/lib/money';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { Search, Plus, Pencil, Eye, Trash2 } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
@@ -16,11 +17,7 @@ const props = defineProps<{
 const search = ref(props.filters.search || '');
 const room = ref(props.filters.room || '');
 const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        minimumFractionDigits: 0,
-    }).format(value)
+    return formatMoneyRp(value)
 }
 
 watch([search, room], () => {

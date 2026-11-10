@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatRupiah as formatMoneyRp } from '@/lib/money';
 import { ref, computed } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import { 
@@ -448,12 +449,7 @@ const monthlyRackTrendData = computed(() => {
 
 // Helper to format currency
 const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-    }).format(amount)
+    return formatMoneyRp(amount)
 }
 
 // Helper to get status color

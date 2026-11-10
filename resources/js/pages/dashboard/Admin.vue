@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatNumber as formatMoney } from '@/lib/money';
 import { Head, router, Link } from '@inertiajs/vue3'
 import { ref, computed } from 'vue'
 
@@ -769,7 +770,7 @@ const invoiceChartData = {
             <div class="rounded-2xl border bg-white dark:bg-gray-900 p-5 shadow-sm">
                 <p class="text-xs text-gray-500">Monthly Revenue</p>
                 <h2 class="text-xl font-bold mt-1">
-                    Rp {{ Number(monthlyRevenue).toLocaleString('id-ID') }}
+                    Rp {{ formatMoney(Number(monthlyRevenue)) }}
                 </h2>
                 <DollarSign class="h-5 w-5 text-gray-400 mt-2" />
             </div>
@@ -777,7 +778,7 @@ const invoiceChartData = {
             <div class="rounded-2xl border bg-white dark:bg-gray-900 p-5 shadow-sm">
                 <p class="text-xs text-gray-500">Yearly Revenue</p>
                 <h2 class="text-xl font-bold mt-1">
-                    Rp {{ Number(yearlyRevenue).toLocaleString('id-ID') }}
+                    Rp {{ formatMoney(Number(yearlyRevenue)) }}
                 </h2>
                 <DollarSign class="h-5 w-5 text-gray-400 mt-2" />
             </div>
@@ -837,7 +838,7 @@ const invoiceChartData = {
                     </div>
 
                     <span class="text-red-600 font-bold">
-                        Rp {{ Number(inv.total).toLocaleString('id-ID') }}
+                        Rp {{ formatMoney(Number(inv.total)) }}
                     </span>
 
                 </div>
@@ -887,7 +888,7 @@ const invoiceChartData = {
                 </div>
 
                 <span class="font-bold">
-                    Rp {{ Number(inv.total).toLocaleString('id-ID') }}
+                    Rp {{ formatMoney(Number(inv.total)) }}
                 </span>
 
             </div>

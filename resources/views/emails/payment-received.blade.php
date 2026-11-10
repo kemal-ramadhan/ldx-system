@@ -182,7 +182,7 @@
                                                     font-weight:bold;
                                                     color:#16a34a;
                                                 ">
-                                                    Rp {{ number_format($invoice->total, 0, ',', '.') }}
+                                                    Rp {{ \App\Support\Money::format($invoice->total) }}
                                                 </td>
 
                                             </tr>

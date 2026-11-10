@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatRupiah as formatMoneyRp, formatNumber as formatMoney } from '@/lib/money';
 import { Head, router, useForm } from '@inertiajs/vue3'
 import { computed, ref } from 'vue'
 import {
@@ -69,13 +70,7 @@ const submitPayment = () => {
  */
 const formatRupiah = (value: number) => {
 
-    return new Intl.NumberFormat(
-        'id-ID',
-        {
-            style: 'currency',
-            currency: 'IDR',
-        }
-    ).format(value || 0);
+    return formatMoneyRp(value || 0);
 };
 
 const accountNumber = ref('7435944400')
@@ -178,7 +173,7 @@ const copyAccountNumber = async () => {
                     </p>
 
                     <h3 class="mt-1 font-semibold text-primary">
-                        Rp {{ Number(invoice.total).toLocaleString('id-ID') }}
+                        Rp {{ formatMoney(Number(invoice.total)) }}
                     </h3>
                 </div>
 

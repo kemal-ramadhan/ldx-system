@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatNumber as formatMoney } from '@/lib/money';
 import { Head } from '@inertiajs/vue3';
 
 defineProps<{
@@ -109,7 +110,7 @@ defineOptions({
                     </p>
 
                     <p class="font-medium">
-                        Rp {{ Number(product.base_price).toLocaleString('id-ID') }}
+                        Rp {{ formatMoney(Number(product.base_price)) }}
                     </p>
                 </div>
 

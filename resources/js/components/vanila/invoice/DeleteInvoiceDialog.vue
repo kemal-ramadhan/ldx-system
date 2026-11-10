@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatRupiah as formatMoneyRp } from '@/lib/money';
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { AlertTriangle } from 'lucide-vue-next'
@@ -22,7 +23,7 @@ const open = defineModel<boolean>('open', { default: false })
 const isDeleting = ref(false)
 
 const formatRupiah = (value: number) =>
-    new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(value || 0)
+    formatMoneyRp(value || 0)
 
 const confirmDelete = () => {
     if (!props.invoice) return

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatNumber as formatMoney } from '@/lib/money';
 import { Head, Form, useForm } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -140,8 +141,19 @@ defineOptions({
                         id="base_price"
                         v-model="form.base_price"
                         type="number"
+                        min="0"
+                        step="0.01"
                         placeholder="200000"
                     />
+
+                    <p class="text-xs text-muted-foreground">
+                        = Rp {{ formatMoney(form.base_price) }}
+                    </p>
+                    <p class="text-xs text-muted-foreground">
+                        Harga boleh memakai desimal sampai 2 angka di belakang koma agar sama persis dengan invoice.
+                        Gunakan <strong>titik (.)</strong> sebagai pemisah desimal, tanpa titik ribuan.
+                        Contoh: <code>1500000.50</code> = Rp 1.500.000,50
+                    </p>
 
                     <InputError :message="errors.base_price" />
                 </div>
