@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
+import InputError from '@/components/InputError.vue';
 import ItemTaxFields from '@/components/ItemTaxFields.vue';
 import SearchSelect from '@/components/SearchSelect.vue';
 import { defaultItemTax, itemTaxFrom, taxSummary, type ItemTax } from '@/lib/tax';
@@ -28,7 +29,7 @@ type ServiceItem = ItemTax & {
 
 type ServiceForm = {
     client_id: number | null;
-    rack_id: number | null;
+    rack_id: string | number | null;
     name: string;
     description: string;
     billing_cycle: string;
@@ -136,7 +137,45 @@ const summary = computed(() =>
     ),
 );
 
+
+/**
+ * =========================================
+ * RACK (OPTIONAL)
+ * =========================================
+ * Some customers buy other products without renting a rack.
+ */
+const rackMode = ref<'rack' | 'none'>(props.service.rack_id ? 'rack' : 'none');
+const rackError = ref('');
+let lastRackId: string | number | null = form.rack_id;
+
+const setRackMode = (mode: 'rack' | 'none') => {
+    if (mode === rackMode.value) return;
+
+    if (mode === 'none') {
+        lastRackId = form.rack_id;
+        form.rack_id = null;
+        rackError.value = '';
+    } else {
+        form.rack_id = lastRackId;
+    }
+
+    rackMode.value = mode;
+};
+
+/** "Sewa Rack" requires a rack to be picked. */
+const validateRack = () => {
+    if (rackMode.value === 'rack' && !form.rack_id) {
+        rackError.value = 'Pilih rack, atau pilih "Tanpa Rack" jika customer tidak menyewa rack.';
+        return false;
+    }
+
+    rackError.value = '';
+    return true;
+};
+
 const updateService = () => {
+    if (!validateRack()) return;
+
     form.put(`/admin/services/${props.service.id}`);
 };
 
@@ -197,19 +236,47 @@ defineOptions({
                         <SearchSelect v-model="form.client_id" :options="clients" label="company_name"
                             placeholder="Search Client" />
 
-                        <InputError :message="errors.client_id" />
+                        <InputError :message="form.errors.client_id" />
                     </div>
 
-                    <!-- Rack -->
+                    <!-- Rack (optional) -->
                     <div class="grid gap-2">
                         <Label>
                             Rack
-                            <span class="text-red-500">*</span>
+                            <span class="text-xs font-normal text-muted-foreground">(opsional)</span>
                         </Label>
 
-                        <SearchSelect v-model="form.rack_id" :options="racks" label="name" placeholder="Search Rack" />
+                        <div class="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Penggunaan rack">
+                            <button type="button" role="radio" :aria-checked="rackMode === 'rack'"
+                                @click="setRackMode('rack')" :class="[
+                                    'rounded-lg border px-3 py-2 text-sm font-medium transition',
+                                    rackMode === 'rack'
+                                        ? 'border-primary bg-primary text-primary-foreground'
+                                        : 'border-input bg-background text-muted-foreground hover:bg-muted'
+                                ]">
+                                Sewa Rack
+                            </button>
+                            <button type="button" role="radio" :aria-checked="rackMode === 'none'"
+                                @click="setRackMode('none')" :class="[
+                                    'rounded-lg border px-3 py-2 text-sm font-medium transition',
+                                    rackMode === 'none'
+                                        ? 'border-primary bg-primary text-primary-foreground'
+                                        : 'border-input bg-background text-muted-foreground hover:bg-muted'
+                                ]">
+                                Tanpa Rack
+                            </button>
+                        </div>
 
-                        <InputError :message="errors.rack_id" />
+                        <template v-if="rackMode === 'rack'">
+                            <SearchSelect v-model="form.rack_id" :options="racks" label="name"
+                                placeholder="Search Rack" @change="rackError = ''" />
+                            <InputError :message="rackError || form.errors.rack_id" />
+                        </template>
+
+                        <p v-else class="rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
+                            Untuk customer yang hanya memakai layanan/produk lain (tanpa colocation).
+                            Invoice tetap dibuat seperti biasa.
+                        </p>
                     </div>
 
                     <!-- Service Name -->
@@ -221,7 +288,7 @@ defineOptions({
 
                         <Input v-model="form.name" type="text" placeholder="Rack R01 PT ABC" />
 
-                        <InputError :message="errors.name" />
+                        <InputError :message="form.errors.name" />
                     </div>
 
                     <!-- Billing Cycle -->
@@ -233,7 +300,7 @@ defineOptions({
                         <SearchSelect v-model="form.billing_cycle" :options="billingCycleOptions" label="label"
                             value-key="value" placeholder="Select Billing Cycle" />
 
-                        <InputError :message="errors.billing_cycle" />
+                        <InputError :message="form.errors.billing_cycle" />
                     </div>
 
                     <!-- Start Date -->
@@ -244,7 +311,7 @@ defineOptions({
 
                         <Input v-model="form.start_date" type="date" />
 
-                        <InputError :message="errors.start_date" />
+                        <InputError :message="form.errors.start_date" />
                     </div>
 
                     <!-- End Date -->
@@ -255,7 +322,7 @@ defineOptions({
 
                         <Input v-model="form.end_date" type="date" />
 
-                        <InputError :message="errors.end_date" />
+                        <InputError :message="form.errors.end_date" />
                     </div>
 
                     <!-- Next Due -->
@@ -266,7 +333,7 @@ defineOptions({
 
                         <Input v-model="form.next_due_date" type="date" />
 
-                        <InputError :message="errors.next_due_date" />
+                        <InputError :message="form.errors.next_due_date" />
                     </div>
 
                     <!-- Status -->
@@ -278,7 +345,7 @@ defineOptions({
                         <SearchSelect v-model="form.status" :options="statusOptions" label="label" value-key="value"
                             placeholder="Select Status" />
 
-                        <InputError :message="errors.status" />
+                        <InputError :message="form.errors.status" />
                     </div>
 
                     <!-- Description -->
@@ -291,7 +358,7 @@ defineOptions({
                             class="h-28 resize-none rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
                             placeholder="Service description..."></textarea>
 
-                        <InputError :message="errors.description" />
+                        <InputError :message="form.errors.description" />
                     </div>
 
                 </div>

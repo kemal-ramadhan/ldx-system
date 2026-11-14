@@ -29,10 +29,12 @@ class DevicePort extends Model
 
     public function device(): BelongsTo
     {
+        // a port's device stays resolvable after the device left the DC,
+        // so cross-connect / interconnection history keeps showing it
         return $this->belongsTo(
             RackDivice::class,
             'rack_divice_id'
-        );
+        )->withoutGlobalScope('excludeRemoved');
     }
 
     public function sourceInterconnectionRequests(): HasMany

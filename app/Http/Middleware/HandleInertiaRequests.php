@@ -44,6 +44,14 @@ class HandleInertiaRequests extends Middleware
                 : null,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            // sidebar badges (admin only, evaluated lazily per request)
+            'navBadges' => fn () => $request->user()?->role?->slug === 'super-admin'
+                ? [
+                    'visit_requests' => \App\Models\VisitRequest::where('status', 'pending')->count(),
+                    // failed e-mails not yet fixed by a successful "Kirim Ulang"
+                    'email_failed' => \App\Models\EmailLog::unresolvedFailures()->count(),
+                ]
+                : [],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

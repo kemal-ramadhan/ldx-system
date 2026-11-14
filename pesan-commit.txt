@@ -1,0 +1,43 @@
+Enhance : optional rack in service, client interconnection & cross connect, device check-in/out, visit request, email history
+
+Service
+- Rack is now optional when creating/editing a service ("Sewa Rack" / "Tanpa Rack"),
+  invoices can still be generated for clients without a rack
+- Fix: validation errors were never shown on service create/edit form
+
+Interconnection & Cross Connect (client portal)
+- Client create form follows the admin concept: internal / MMR DC APJII (S3/K1),
+  default "MMR DC APJII", rack OTB/Lainnya, validated cable options
+- Internal destination limited to the client's own ports; data scoped per client
+  (ClientPortAccess), other clients' contact data no longer exposed
+- Remove unscoped endpoints destination-clients/{id}/devices and devices/{id}/ports
+- Destination client can see requests targeting its ports (read-only)
+- New client Cross Connect menu: list, detail, request terminate
+- Admin: terminate request badge + prefilled reason
+- Fix: terminate of external (MMR) cross connect returned 404
+
+Device check-in / check-out (admin only)
+- Device movements: masuk, keluar sementara, kembali, pindah rack/unit, keluar permanen
+- Carrier data, photos and BAST attachments; history per device, per rack and global log
+- Removed devices are kept (placement_status) instead of deleted, ports disabled,
+  cross connect history kept
+- Store start_unit/end_unit (U position was never saved)
+- Fix: freed units stayed 'empty' with client_id (could be rented twice)
+
+Visit request (pengajuan kunjungan)
+- Client submits visit (date/time, racks, guest list); admin approves/rejects
+- Approval e-mail with check-in code + QR; self check-in at /buku-tamu with code
+  and last 4 digits of NIK, or front-desk check-in/check-out by admin
+- Menu badge for pending requests
+- Security: guest book photo page/upload now require a signed URL, upload validated
+- Fix: "Perawatan"/"Lainnya" cards on /buku-tamu, visitor status filter
+
+Email history (Riwayat Email)
+- Every e-mail sent by the app is logged (invoice, reminder, payment received,
+  visit request) with inbox-like preview, attachments, status and error
+- Resend with latest data, failed-mail badge, e-mail history on invoice page
+- Archive BCC addresses managed from admin settings (app_settings table, multiple e-mails)
+
+Migrations (9): terminate request on cross_connects, rack_divices placement,
+device_movements, device_movement_attachments, visit_requests (+ racks pivot),
+visit_request_members, visitors.visit_request_id, email_logs, app_settings

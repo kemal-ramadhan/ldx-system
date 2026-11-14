@@ -45,6 +45,10 @@
         :selected-time-filter="props.selectedTimeFilter"
         :trend-chart-data="props.trendChartData"
         :trend-chart-options="props.trendChartOptions"
+        :removed-devices="props.removedDevices"
+        :movements="props.movements"
+        :client-rack-options="props.clientRackOptions"
+        :today-visitors="props.todayVisitors"
         @refresh="emit('refresh')"
         @toggle-auto-refresh="emit('toggleAutoRefresh')"
         @change-time-filter="(val: any) => emit('changeTimeFilter', val)"
@@ -63,6 +67,7 @@ import InvoiceClient from './tabs/InvoiceClient.vue'
 import InterconnectionClient from './tabs/InterconnectionClient.vue'
 import TelemetryRack from './tabs/TelemetryRack.vue'
 import ImageRack from './tabs/ImageRack.vue'
+import MovementRack from './tabs/MovementRack.vue'
 
 const props = defineProps<{
   rack: any;
@@ -77,6 +82,10 @@ const props = defineProps<{
   selectedTimeFilter?: string;
   trendChartData?: any;
   trendChartOptions?: any;
+  removedDevices?: any[];
+  movements?: any[];
+  clientRackOptions?: any[];
+  todayVisitors?: any[];
 }>()
 
 const emit = defineEmits<{
@@ -92,6 +101,7 @@ const tabs = computed(() => [
   { key: 'device',   label: 'Device',  badge: props.rack?.rack_divices_count || 0 },
   { key: 'invoice',  label: 'Invoice', badge: props.invoices?.total || 0 },
   { key: 'interconnection',  label: 'Crossconnect', badge: props.interconnections?.length || 0 },
+  { key: 'movements', label: 'Keluar-Masuk', badge: props.movements?.length || 0 },
   { key: 'images', label: 'Gambar', badge: props.rack?.images_count ?? props.rack?.images?.length ?? 0 },
   {
     key: 'telemetry',
@@ -107,6 +117,7 @@ const panels: Record<string, any> = {
   interconnection: InterconnectionClient,
   telemetry: TelemetryRack,
   images: ImageRack,
+  movements: MovementRack,
 }
 
 const currentPanel = computed(() => panels[activeTab.value])

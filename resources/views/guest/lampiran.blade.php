@@ -53,7 +53,7 @@ bg-blue-600 text-white px-6 py-3 rounded-full shadow-lg">
             <div id="successMessage" class="hidden mt-6 bg-green-50 border border-green-200 rounded-xl p-6 text-center">
                 <h2 class="text-xl font-bold mb-2">Foto berhasil disimpan 🎉</h2>
 
-                <a href="{{ route('daftar.buku.tamu') }}" class="bg-blue-600 text-white px-6 py-2 rounded-lg">
+                <a href="{{ route('buku.tamu') }}" class="bg-blue-600 text-white px-6 py-2 rounded-lg">
                     Kembali ke Beranda
                 </a>
 
@@ -134,19 +134,29 @@ bg-blue-600 text-white px-6 py-3 rounded-full shadow-lg">
                 formData.append("photos[]", photo, "photo_" + index + ".jpg")
             })
 
-            const response = await fetch("{{ route('buku.tamu.lampiran.store', $guest->id) }}", {
+            const response = await fetch(@json($uploadUrl), {
                 method: "POST",
                 body: formData,
                 headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
                 }
             })
 
             if (!response.ok) {
 
-                const text = await response.text()
-                console.log(text)
-                alert("Server error")
+                let message = "Foto gagal dikirim, silakan coba lagi."
+
+                if (response.status === 403) {
+                    message = "Halaman foto sudah kedaluwarsa. Silakan ulangi dari Buku Tamu."
+                } else {
+                    try {
+                        const body = await response.json()
+                        message = body.message || Object.values(body.errors || {}).flat()[0] || message
+                    } catch (e) {}
+                }
+
+                alert(message)
                 return
 
             }

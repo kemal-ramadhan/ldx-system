@@ -23,6 +23,8 @@ class Visitor extends Model
         'checkin_time',
         'checkout_time',
         'status',
+        'visit_request_id',
+        'visit_request_member_id',
     ];
 
     protected $casts = [
@@ -30,6 +32,16 @@ class Visitor extends Model
         'checkin_time' => 'datetime',
         'checkout_time' => 'datetime',
     ];
+
+    public function visitRequest()
+    {
+        return $this->belongsTo(VisitRequest::class);
+    }
+
+    public function visitRequestMember()
+    {
+        return $this->belongsTo(VisitRequestMember::class);
+    }
 
     public function visitorAttemps()
     {

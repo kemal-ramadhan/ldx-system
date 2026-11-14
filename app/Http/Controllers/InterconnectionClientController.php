@@ -2,253 +2,139 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Client;
 use App\Models\DevicePort;
 use App\Models\InterconnectionRequest;
 use App\Models\RackDivice;
+use App\Support\ClientPortAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
+/**
+ * Interconnection requests in the client portal.
+ *
+ * Same concept as the admin side (internal / external MMR S3-K1, cable data),
+ * limited to the logged-in client's data:
+ *  - a client can only request between ITS OWN ports, or to an external MMR
+ *    (connections to other clients are created by the LDX team / admin);
+ *  - a client sees requests it submitted and requests targeting its ports;
+ *  - other clients' data is limited to company name + rack/device/port names.
+ */
 class InterconnectionClientController extends Controller
 {
+    public const EXTERNAL_LOCATIONS = ['S3', 'K1'];
+
+    private function clientId(): int
+    {
+        $clientPic = Auth::user()->clientPic;
+
+        abort_unless(
+            $clientPic && $clientPic->client_id,
+            403,
+            'User belum terhubung dengan client.'
+        );
+
+        return (int) $clientPic->client_id;
+    }
+
+    private function myRole(InterconnectionRequest $request, int $clientId): string
+    {
+        return (int) $request->requester_client_id === $clientId ? 'requester' : 'destination';
+    }
+
     /**
      * =========================================================
      * INDEX
-     * List interconnection milik client yang sedang login
      * =========================================================
      */
     public function index(Request $request)
     {
-        /*
-    |--------------------------------------------------------------------------
-    | GET AUTHENTICATED CLIENT
-    |--------------------------------------------------------------------------
-    */
-
-        $clientPic = Auth::user()->clientPic;
-
-        abort_unless(
-            $clientPic && $clientPic->client_id,
-            403,
-            'User belum terhubung dengan client.'
-        );
-
-        $clientId = (int) $clientPic->client_id;
-
-
-        /*
-    |--------------------------------------------------------------------------
-    | QUERY INTERCONNECTION
-    |--------------------------------------------------------------------------
-    */
+        $clientId = $this->clientId();
 
         $query = InterconnectionRequest::query()
             ->with([
-                'requesterClient',
-
-                /*
-            |--------------------------------------------------------------------------
-            | SOURCE
-            |--------------------------------------------------------------------------
-            */
-
-                'sourcePort.device.client',
-                'sourcePort.device.rack',
-
-                /*
-            |--------------------------------------------------------------------------
-            | DESTINATION
-            |--------------------------------------------------------------------------
-            */
-
-                'destinationPort.device.client',
-                'destinationPort.device.rack',
+                'requesterClient:id,company_code,company_name',
+                ...ClientPortAccess::portRelations(),
             ])
-            ->where('requester_client_id', $clientId)
             ->latest();
 
-
-        /*
-    |--------------------------------------------------------------------------
-    | SEARCH
-    |--------------------------------------------------------------------------
-    */
+        ClientPortAccess::touchingClient($query, $clientId, includeRequester: true);
 
         if ($request->filled('search')) {
-
             $search = $request->search;
 
             $query->where(function ($q) use ($search) {
-
-                $q->where(
-                    'request_number',
-                    'like',
-                    "%{$search}%"
-                )
-
-                    ->orWhere(
-                        'description',
-                        'like',
-                        "%{$search}%"
-                    );
+                $q->where('request_number', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
-
-        /*
-    |--------------------------------------------------------------------------
-    | FILTER STATUS
-    |--------------------------------------------------------------------------
-    */
-
         if ($request->filled('status')) {
-
-            $query->where(
-                'status',
-                $request->status
-            );
+            $query->where('status', $request->status);
         }
 
+        $interconnections = $query->paginate(10)->withQueryString();
 
-        /*
-    |--------------------------------------------------------------------------
-    | PAGINATION
-    |--------------------------------------------------------------------------
-    */
+        $interconnections->getCollection()->transform(function ($item) use ($clientId) {
+            $item->setAttribute('my_role', $this->myRole($item, $clientId));
 
-        $interconnections = $query
-            ->paginate(10)
-            ->withQueryString();
+            return $item;
+        });
 
-
-        /*
-    |--------------------------------------------------------------------------
-    | RESPONSE
-    |--------------------------------------------------------------------------
-    */
-
-        return Inertia::render(
-            'Client/Interconnections/Index',
-            [
-                'interconnections' => $interconnections,
-
-                'filters' => [
-                    'search' => $request->search,
-                    'status' => $request->status,
-                ],
-            ]
-        );
+        return Inertia::render('Client/Interconnections/Index', [
+            'interconnections' => $interconnections,
+            'filters' => [
+                'search' => $request->search,
+                'status' => $request->status,
+            ],
+        ]);
     }
-
 
     /**
      * =========================================================
      * CREATE
-     * Form membuat interconnection request
+     * Only the client's own active devices (source & internal destination).
      * =========================================================
      */
     public function create()
     {
-        $clientPic = Auth::user()->clientPic;
+        $clientId = $this->clientId();
 
-        abort_unless(
-            $clientPic && $clientPic->client_id,
-            403,
-            'User belum terhubung dengan client.'
-        );
-
-        $clientId = (int) $clientPic->client_id;
-
-        /*
-        |--------------------------------------------------------------------------
-        | Source Device
-        |--------------------------------------------------------------------------
-        | Device yang dimiliki oleh client yang sedang login.
-        |--------------------------------------------------------------------------
-        */
         $devices = RackDivice::query()
             ->where('client_id', $clientId)
             ->where('status', 'active')
             ->with([
-                'rack',
-                'ports' => function ($query) {
-                    $query
-                        ->where('status', 'available')
-                        ->orderBy('port_number');
-                },
+                'rack:id,code,name',
+                'ports' => fn ($q) => $q
+                    ->select(['id', 'rack_divice_id', 'port_name', 'port_number', 'port_type', 'status'])
+                    ->where('status', 'available')
+                    ->orderBy('port_number'),
             ])
             ->orderBy('divice_name')
-            ->get();
-
-        /*
-        |--------------------------------------------------------------------------
-        | Destination Client
-        |--------------------------------------------------------------------------
-        | Hanya client lain yang aktif.
-        |--------------------------------------------------------------------------
-        */
-        $clients = Client::query()
-            ->where('id', '!=', $clientId)
-            ->where('status', 'active')
-            ->orderBy('company_name')
-            ->get([
-                'id',
-                'company_code',
-                'company_name',
-            ]);
+            ->get(['id', 'client_id', 'rack_id', 'code', 'divice_name']);
 
         return Inertia::render('Client/Interconnections/Create', [
             'devices' => $devices,
-            'clients' => $clients,
+            'externalLocations' => self::EXTERNAL_LOCATIONS,
         ]);
     }
 
     /**
      * =========================================================
      * STORE
-     * Client membuat interconnection request
+     * Rules mirror the admin InterconnectionRequestController::store,
+     * requester = logged-in client.
      * =========================================================
      */
     public function store(Request $request)
     {
-        /*
-    |--------------------------------------------------------------------------
-    | CLIENT AUTHENTICATION
-    |--------------------------------------------------------------------------
-    | User -> ClientPic -> Client
-    |--------------------------------------------------------------------------
-    */
-        $clientPic = Auth::user()->clientPic;
-
-        abort_unless(
-            $clientPic && $clientPic->client_id,
-            403,
-            'User belum terhubung dengan client.'
-        );
-
-        $clientId = (int) $clientPic->client_id;
-
-
-        /*
-    |--------------------------------------------------------------------------
-    | VALIDATION
-    |--------------------------------------------------------------------------
-    */
+        $clientId = $this->clientId();
 
         $validated = $request->validate([
-            'source_port_id' => [
-                'required',
-                'integer',
-                'exists:device_ports,id',
-            ],
-
-            'destination_type' => [
-                'required',
-                'in:internal,external',
-            ],
-
+            'source_port_id' => ['required', 'integer', 'exists:device_ports,id'],
+            'destination_type' => ['required', 'in:internal,external'],
             'destination_port_id' => [
                 'exclude_if:destination_type,external',
                 'required_if:destination_type,internal',
@@ -256,452 +142,145 @@ class InterconnectionClientController extends Controller
                 'exists:device_ports,id',
                 'different:source_port_id',
             ],
-
-            'external_client_name' => [
+            'external_location' => [
                 'exclude_if:destination_type,internal',
                 'required_if:destination_type,external',
-                'string',
-                'max:255',
+                'in:' . implode(',', self::EXTERNAL_LOCATIONS),
             ],
-
-            'external_rack_name' => [
-                'exclude_if:destination_type,internal',
-                'required_if:destination_type,external',
-                'string',
-                'max:255',
-            ],
-
-            'external_device_name' => [
-                'exclude_if:destination_type,internal',
-                'required_if:destination_type,external',
-                'string',
-                'max:255',
-            ],
-
-            'external_port_name' => [
-                'exclude_if:destination_type,internal',
-                'required_if:destination_type,external',
-                'string',
-                'max:255',
-            ],
-
-            'interconnection_type' => [
-                'required',
-                'string',
-                'max:50',
-            ],
-
-            'cable_type' => [
-                'required',
-                'string',
-                'max:50',
-            ],
-
-            'connector_type' => [
-                'required',
-                'string',
-                'max:50',
-            ],
-
-            'cable_length' => [
-                'required',
-                'numeric',
-                'min:0.1',
-            ],
-
-            'cable_length_unit' => [
-                'required',
-                'string',
-                'max:20',
-            ],
-
-            'description' => [
-                'nullable',
-                'string',
-            ],
-
-            'notes' => [
-                'nullable',
-                'string',
-            ],
+            'external_client_name' => ['exclude_if:destination_type,internal', 'required_if:destination_type,external', 'string', 'max:255'],
+            'external_rack_name' => ['exclude_if:destination_type,internal', 'required_if:destination_type,external', 'string', 'max:255'],
+            'external_device_name' => ['exclude_if:destination_type,internal', 'required_if:destination_type,external', 'string', 'max:255'],
+            'external_port_name' => ['exclude_if:destination_type,internal', 'required_if:destination_type,external', 'string', 'max:255'],
+            'interconnection_type' => ['required', 'in:internal_building,cross_connect,other'],
+            'cable_type' => ['required', 'in:fiber_optic,copper,coaxial,other'],
+            'connector_type' => ['nullable', 'string', 'max:100'],
+            'cable_length' => ['nullable', 'numeric', 'min:0'],
+            'cable_length_unit' => ['required', 'in:meter,cm,km'],
+            'description' => ['nullable', 'string'],
+            'notes' => ['nullable', 'string'],
+        ], [
+            'destination_port_id.required_if' => 'Port tujuan wajib dipilih.',
+            'destination_port_id.different' => 'Port tujuan harus berbeda dengan port sumber.',
+            'external_location.required_if' => 'Lokasi MMR (S3 / K1) wajib dipilih.',
+            'external_location.in' => 'Lokasi MMR harus S3 atau K1.',
+            'interconnection_type.in' => 'Tipe interconnection tidak valid.',
+            'cable_type.in' => 'Tipe kabel tidak valid.',
         ]);
 
-
-        /*
-    |--------------------------------------------------------------------------
-    | SOURCE PORT
-    |--------------------------------------------------------------------------
-    */
-
-        $sourcePort = DevicePort::query()
-            ->with('device')
-            ->whereKey($validated['source_port_id'])
-            ->firstOrFail();
-
-
-        /*
-    |--------------------------------------------------------------------------
-    | SOURCE DEVICE HARUS MILIK CLIENT LOGIN
-    |--------------------------------------------------------------------------
-    */
-
-        abort_unless(
-            $sourcePort->device &&
-                (int) $sourcePort->device->client_id === $clientId,
-            403,
-            'Source port bukan milik client Anda.'
-        );
-
-
-        /*
-    |--------------------------------------------------------------------------
-    | SOURCE PORT HARUS AVAILABLE
-    |--------------------------------------------------------------------------
-    */
-
-        abort_unless(
-            $sourcePort->status === 'available',
-            422,
-            'Source port tidak tersedia.'
-        );
-
-
-        /*
-    |--------------------------------------------------------------------------
-    | DESTINATION PORT
-    |--------------------------------------------------------------------------
-    */
-
         $isExternal = $validated['destination_type'] === 'external';
-        $destinationPort = null;
 
-        if (!$isExternal) {
-            $destinationPort = DevicePort::query()
-                ->with('device.client')
-                ->whereKey($validated['destination_port_id'])
-                ->firstOrFail();
-
-
-            /*
+        /*
         |--------------------------------------------------------------------------
-        | DESTINATION DEVICE HARUS ADA
+        | OWNERSHIP: both ends must be the client's own ports
         |--------------------------------------------------------------------------
         */
+        $sourcePort = DevicePort::with('device')->findOrFail($validated['source_port_id']);
 
-            abort_unless(
-                $destinationPort->device,
-                422,
-                'Destination device tidak ditemukan.'
-            );
-
-
-            /*
-        |--------------------------------------------------------------------------
-        | DESTINATION DEVICE HARUS AKTIF
-        |--------------------------------------------------------------------------
-        */
-
-            abort_unless(
-                $destinationPort->device->status === 'active',
-                422,
-                'Destination device tidak aktif.'
-            );
-
-
-            /*
-        |--------------------------------------------------------------------------
-        | DESTINATION CLIENT HARUS BERBEDA
-        |--------------------------------------------------------------------------
-        */
-
-            abort_unless(
-                (int) $destinationPort->device->client_id !== $clientId,
-                422,
-                'Destination harus berasal dari client lain.'
-            );
-
-
-            /*
-        |--------------------------------------------------------------------------
-        | DESTINATION PORT HARUS AVAILABLE
-        |--------------------------------------------------------------------------
-        */
-
-            abort_unless(
-                $destinationPort->status === 'available',
-                422,
-                'Destination port tidak tersedia.'
-            );
+        if ((int) $sourcePort->device?->client_id !== $clientId) {
+            throw ValidationException::withMessages([
+                'source_port_id' => 'Port sumber bukan milik perusahaan Anda.',
+            ]);
         }
 
+        if ($sourcePort->status !== 'available') {
+            throw ValidationException::withMessages([
+                'source_port_id' => 'Port sumber sedang tidak tersedia.',
+            ]);
+        }
 
-        /*
-    |--------------------------------------------------------------------------
-    | GENERATE REQUEST NUMBER + CREATE
-    |--------------------------------------------------------------------------
-    */
+        if (!$isExternal) {
+            $destinationPort = DevicePort::with('device')->findOrFail($validated['destination_port_id']);
 
-        $interconnection = DB::transaction(function () use (
-            $validated,
-            $clientId,
-            $sourcePort,
-            $destinationPort
-        ) {
+            if ((int) $destinationPort->device?->client_id !== $clientId) {
+                throw ValidationException::withMessages([
+                    'destination_port_id' => 'Port tujuan harus milik perusahaan Anda. Interconnection ke client lain diajukan melalui tim LDX.',
+                ]);
+            }
 
-            /*
-        |--------------------------------------------------------------------------
-        | REQUEST NUMBER
-        |--------------------------------------------------------------------------
-        |
-        | Format:
-        | IC-YYYYMM-00001
-        |
-        |--------------------------------------------------------------------------
-        */
+            if ($destinationPort->device->status !== 'active') {
+                throw ValidationException::withMessages([
+                    'destination_port_id' => 'Device tujuan tidak aktif.',
+                ]);
+            }
 
-            $year = now()->year;
-            $month = now()->month;
+            if ($destinationPort->status !== 'available') {
+                throw ValidationException::withMessages([
+                    'destination_port_id' => 'Port tujuan sedang tidak tersedia.',
+                ]);
+            }
+        }
 
+        $interconnection = DB::transaction(function () use ($validated, $clientId, $sourcePort, $isExternal) {
+            // IC-YYYYMM-00001
             $lastRequest = InterconnectionRequest::query()
-                ->whereYear('created_at', $year)
-                ->whereMonth('created_at', $month)
+                ->whereYear('created_at', now()->year)
+                ->whereMonth('created_at', now()->month)
                 ->latest('id')
                 ->lockForUpdate()
                 ->first();
 
-            $sequence = $lastRequest
-                ? ((int) substr($lastRequest->request_number, -5)) + 1
-                : 1;
-
-            $requestNumber =
-                'IC-' .
-                now()->format('Ym') .
-                '-' .
-                str_pad(
-                    $sequence,
-                    5,
-                    '0',
-                    STR_PAD_LEFT
-                );
-
-
-            /*
-        |--------------------------------------------------------------------------
-        | CREATE INTERCONNECTION REQUEST
-        |--------------------------------------------------------------------------
-        */
+            $sequence = $lastRequest ? ((int) substr($lastRequest->request_number, -5)) + 1 : 1;
 
             return InterconnectionRequest::create([
-                'request_number' => $requestNumber,
-
-                /*
-            |--------------------------------------------------------------------------
-            | CLIENT DARI AUTHENTICATION
-            |--------------------------------------------------------------------------
-            */
-
+                'request_number' => 'IC-' . now()->format('Ym') . '-' . str_pad($sequence, 5, '0', STR_PAD_LEFT),
                 'requester_client_id' => $clientId,
 
-                /*
-            |--------------------------------------------------------------------------
-            | PORT
-            |--------------------------------------------------------------------------
-            */
-
                 'source_port_id' => $sourcePort->id,
-
                 'destination_type' => $validated['destination_type'],
+                'destination_port_id' => $isExternal ? null : $validated['destination_port_id'],
 
-                'destination_port_id' => $validated['destination_port_id'] ?? null,
-
+                'external_location' => $isExternal ? $validated['external_location'] : null,
                 'external_client_name' => $validated['external_client_name'] ?? null,
-
                 'external_rack_name' => $validated['external_rack_name'] ?? null,
-
                 'external_device_name' => $validated['external_device_name'] ?? null,
-
                 'external_port_name' => $validated['external_port_name'] ?? null,
 
-                /*
-            |--------------------------------------------------------------------------
-            | INTERCONNECTION
-            |--------------------------------------------------------------------------
-            */
+                'interconnection_type' => $validated['interconnection_type'],
+                'cable_type' => $validated['cable_type'],
+                'connector_type' => $validated['connector_type'] ?? null,
+                'cable_length' => $validated['cable_length'] ?? null,
+                'cable_length_unit' => $validated['cable_length_unit'],
 
-                'interconnection_type' =>
-                $validated['interconnection_type'],
-
-                'cable_type' =>
-                $validated['cable_type'],
-
-                'connector_type' =>
-                $validated['connector_type'],
-
-                'cable_length' =>
-                $validated['cable_length'],
-
-                'cable_length_unit' =>
-                $validated['cable_length_unit'],
-
-                /*
-            |--------------------------------------------------------------------------
-            | WORKFLOW
-            |--------------------------------------------------------------------------
-            */
-
-                'status' =>
-                'waiting_destination_approval',
-
+                'status' => 'waiting_destination_approval',
                 'progress' => 0,
-
                 'requested_at' => now(),
 
-                /*
-            |--------------------------------------------------------------------------
-            | DESCRIPTION
-            |--------------------------------------------------------------------------
-            */
-
-                'description' =>
-                $validated['description'] ?? null,
-
-                'notes' =>
-                $validated['notes'] ?? null,
+                'description' => $validated['description'] ?? null,
+                'notes' => $validated['notes'] ?? null,
             ]);
         });
 
-
-        /*
-    |--------------------------------------------------------------------------
-    | REDIRECT TO DETAIL
-    |--------------------------------------------------------------------------
-    */
-
         return redirect()
-            ->route(
-                'client.interconnections.show',
-                $interconnection->id
-            )
-            ->with(
-                'success',
-                'Interconnection request berhasil dibuat.'
-            );
+            ->route('client.interconnections.show', $interconnection->id)
+            ->with('success', 'Interconnection request berhasil dibuat.');
     }
-
 
     /**
      * =========================================================
      * SHOW
-     * Detail interconnection milik client
+     * Requester or owner of one of the ports; 404 otherwise.
      * =========================================================
      */
     public function show(string $id)
     {
-        /*
-    |--------------------------------------------------------------------------
-    | GET AUTHENTICATED CLIENT
-    |--------------------------------------------------------------------------
-    */
+        $clientId = $this->clientId();
 
-        $clientPic = Auth::user()->clientPic;
-
-        abort_unless(
-            $clientPic && $clientPic->client_id,
-            403,
-            'User belum terhubung dengan client.'
-        );
-
-        $clientId = (int) $clientPic->client_id;
-
-
-        /*
-    |--------------------------------------------------------------------------
-    | GET REQUEST
-    |--------------------------------------------------------------------------
-    */
-
-        $interconnection = InterconnectionRequest::query()
+        $query = InterconnectionRequest::query()
             ->with([
-                'requesterClient',
-
-                'sourcePort.device.client',
-                'sourcePort.device.rack',
-
-                'destinationPort.device.client',
-                'destinationPort.device.rack',
-
-                'destinationApprover',
-                'dcApprover',
-
-                'crossConnect',
+                'requesterClient:id,company_code,company_name',
+                ...ClientPortAccess::portRelations(withLocation: true),
+                'destinationApprover:id,name',
+                'dcApprover:id,name',
+                'crossConnect:id,interconnection_request_id,cross_connect_number,status,installed_at,terminated_at',
             ])
-            ->whereKey($id)
-            ->where('requester_client_id', $clientId)
+            ->whereKey($id);
+
+        $interconnection = ClientPortAccess::touchingClient($query, $clientId, includeRequester: true)
             ->firstOrFail();
 
-
-        /*
-    |--------------------------------------------------------------------------
-    | RESPONSE
-    |--------------------------------------------------------------------------
-    */
-
-        return Inertia::render(
-            'Client/Interconnections/Show',
-            [
-                'interconnection' => $interconnection,
-            ]
-        );
-    }
-
-
-    /**
-     * =========================================================
-     * DESTINATION DEVICES
-     * =========================================================
-     */
-    public function destinationDevices($clientId)
-    {
-        $devices = RackDivice::query()
-            ->where('client_id', $clientId)
-            ->where('status', 'active')
-            ->with('rack')
-            ->orderBy('divice_name')
-            ->get([
-                'id',
-                'client_id',
-                'rack_id',
-                'code',
-                'divice_name',
-                'model',
-                'status',
-            ]);
-
-        return response()->json($devices);
-    }
-
-
-    /**
-     * =========================================================
-     * DEVICE PORTS
-     * =========================================================
-     */
-    public function devicePorts($deviceId)
-    {
-        $ports = DevicePort::query()
-            ->where('rack_divice_id', $deviceId)
-            ->where('status', 'available')
-            ->orderBy('port_number')
-            ->get([
-                'id',
-                'rack_divice_id',
-                'port_name',
-                'port_number',
-                'port_type',
-                'connector_type',
-                'status',
-            ]);
-
-        return response()->json($ports);
+        return Inertia::render('Client/Interconnections/Show', [
+            'interconnection' => $interconnection,
+            'myRole' => $this->myRole($interconnection, $clientId),
+        ]);
     }
 }

@@ -87,6 +87,10 @@ const props = defineProps<{
     interconnections: any;
     monitoringData?: MonitoringResponse | null;
     telemetryLogs?: any[];
+    removedDevices?: any[];
+    movements?: any[];
+    clientRackOptions?: any[];
+    todayVisitors?: any[];
 }>();
 
 defineOptions({
@@ -414,6 +418,10 @@ const formatSeconds = (sec: number) => {
         :selected-time-filter="selectedTimeFilter"
         :trend-chart-data="trendChartData"
         :trend-chart-options="trendChartOptions"
+        :removed-devices="removedDevices"
+        :movements="movements"
+        :client-rack-options="clientRackOptions"
+        :today-visitors="todayVisitors"
         @refresh="fetchTelemetry"
         @toggle-auto-refresh="toggleAutoRefresh"
         @change-time-filter="(val: any) => selectedTimeFilter = val"

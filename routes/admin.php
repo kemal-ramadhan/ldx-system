@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardAdminController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\DeviceMovementController;
+use App\Http\Controllers\VisitRequestController;
+use App\Http\Controllers\EmailLogController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\ProductController;
@@ -64,6 +67,30 @@ Route::middleware(['auth', 'verified', 'role:super-admin'])->group(function () {
     Route::post('admin/racks/{rack}/devices', [RackController::class, 'storeDevice']);
     Route::put('admin/racks/devices/{device}', [RackController::class, 'updateDevice'])->name('admin.racks.devices.update');
     Route::delete('admin/racks/devices/{id}', [RackController::class, 'destroyDevice'])->name('admin.racks.devices.destroy');
+
+    // keluar-masuk device (history + check-in/out)
+    Route::get('admin/device-movements', [DeviceMovementController::class, 'index'])->name('admin.device-movements.index');
+    Route::get('admin/device-movements/{movement}', [DeviceMovementController::class, 'show'])->name('admin.device-movements.show');
+    Route::get('admin/devices/{device}/history', [DeviceMovementController::class, 'history'])->name('admin.devices.history');
+    Route::post('admin/devices/{device}/temp-out', [DeviceMovementController::class, 'tempOut'])->name('admin.devices.temp-out');
+    Route::post('admin/devices/{device}/return-in', [DeviceMovementController::class, 'returnIn'])->name('admin.devices.return-in');
+    Route::post('admin/devices/{device}/relocate', [DeviceMovementController::class, 'relocate'])->name('admin.devices.relocate');
+    Route::post('admin/devices/{device}/check-out', [DeviceMovementController::class, 'checkOut'])->name('admin.devices.check-out');
+
+    // pengajuan kunjungan (from the client portal)
+    Route::get('admin/visit-requests', [VisitRequestController::class, 'index'])->name('admin.visit-requests.index');
+    Route::get('admin/visit-requests/{visitRequest}', [VisitRequestController::class, 'show'])->name('admin.visit-requests.show');
+    Route::patch('admin/visit-requests/{visitRequest}/approve', [VisitRequestController::class, 'approve'])->name('admin.visit-requests.approve');
+    Route::patch('admin/visit-requests/{visitRequest}/reject', [VisitRequestController::class, 'reject'])->name('admin.visit-requests.reject');
+    Route::post('admin/visit-requests/{visitRequest}/members/{member}/check-in', [VisitRequestController::class, 'checkIn'])->name('admin.visit-requests.check-in');
+    Route::post('admin/visit-requests/{visitRequest}/members/{member}/check-out', [VisitRequestController::class, 'checkOut'])->name('admin.visit-requests.check-out');
+
+    // riwayat email (everything the app sends) + kirim ulang
+    Route::get('admin/email-logs', [EmailLogController::class, 'index'])->name('admin.email-logs.index');
+    Route::put('admin/email-settings', [EmailLogController::class, 'updateSettings'])->name('admin.email-settings.update');
+    Route::get('admin/email-logs/{emailLog}', [EmailLogController::class, 'show'])->name('admin.email-logs.show');
+    Route::get('admin/email-logs/{emailLog}/preview', [EmailLogController::class, 'preview'])->name('admin.email-logs.preview');
+    Route::post('admin/email-logs/{emailLog}/resend', [EmailLogController::class, 'resend'])->middleware('throttle:10,1')->name('admin.email-logs.resend');
 
     // categories product
     Route::resource('admin/categories', CategoriesController::class);

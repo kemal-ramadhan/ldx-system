@@ -149,7 +149,11 @@ defineOptions({
 
                         <!-- Rack -->
                         <td class="px-4 py-3">
-                            {{ service.rack?.name || '-' }}
+                            <span v-if="service.rack">{{ service.rack.name }}</span>
+                            <span v-else
+                                class="inline-flex rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                                Tanpa Rack
+                            </span>
                         </td>
 
                         <!-- Monthly -->

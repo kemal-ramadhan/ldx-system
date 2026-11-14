@@ -88,6 +88,9 @@ interface InterconnectionRequest {
 interface CrossConnect {
     id: number
     cross_connect_number: string
+    terminate_requested_at?: string | null
+    terminate_request_reason?: string | null
+    terminate_requester?: { id: number; name: string } | null
     interconnection_request_id?: number | null
 
     source_port_id: number
@@ -259,6 +262,11 @@ const openTerminateModal = () => {
     terminateForm.reset()
     terminateForm.clearErrors()
 
+    // prefill with the reason sent from the client portal
+    if (item.value.terminate_request_reason) {
+        terminateForm.reason = item.value.terminate_request_reason
+    }
+
     terminateModal.value = true
 }
 
@@ -377,6 +385,21 @@ defineOptions({
             </div>
         </div>
 
+
+        <!-- ================================================= -->
+        <!-- TERMINATE REQUEST FROM CLIENT -->
+        <!-- ================================================= -->
+
+        <div v-if="item.terminate_requested_at"
+            class="mb-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300">
+            <p class="font-semibold">Permintaan terminate dari client</p>
+            <p class="mt-1">
+                Diajukan {{ new Date(item.terminate_requested_at).toLocaleString('id-ID') }}
+                <template v-if="item.terminate_requester"> oleh {{ item.terminate_requester.name }}</template>
+            </p>
+            <p class="mt-1 whitespace-pre-line">Alasan: {{ item.terminate_request_reason }}</p>
+            <p class="mt-2 text-xs">Klik <strong>Terminate</strong> untuk memproses permintaan ini.</p>
+        </div>
 
         <!-- ================================================= -->
         <!-- STATUS BANNER -->

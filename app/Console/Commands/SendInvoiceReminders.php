@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Mail\InvoiceReminderMail;
+use App\Services\MailLogger;
 use App\Models\Invoice;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Console\Command;
@@ -84,32 +85,7 @@ class SendInvoiceReminders extends Command
         }
 
         try {
-            $logoSrc = 'data:image/png;base64,' . base64_encode(
-                file_get_contents(public_path('assets/logos/ldx-logo.png'))
-            );
-            $logoLdxSrc = 'data:image/png;base64,' . base64_encode(
-                file_get_contents(public_path('assets/logos/ldx.png'))
-            );
-
-            $pdf = Pdf::loadView('pdf.invoice', [
-                'invoice' => $invoice,
-                'logoSrc' => $logoSrc,
-                'logoLdxSrc' => $logoLdxSrc,
-            ]);
-
-            $directory = storage_path('app/public/invoices');
-
-            if (!file_exists($directory)) {
-                mkdir($directory, 0777, true);
-            }
-
-            $filePath = $directory . '/' . $invoice->invoice_number . '.pdf';
-
-            file_put_contents($filePath, $pdf->output());
-
-            Mail::to($invoice->client->company_email)->send(
-                new InvoiceReminderMail($invoice, $filePath, $type)
-            );
+            self::deliverReminder($invoice, $type);
 
             $this->info("Reminder ({$type}) sent: {$invoice->invoice_number}");
 
@@ -119,5 +95,46 @@ class SendInvoiceReminders extends Command
 
             return false;
         }
+    }
+
+    /**
+     * Build the PDF and send one reminder (throws on failure).
+     * Also used by "Kirim Ulang" in Riwayat Email.
+     */
+    public static function deliverReminder(Invoice $invoice, string $type): void
+    {
+        $invoice->loadMissing(['client', 'service', 'items']);
+
+        if (!$invoice->client?->company_email) {
+            throw new \RuntimeException("Client email not found for invoice {$invoice->invoice_number}.");
+        }
+
+        $logoSrc = 'data:image/png;base64,' . base64_encode(
+            file_get_contents(public_path('assets/logos/ldx-logo.png'))
+        );
+        $logoLdxSrc = 'data:image/png;base64,' . base64_encode(
+            file_get_contents(public_path('assets/logos/ldx.png'))
+        );
+
+        $pdf = Pdf::loadView('pdf.invoice', [
+            'invoice' => $invoice,
+            'logoSrc' => $logoSrc,
+            'logoLdxSrc' => $logoLdxSrc,
+        ]);
+
+        $directory = storage_path('app/public/invoices');
+
+        if (!file_exists($directory)) {
+            mkdir($directory, 0777, true);
+        }
+
+        $filePath = $directory . '/' . $invoice->invoice_number . '.pdf';
+
+        file_put_contents($filePath, $pdf->output());
+
+        // recorded in Riwayat Email (failed sends are marked there)
+        MailLogger::guard(fn () => Mail::to($invoice->client->company_email)->send(
+            new InvoiceReminderMail($invoice, $filePath, $type)
+        ));
     }
 }

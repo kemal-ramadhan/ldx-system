@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { Link, usePage } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 
 import {
     ChevronDown,
@@ -38,6 +38,18 @@ const toggleMenu = (title: string) => {
 const { isCurrentUrl } = useCurrentUrl();
 
 const { state } = useSidebar();
+
+/*
+ * Badges: items with `badgeKey` show page.props.navBadges[badgeKey];
+ * a parent shows the sum of its children.
+ */
+const page = usePage();
+const navBadges = computed(() => (page.props.navBadges ?? {}) as Record<string, number>);
+
+const badgeOf = (item: any): number =>
+    item.badgeKey
+        ? Number(navBadges.value[item.badgeKey] ?? 0)
+        : (item.children ?? []).reduce((sum: number, child: any) => sum + badgeOf(child), 0);
 </script>
 
 <template>
@@ -66,6 +78,7 @@ const { state } = useSidebar();
                         <span v-if="state !== 'collapsed'">
                             {{ item.title }}
                         </span>
+                        <span v-if="state !== 'collapsed' && badgeOf(item)" class="ml-auto rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">{{ badgeOf(item) }}</span>
                     </Link>
                 </SidebarMenuButton>
 
@@ -95,8 +108,9 @@ const { state } = useSidebar();
                             :key="child.title"
                             as-child
                         >
-                            <Link :href="child.href">
+                            <Link :href="child.href" class="flex items-center justify-between gap-2">
                                 {{ child.title }}
+                                <span v-if="badgeOf(child)" class="ml-auto rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">{{ badgeOf(child) }}</span>
                             </Link>
                         </DropdownMenuItem>
 
@@ -116,6 +130,8 @@ const { state } = useSidebar();
                         <span>
                             {{ item.title }}
                         </span>
+
+                        <span v-if="badgeOf(item)" class="ml-auto rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">{{ badgeOf(item) }}</span>
 
                         <ChevronDown
                             class="ml-auto h-4 w-4 transition-transform"
@@ -141,7 +157,10 @@ const { state } = useSidebar();
                                     isCurrentUrl(child.href)
                             }"
                         >
-                            {{ child.title }}
+                            <span class="flex items-center justify-between gap-2">
+                                {{ child.title }}
+                                <span v-if="badgeOf(child)" class="rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">{{ badgeOf(child) }}</span>
+                            </span>
                         </Link>
 
                     </div>

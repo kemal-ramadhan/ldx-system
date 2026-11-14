@@ -230,7 +230,30 @@ function formatDateTime(date: string | null) {
                             <p style="margin: 0; font-size: 13px; color: var(--color-text-primary);">{{ formatDateTime(props.visitor?.checkin_time) }}</p>
                         </div>
                     </div>
-                    
+                    <!-- checkout_time -->
+                    <div
+                        style="padding: 10px 12px 10px 0; border-bottom: 0.5px solid var(--color-border-tertiary); border-right: 0.5px solid var(--color-border-tertiary);">
+                        <p
+                            style="margin: 0; font-size: 11px; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.04em;">
+                            Checkout Time</p>
+                        <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px;">
+                            <p style="margin: 0; font-size: 13px; color: var(--color-text-primary);">
+                                {{ props.visitor?.checkout_time ? formatDateTime(props.visitor.checkout_time) : '-' }}</p>
+                        </div>
+                    </div>
+                    <!-- from a visit request (client portal) -->
+                    <div v-if="props.visitor?.visit_request"
+                        style="padding: 10px 12px 10px 0; border-bottom: 0.5px solid var(--color-border-tertiary); border-right: 0.5px solid var(--color-border-tertiary);">
+                        <p
+                            style="margin: 0; font-size: 11px; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.04em;">
+                            Pengajuan Kunjungan</p>
+                        <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px;">
+                            <Link :href="`/admin/visit-requests/${props.visitor.visit_request.id}`" class="text-sm font-medium text-primary hover:underline">
+                                {{ props.visitor.visit_request.request_number }}
+                            </Link>
+                        </div>
+                    </div>
+
                 </div>
 
                 <div class="p-4">

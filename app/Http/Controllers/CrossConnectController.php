@@ -198,6 +198,8 @@ class CrossConnectController extends Controller
             |--------------------------------------------------------------------------
             */
                 'installer',
+
+                'terminateRequester:id,name',
             ])
             ->findOrFail($id);
 
@@ -268,10 +270,13 @@ class CrossConnectController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            $destinationPort = $crossConnect
-                ->destinationPort()
-                ->lockForUpdate()
-                ->firstOrFail();
+            // external (MMR) cross connects have no destination port
+            $destinationPort = $crossConnect->destination_type === 'external'
+                ? null
+                : $crossConnect
+                    ->destinationPort()
+                    ->lockForUpdate()
+                    ->first();
 
             /*
             |--------------------------------------------------------------------------
@@ -284,7 +289,14 @@ class CrossConnectController extends Controller
 
                 'terminated_at' => now(),
 
-                'notes' => $validated['reason'],
+                'notes' => $crossConnect->terminate_request_reason
+                    ? $validated['reason'] . "\n\n[Permintaan client] " . $crossConnect->terminate_request_reason
+                    : $validated['reason'],
+
+                // request from the client portal has been processed
+                'terminate_requested_at' => null,
+                'terminate_requested_by' => null,
+                'terminate_request_reason' => null,
             ]);
 
             /*
@@ -305,7 +317,7 @@ class CrossConnectController extends Controller
             |--------------------------------------------------------------------------
             */
 
-            if ($destinationPort->status === 'connected') {
+            if ($destinationPort && $destinationPort->status === 'connected') {
                 $destinationPort->update([
                     'status' => 'available',
                 ]);

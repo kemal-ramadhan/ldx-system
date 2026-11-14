@@ -109,7 +109,7 @@
                                 class="{{ $fieldClass('type_of_visit') }}">
                                 <option value="">-- Pilih Tujuan --</option>
                                 @foreach ($visitTypes as $value => $label)
-                                    <option value="{{ $value }}" @selected(old('type_of_visit') === $value)>{{ $label }}</option>
+                                    <option value="{{ $value }}" @selected(old('type_of_visit', $defaultType ?? null) === $value)>{{ $label }}</option>
                                 @endforeach
                             </select>
                         </div>

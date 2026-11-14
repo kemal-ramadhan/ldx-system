@@ -8,6 +8,11 @@ use App\Models\Rack;
 use App\Models\RackDivice;
 use App\Models\RackImage;
 use App\Models\RackUnit;
+use App\Models\DeviceMovement;
+use App\Models\Visitor;
+use App\Services\DeviceMovementService;
+use App\Services\RackUnitAllocator;
+use App\Support\DeviceMovementRules;
 use App\Models\Room;
 use App\Models\DevicePort;
 use App\Models\RackTelemetryLog;
@@ -417,6 +422,10 @@ class RackController extends Controller
             'status' => ['required', 'in:active,inactive,maintenance'],
 
             'installed_at' => ['nullable', 'date'],
+
+            // keluar-masuk: who brought the device in + documents (optional)
+            ...DeviceMovementRules::carrier(),
+            ...DeviceMovementRules::attachments(),
         ]);
 
         DB::beginTransaction();
@@ -429,141 +438,49 @@ class RackController extends Controller
              * =========================
              */
 
-            $emptyUnits = RackUnit::query()
-                ->where('rack_id', $rack->id)
-                ->where('client_id', $validated['client_id'])
-                ->whereNull('rack_divice_id')
-                ->orderBy('unit_number', 'asc')
-                ->get();
-
-            /**
+            /*
              * =========================
-             * FIND CONTIGUOUS UNITS
+             * CONTIGUOUS FREE UNITS OF THE CLIENT
              * =========================
              */
-
-            $required = (int) $validated['total_unit'];
-
-            $matchedUnits = [];
-
-            for ($i = 0; $i < count($emptyUnits); $i++) {
-
-                $currentGroup = [$emptyUnits[$i]];
-
-                for ($j = $i + 1; $j < count($emptyUnits); $j++) {
-
-                    $prev = $emptyUnits[$j - 1];
-                    $current = $emptyUnits[$j];
-
-                    /**
-                     * CHECK SEQUENTIAL
-                     */
-
-                    if ($current->unit_number == $prev->unit_number + 1) {
-
-                        $currentGroup[] = $current;
-
-                        if (count($currentGroup) == $required) {
-
-                            $matchedUnits = $currentGroup;
-                            break 2;
-                        }
-                    } else {
-
-                        break;
-                    }
-                }
-
-                /**
-                 * FOR 1U DEVICE
-                 */
-
-                if ($required == 1) {
-
-                    $matchedUnits = [$emptyUnits[$i]];
-                    break;
-                }
-            }
-
-            /**
-             * =========================
-             * NO AVAILABLE SLOT
-             * =========================
-             */
-
-            if (count($matchedUnits) < $required) {
-
-                return back()->withErrors([
-                    'message' => 'No contiguous rack units available.'
-                ]);
-            }
-
-            /**
-             * =========================
-             * START & END UNIT
-             * =========================
-             */
-
-            $startUnit = $matchedUnits[0]->unit_number;
-
-            $endUnit = $matchedUnits[count($matchedUnits) - 1]->unit_number;
-
-            /**
-             * =========================
-             * CREATE DEVICE
-             * =========================
-             */
+            $units = RackUnitAllocator::findContiguous(
+                $rack->id,
+                (int) $validated['client_id'],
+                (int) $validated['total_unit']
+            );
 
             $device = RackDivice::create([
                 'rack_id' => $rack->id,
                 'client_id' => $validated['client_id'],
-
                 'code' => 'DVC-' . strtoupper(Str::random(6)),
-
                 'divice_name' => $validated['divice_name'],
-                'divice_type' => $validated['divice_type'],
-
-                'model' => $validated['model'],
-                'serial_number' => $validated['serial_number'],
-
-                'description' => $validated['description'],
-
-                'power_usage' => $validated['power_usage'],
-                'weight_usage' => $validated['weight_usage'],
-
-                'ip_address' => $validated['ip_address'],
-
-                'start_unit' => $startUnit,
-                'end_unit' => $endUnit,
-
+                'divice_type' => $validated['divice_type'] ?? null,
+                'model' => $validated['model'] ?? null,
+                'serial_number' => $validated['serial_number'] ?? null,
+                'description' => $validated['description'] ?? null,
+                'power_usage' => $validated['power_usage'] ?? null,
+                'weight_usage' => $validated['weight_usage'] ?? null,
+                'ip_address' => $validated['ip_address'] ?? null,
                 'total_unit' => $validated['total_unit'],
-
                 'status' => $validated['status'],
-
+                'placement_status' => RackDivice::PLACEMENT_IN_RACK,
                 // empty = installed now
                 'installed_at' => $validated['installed_at'] ?? now(),
             ]);
 
-            /**
+            RackUnitAllocator::assign($device, $units);
+
+            /*
              * =========================
-             * ASSIGN UNITS
+             * KELUAR-MASUK: record "Masuk"
              * =========================
              */
+            DeviceMovementService::recordCheckIn($device->fresh(), [
+                ...$request->only(['carrier_name', 'carrier_company', 'carrier_id_number', 'carrier_phone', 'visitor_id']),
+                'photos' => $request->file('photos', []),
+                'bast' => $request->file('bast', []),
+            ]);
 
-            foreach ($matchedUnits as $unit) {
-
-                $unit->update([
-                    'client_id' => $validated['client_id'],
-                    'rack_divice_id' => $device->id,
-                    'status' => 'used',
-                ]);
-            }
-
-            /**
-             * =========================
-             * UPDATE RACK STATUS (weight)
-             * =========================
-             */
             $rack->refreshFullStatus();
 
             DB::commit();
@@ -572,6 +489,12 @@ class RackController extends Controller
                 'success',
                 'Device added successfully.'
             );
+        } catch (ValidationException $e) {
+            DB::rollBack();
+
+            return back()->withErrors([
+                'message' => collect($e->errors())->flatten()->first(),
+            ]);
         } catch (\Throwable $th) {
 
             DB::rollBack();
@@ -650,6 +573,50 @@ class RackController extends Controller
             ->get();
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | KELUAR-MASUK DEVICE
+        |--------------------------------------------------------------------------
+        */
+        // devices that permanently left this rack (hidden from rackDivices by the global scope)
+        $removedDevices = RackDivice::withRemoved()
+            ->where('rack_id', $rack->id)
+            ->where('placement_status', RackDivice::PLACEMENT_REMOVED)
+            ->with('client:id,company_name')
+            ->orderByDesc('removed_at')
+            ->get(['id', 'rack_id', 'client_id', 'code', 'divice_name', 'model', 'serial_number', 'total_unit', 'installed_at', 'removed_at', 'placement_status']);
+
+        // last movements touching this rack
+        $movements = DeviceMovement::query()
+            ->where(fn ($q) => $q->where('from_rack_id', $rack->id)->orWhere('to_rack_id', $rack->id))
+            ->with(['client:id,company_name', 'fromRack:id,code,name', 'toRack:id,code,name', 'recorder:id,name'])
+            ->withCount('attachments')
+            ->orderByDesc('occurred_at')
+            ->orderByDesc('id')
+            ->limit(50)
+            ->get();
+
+        // racks each client of this rack rents (targets for "Pindah" / "Kembalikan")
+        $clientRackOptions = RackUnit::query()
+            ->whereIn('client_id', $rack->rackDivices->pluck('client_id')->filter()->unique())
+            ->whereHas('rack')
+            ->with('rack:id,code,name')
+            ->get(['id', 'rack_id', 'client_id', 'rack_divice_id'])
+            ->groupBy(fn ($unit) => $unit->client_id . '-' . $unit->rack_id)
+            ->map(fn ($units) => [
+                'client_id' => $units->first()->client_id,
+                'rack_id' => $units->first()->rack_id,
+                'rack_label' => $units->first()->rack?->code ?? $units->first()->rack?->name,
+                'free_units' => $units->whereNull('rack_divice_id')->count(),
+            ])
+            ->values();
+
+        // carriers registered in the guest book today (optional link)
+        $todayVisitors = Visitor::query()
+            ->whereDate('visit_date', today())
+            ->orderByDesc('checkin_time')
+            ->get(['id', 'name', 'company_name', 'nik', 'phone', 'type_of_visit']);
+
         return Inertia::render('racks/RackShow', [
             'title' => 'Rack Details',
             'rack' => $rack,
@@ -658,6 +625,10 @@ class RackController extends Controller
             'interconnections' => $interconnections,
             'monitoringData' => $monitoringData,
             'telemetryLogs' => $telemetryLogs,
+            'removedDevices' => $removedDevices,
+            'movements' => $movements,
+            'clientRackOptions' => $clientRackOptions,
+            'todayVisitors' => $todayVisitors,
         ]);
     }
 
@@ -1349,17 +1320,36 @@ class RackController extends Controller
 
             /**
              * =========================
+             * ONLY FOR WRONG INPUT
+             * =========================
+             * A device that physically moved (anything beyond its "Masuk"
+             * record) must use "Keluarkan" so the history is kept.
+             */
+            if ($device->movements()->where('type', '!=', 'check_in')->exists() || $device->movements()->count() > 1) {
+                DB::rollBack();
+
+                return back()->withErrors([
+                    'message' => 'Device ini sudah punya riwayat keluar-masuk. Gunakan "Keluarkan" agar riwayatnya tetap tersimpan.',
+                ]);
+            }
+
+            /**
+             * =========================
              * RELEASE RACK UNITS
              * =========================
+             * Units stay rented to the client ('used'), not 'empty',
+             * so they can't be rented to another client by mistake.
              */
+            RackUnitAllocator::release($device);
 
-            RackUnit::query()
-                ->where('rack_id', $device->rack_id)
-                ->where('rack_divice_id', $device->id)
-                ->update([
-                    'rack_divice_id' => null,
-                    'status' => 'empty',
-                ]);
+            // wrong input: drop its "Masuk" record too
+            foreach ($device->movements()->with('attachments')->get() as $movement) {
+                foreach ($movement->attachments as $attachment) {
+                    Storage::disk('public')->delete($attachment->file_path);
+                }
+
+                $movement->delete();
+            }
 
             /**
              * =========================

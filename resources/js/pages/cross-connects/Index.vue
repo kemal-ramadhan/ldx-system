@@ -45,6 +45,7 @@ interface Installer {
 interface CrossConnect {
     id: number
     cross_connect_number: string
+    terminate_requested_at?: string | null
     source_port?: DevicePort
     destination_port?: DevicePort
     destination_type?: 'internal' | 'external'
@@ -499,6 +500,11 @@ defineOptions({
                                             crossConnect.cross_connect_number
                                         }}
                                     </p>
+
+                                    <span v-if="crossConnect.terminate_requested_at"
+                                        class="mt-1 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+                                        Permintaan terminate dari client
+                                    </span>
 
                                     <p v-if="
                                         crossConnect.interconnection_request

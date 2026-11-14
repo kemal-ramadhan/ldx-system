@@ -104,7 +104,8 @@ class ServiceController extends Controller
              * =========================
              */
             'client_id' => 'required|exists:clients,id',
-            'rack_id' => 'required|exists:racks,id',
+            // optional: customers may use other services without renting a rack
+            'rack_id' => 'nullable|exists:racks,id',
             'name' => 'required|string|max:150',
             'description' => 'nullable|string',
             'billing_cycle' => 'required|in:monthly,quarterly,yearly',
@@ -144,7 +145,7 @@ class ServiceController extends Controller
              */
             $service = Service::create([
                 'client_id' => $validated['client_id'],
-                'rack_id' => $validated['rack_id'],
+                'rack_id' => $validated['rack_id'] ?? null,
                 'code' => $this->generateServiceCode(),
                 'name' => $validated['name'],
                 'description' => $validated['description'] ?? null,
@@ -303,7 +304,8 @@ class ServiceController extends Controller
              * =========================
              */
             'client_id' => 'required|exists:clients,id',
-            'rack_id' => 'required|exists:racks,id',
+            // optional: customers may use other services without renting a rack
+            'rack_id' => 'nullable|exists:racks,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'billing_cycle' => 'required|in:monthly,quarterly,yearly',
@@ -343,7 +345,7 @@ class ServiceController extends Controller
              */
             $service->update([
                 'client_id' => $validated['client_id'],
-                'rack_id' => $validated['rack_id'],
+                'rack_id' => $validated['rack_id'] ?? null,
                 'name' => $validated['name'],
                 'description' => $validated['description'] ?? null,
                 'billing_cycle' => $validated['billing_cycle'],

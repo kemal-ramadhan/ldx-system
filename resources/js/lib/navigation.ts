@@ -5,6 +5,7 @@ import {
     Package,
     WalletCards,
     NotepadText,
+    Mail,
 } from 'lucide-vue-next';
 
 export const navigation = {
@@ -59,6 +60,10 @@ export const navigation = {
                     title: 'Suhu Monitoring',
                     href: '/admin/racks/monitoring',
                 },
+                {
+                    title: 'Keluar-Masuk Device',
+                    href: '/admin/device-movements',
+                },
             ],
         },
         {
@@ -110,6 +115,11 @@ export const navigation = {
                     title: 'Visitor',
                     href: '/admin/visitors',
                 },
+                {
+                    title: 'Pengajuan Kunjungan',
+                    href: '/admin/visit-requests',
+                    badgeKey: 'visit_requests',
+                },
             ],
         },
         {
@@ -130,6 +140,12 @@ export const navigation = {
                     href: '/admin/tickets-priority',
                 },
             ],
+        },
+        {
+            title: 'Riwayat Email',
+            href: '/admin/email-logs',
+            icon: Mail,
+            badgeKey: 'email_failed',
         },
     ],
 
@@ -162,6 +178,16 @@ export const navigation = {
             title: 'Interconnection',
             href: '/client/interconnections',
             icon: Package,
+        },
+        {
+            title: 'Cross Connect',
+            href: '/client/cross-connects',
+            icon: Package,
+        },
+        {
+            title: 'Pengajuan Kunjungan',
+            href: '/client/visit-requests',
+            icon: NotepadText,
         },
         {
             title: 'Invoices',

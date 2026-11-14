@@ -168,10 +168,18 @@ defineOptions({
                             </p>
 
                             <p class="font-medium">
-                                {{ service.rack?.name || '-' }}
+                                <span v-if="service.rack">{{ service.rack.name }}</span>
+                            <span v-else
+                                class="inline-flex rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                                Tanpa Rack
+                            </span>
                             </p>
                         </div>
                     </div>
+                    <p v-if="!service.rack"
+                        class="mt-4 rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
+                        Service ini <strong>tanpa rack</strong> (layanan non-colocation), invoice tetap dibuat seperti biasa.
+                    </p>
                 </div>
 
                 <!-- Service Items -->

@@ -115,4 +115,11 @@ return [
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
+    /*
+    | Every e-mail sent by the app is also BCC'd here (comma separated), so a
+    | copy shows up in the hosting mailbox. SMTP sending never fills "Sent".
+    | Empty = disabled.
+    */
+    'archive_bcc' => env('MAIL_ARCHIVE_BCC'),
+
 ];

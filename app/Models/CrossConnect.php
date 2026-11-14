@@ -26,6 +26,9 @@ class CrossConnect extends Model
         'installed_by',
         'installed_at',
         'terminated_at',
+        'terminate_requested_at',
+        'terminate_requested_by',
+        'terminate_request_reason',
         'description',
         'notes',
     ];
@@ -34,6 +37,7 @@ class CrossConnect extends Model
         'cable_length' => 'decimal:2',
         'installed_at' => 'datetime',
         'terminated_at' => 'datetime',
+        'terminate_requested_at' => 'datetime',
     ];
 
     /*
@@ -41,6 +45,11 @@ class CrossConnect extends Model
     | Relationships
     |--------------------------------------------------------------------------
     */
+
+    public function terminateRequester(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'terminate_requested_by');
+    }
 
     public function interconnectionRequest(): BelongsTo
     {

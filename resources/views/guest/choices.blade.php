@@ -5,7 +5,7 @@
         <h1 class="text-center text-3xl md:text-4xl font-bold text-gray-900 mb-20">
             Pilihan Jenis Kunjungan
         </h1>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
             <!-- Card 1: Berkunjung -->
             <div class="card-hover">
                 <a href="{{ route('daftar.buku.tamu', ['jenis' => 'berkunjung']) }}"
@@ -40,8 +40,8 @@
 
             <!-- Card 2: Perawatan -->
             <div class="card-hover">
-                <button onclick="selectType('perawatan')"
-                    class="w-full h-full bg-white rounded-2xl p-8 shadow-md border-2 border-transparent hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 group">
+                <a href="{{ route('daftar.buku.tamu', ['jenis' => 'perawatan']) }}"
+                    class="block w-full h-full bg-white rounded-2xl p-8 shadow-md border-2 border-transparent hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 group">
                     <div class="flex flex-col items-center">
                         <div
                             class="bg-gradient-to-br from-cyan-100 to-cyan-200 rounded-full p-6 mb-6 group-hover:from-cyan-200 group-hover:to-cyan-300 transition-all">
@@ -53,13 +53,13 @@
                         <h3 class="text-xl font-bold text-gray-900 mb-2">Perawatan</h3>
                         <p class="text-gray-600 text-center text-sm">Perawatan dan maintenance fasilitas data center</p>
                     </div>
-                </button>
+                </a>
             </div>
 
             <!-- Card 3: Lainnya -->
             <div class="card-hover">
-                <button onclick="selectType('lainnya')"
-                    class="w-full h-full bg-white rounded-2xl p-8 shadow-md border-2 border-transparent hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 group">
+                <a href="{{ route('daftar.buku.tamu', ['jenis' => 'lainnya']) }}"
+                    class="block w-full h-full bg-white rounded-2xl p-8 shadow-md border-2 border-transparent hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 group">
                     <div class="flex flex-col items-center">
                         <div
                             class="bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-full p-6 mb-6 group-hover:from-indigo-200 group-hover:to-indigo-300 transition-all">
@@ -73,7 +73,24 @@
                             kategori
                             di atas</p>
                     </div>
-                </button>
+                </a>
+            </div>
+
+            <!-- Card 4: Sudah punya kode (pengajuan kunjungan dari portal client) -->
+            <div class="card-hover">
+                <a href="{{ route('kunjungan.checkin') }}"
+                    class="group block w-full h-full rounded-2xl p-8 shadow-md border-2 border-blue-500 bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all">
+                    <div class="flex flex-col items-center text-center">
+                        <div class="bg-white/20 rounded-full p-6 mb-6">
+                            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Sudah Punya Kode Kunjungan</h3>
+                        <p class="text-blue-100 text-center text-sm">Kunjungan yang sudah diajukan &amp; disetujui. Cukup check-in dengan kode / QR.</p>
+                    </div>
+                </a>
             </div>
         </div>
     </div>

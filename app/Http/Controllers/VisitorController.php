@@ -6,6 +6,7 @@ use App\Models\Visitor;
 use App\Models\VisitorAttemp;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 use Inertia\Inertia;
 
 class VisitorController extends Controller
@@ -44,14 +45,24 @@ class VisitorController extends Controller
 
     public function guest(Request $request)
     {
-        $jenis = $request->query('jenis');
-        return view('guest.index');
+        // card chosen on /buku-tamu -> preselect "Tujuan Kunjungan"
+        $defaultType = [
+            'berkunjung' => 'Kunjungan',
+            'perawatan' => 'maintenance',
+            'lainnya' => 'lainnya',
+        ][$request->query('jenis')] ?? null;
+
+        return view('guest.index', compact('defaultType'));
     }
     
     public function guestLampiran($id)
     {
         $guest = Visitor::findOrFail($id);
-        return view('guest.lampiran', compact('guest'));
+
+        // upload endpoint signed the same way (valid as long as this page)
+        $uploadUrl = URL::temporarySignedRoute('buku.tamu.lampiran.store', now()->addMinutes(30), ['id' => $guest->id]);
+
+        return view('guest.lampiran', compact('guest', 'uploadUrl'));
     }
 
     /**
@@ -124,43 +135,45 @@ class VisitorController extends Controller
                 ->withErrors(['general' => 'Data gagal disimpan, silakan coba kirim ulang.']);
         }
 
-        return redirect()
-            ->route('daftar.buku.tamu.lampiran', $guest->id)
+        // signed URL: the photo step can't be opened for another visitor id
+        return redirect(URL::temporarySignedRoute('daftar.buku.tamu.lampiran', now()->addMinutes(30), ['id' => $guest->id]))
             ->with('success', 'Data berhasil disimpan');
     }
 
     public function storeLampiran(Request $request, $id)
     {
+        $request->validate([
+            'photos' => ['required', 'array', 'max:5'],
+            'photos.*' => ['file', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+        ], [
+            'photos.required' => 'Ambil minimal 1 foto.',
+            'photos.*.image' => 'File harus berupa foto.',
+            'photos.*.max' => 'Ukuran foto maksimal 5 MB.',
+        ]);
+
+        $visitor = Visitor::findOrFail($id);
+
         try {
-
-            if ($request->hasFile('photos')) {
-
-                foreach ($request->file('photos') as $photo) {
-
-                    $path = $photo->store('guest_photos', 'public');
-
-                    VisitorAttemp::create([
-                        'visitor_id' => $id,
-                        'file' => $path
-                    ]);
-
-                }
-
+            foreach ($request->file('photos') as $photo) {
+                VisitorAttemp::create([
+                    'visitor_id' => $visitor->id,
+                    'file' => $photo->store('guest_photos', 'public'),
+                ]);
             }
-
-            return response()->json([
-                'success' => true,
-                'redirect' => route('buku.tamu')
-            ]);
-
         } catch (\Throwable $e) {
+            report($e);
 
+            // never expose internal errors on a public page
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
-            ],500);
-
+                'message' => 'Foto gagal disimpan, silakan coba lagi.',
+            ], 500);
         }
+
+        return response()->json([
+            'success' => true,
+            'redirect' => route('buku.tamu'),
+        ]);
     }
 
     /**
@@ -168,7 +181,7 @@ class VisitorController extends Controller
      */
     public function show(string $id)
     {
-        $visitor = Visitor::with('visitorAttemps')->findOrFail($id);
+        $visitor = Visitor::with(['visitorAttemps', 'visitRequest:id,request_number'])->findOrFail($id);
         return Inertia::render('visitors/VisitorShow', [
             'title' => 'Visitor Details',
             'visitor' => $visitor,

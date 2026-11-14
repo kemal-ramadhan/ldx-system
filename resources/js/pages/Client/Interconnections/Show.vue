@@ -40,6 +40,11 @@ interface Rack {
     id: number
     name?: string
     code?: string
+    room?: {
+        id: number
+        name?: string
+        location_data_center?: { id: number; name?: string } | null
+    } | null
 }
 
 interface Device {
@@ -69,8 +74,10 @@ interface Approver {
 
 interface CrossConnect {
     id: number
+    cross_connect_number?: string
     status?: string
-    connected_at?: string
+    installed_at?: string
+    terminated_at?: string
 }
 
 interface Interconnection {
@@ -120,7 +127,18 @@ interface Interconnection {
 
 const props = defineProps<{
     interconnection: Interconnection
+    myRole?: 'requester' | 'destination'
 }>()
+
+/** "Data Center · Room · Rack" for an internal device */
+const locationOf = (device?: Device | null) =>
+    [
+        device?.rack?.room?.location_data_center?.name,
+        device?.rack?.room?.name,
+        device?.rack?.code ?? device?.rack?.name,
+    ]
+        .filter(Boolean)
+        .join(' · ') || '-'
 
 /*
 |--------------------------------------------------------------------------
@@ -394,6 +412,15 @@ const destinationClient =
                             }}
                         </span>
 
+                        <span :class="[
+                            'rounded-full px-3 py-1 text-xs font-semibold',
+                            myRole === 'destination'
+                                ? 'bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300'
+                                : 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300'
+                        ]">
+                            {{ myRole === 'destination' ? 'Anda sebagai Tujuan' : 'Anda sebagai Pengaju' }}
+                        </span>
+
                     </div>
 
                     <p class="mt-1 text-sm text-muted-foreground">
@@ -560,7 +587,7 @@ step,
                         </h2>
 
                         <p class="text-xs text-muted-foreground">
-                            Your equipment
+                            {{ myRole === 'destination' ? 'Equipment pengaju' : 'Your equipment' }}
                         </p>
 
                     </div>
@@ -607,6 +634,15 @@ step,
                             }}
                         </p>
 
+                    </div>
+
+                    <div>
+                        <p class="text-xs text-muted-foreground">
+                            Lokasi
+                        </p>
+                        <p class="mt-1 text-sm font-medium">
+                            {{ locationOf(sourceDevice) }}
+                        </p>
                     </div>
 
 
@@ -737,6 +773,15 @@ step,
                             }}
                         </p>
 
+                    </div>
+
+                    <div v-if="interconnection.destination_type !== 'external'">
+                        <p class="text-xs text-muted-foreground">
+                            Lokasi
+                        </p>
+                        <p class="mt-1 text-sm font-medium">
+                            {{ locationOf(destinationDevice) }}
+                        </p>
                     </div>
 
 
@@ -1125,17 +1170,25 @@ step,
                 <div>
 
                     <p class="text-xs text-muted-foreground">
-                        Connected At
+                        Installed At
                     </p>
 
                     <p class="mt-1 text-sm font-medium">
                         {{
                             formatDate(
-                                interconnection.cross_connect.connected_at
+                                interconnection.cross_connect.installed_at
                             )
                         }}
                     </p>
 
+                </div>
+
+                <div class="sm:col-span-2">
+                    <Link :href="`/client/cross-connects/${interconnection.cross_connect.id}`"
+                        class="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-muted">
+                        <ExternalLink class="h-4 w-4" />
+                        Lihat Cross Connect {{ interconnection.cross_connect.cross_connect_number }}
+                    </Link>
                 </div>
 
             </div>

@@ -9,7 +9,9 @@ use App\Http\Controllers\InvoiceClientController;
 use App\Http\Controllers\RackClientController;
 use App\Http\Controllers\ServiceClientController;
 use App\Http\Controllers\TicketClientController;
+use App\Http\Controllers\CrossConnectClientController;
 use App\Http\Controllers\InterconnectionClientController;
+use App\Http\Controllers\VisitRequestClientController;
 
 Route::middleware(['auth', 'verified', 'role:client'])->group(function () {
     Route::GET('client/dashboard', [DashboardAdminController::class, 'client'])->name('client.dashboard');
@@ -47,18 +49,33 @@ Route::middleware(['auth', 'verified', 'role:client'])->group(function () {
         )->name('interconnections.store');
 
         Route::get(
-            '/interconnections/destination-clients/{clientId}/devices',
-            [InterconnectionClientController::class, 'destinationDevices']
-        )->name('interconnections.destination-devices');
-
-        Route::get(
-            '/interconnections/devices/{deviceId}/ports',
-            [InterconnectionClientController::class, 'devicePorts']
-        )->name('interconnections.device-ports');
-
-        Route::get(
             '/interconnections/{id}',
             [InterconnectionClientController::class, 'show']
         )->name('client.interconnections.show');
+
+        // Cross connects touching the client's ports (read-only + terminate request)
+        Route::get(
+            '/cross-connects',
+            [CrossConnectClientController::class, 'index']
+        )->name('client.cross-connects.index');
+
+        Route::get(
+            '/cross-connects/{crossConnect}',
+            [CrossConnectClientController::class, 'show']
+        )->name('client.cross-connects.show');
+
+        Route::post(
+            '/cross-connects/{crossConnect}/terminate-request',
+            [CrossConnectClientController::class, 'requestTerminate']
+        )->name('client.cross-connects.terminate-request');
+
+        // pengajuan kunjungan
+        Route::get('/visit-requests', [VisitRequestClientController::class, 'index'])->name('client.visit-requests.index');
+        Route::get('/visit-requests/create', [VisitRequestClientController::class, 'create'])->name('client.visit-requests.create');
+        Route::post('/visit-requests', [VisitRequestClientController::class, 'store'])->name('client.visit-requests.store');
+        Route::get('/visit-requests/{id}', [VisitRequestClientController::class, 'show'])->name('client.visit-requests.show');
+        Route::get('/visit-requests/{id}/edit', [VisitRequestClientController::class, 'edit'])->name('client.visit-requests.edit');
+        Route::put('/visit-requests/{id}', [VisitRequestClientController::class, 'update'])->name('client.visit-requests.update');
+        Route::patch('/visit-requests/{id}/cancel', [VisitRequestClientController::class, 'cancel'])->name('client.visit-requests.cancel');
     });
 });

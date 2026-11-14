@@ -1,6 +1,15 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useForm, usePage, router } from '@inertiajs/vue3'
+import { Link, useForm, usePage, router } from '@inertiajs/vue3'
+import DeviceMovementModal from '@/components/device-movement/DeviceMovementModal.vue'
+import MovementCarrierFields from '@/components/device-movement/MovementCarrierFields.vue'
+import {
+    type MovementAction,
+    type Placement,
+    PLACEMENT_LABELS,
+    formatDateTime,
+    placementClass,
+} from '@/lib/deviceMovement'
 import {
     Plus,
     Search,
@@ -11,6 +20,11 @@ import {
     Settings2,
     Cable,
     MoreHorizontal,
+    LogOut,
+    LogIn,
+    ArrowRightLeft,
+    PackageX,
+    History,
 } from 'lucide-vue-next'
 import { route } from 'ziggy-js'
 import { Input } from '@/components/ui/input';
@@ -21,7 +35,40 @@ const page = usePage()
 const props = defineProps<{
     rack: any
     clients: any[]
+    removedDevices?: any[]
+    clientRackOptions?: { client_id: number; rack_id: number; rack_label: string; free_units: number }[]
+    todayVisitors?: any[]
 }>()
+
+/**
+ * =========================
+ * KELUAR-MASUK DEVICE
+ * =========================
+ */
+const placementFilter = ref<Placement | 'all'>('in_rack')
+
+const placementCounts = computed(() => {
+    const devices = props.rack?.rack_divices || []
+    return {
+        in_rack: devices.filter((d: any) => (d.placement_status ?? 'in_rack') === 'in_rack').length,
+        out_temporary: devices.filter((d: any) => d.placement_status === 'out_temporary').length,
+        removed: props.removedDevices?.length ?? 0,
+    }
+})
+
+const movementAction = ref<MovementAction | null>(null)
+const movementDevice = ref<any>(null)
+
+const openMovement = (action: MovementAction, device: any) => {
+    // the modal shows the position, so give it this rack
+    movementDevice.value = { ...device, rack: props.rack }
+    movementAction.value = action
+}
+
+const closeMovement = () => {
+    movementAction.value = null
+    movementDevice.value = null
+}
 
 /**
  * SEARCH
@@ -30,11 +77,16 @@ const search = ref('')
 
 const filteredDevices = computed(() => {
 
+    const source = placementFilter.value === 'removed'
+        ? (props.removedDevices || [])
+        : (props.rack?.rack_divices || []).filter((d: any) =>
+            placementFilter.value === 'all' || (d.placement_status ?? 'in_rack') === placementFilter.value)
+
     if (!search.value) {
-        return props.rack?.rack_divices || []
+        return source
     }
 
-    return props.rack?.rack_divices?.filter((item: any) => {
+    return source.filter((item: any) => {
 
         return (
             item.divice_name?.toLowerCase().includes(search.value.toLowerCase()) ||
@@ -112,6 +164,15 @@ const deviceForm = useForm({
     total_unit: '',
     status: 'active',
     installed_at: '',
+
+    // keluar-masuk: who brought it in + documents (optional)
+    carrier_name: '',
+    carrier_company: '',
+    carrier_id_number: '',
+    carrier_phone: '',
+    visitor_id: null as number | null,
+    photos: [] as File[],
+    bast: [] as File[],
 })
 
 const openGeneratePorts = ref(false)
@@ -234,6 +295,8 @@ const submitDevice = () => {
     deviceForm.post(`/admin/racks/${props.rack.id}/devices`, {
 
         preserveScroll: true,
+
+        forceFormData: true,
 
         onSuccess: () => {
 
@@ -380,7 +443,7 @@ const form = useForm<{ user_id: number | null }>({
 
 const deleteDevice = (id: number) => {
 
-    if (!confirm('Delete this device?')) {
+    if (!confirm('Hapus device ini? Hanya untuk data yang salah input.\nJika barang benar-benar keluar, gunakan "Keluarkan" agar riwayatnya tersimpan.')) {
         return
     }
 
@@ -425,6 +488,18 @@ const refreshSelectedDevice = () => {
                 class="inline-flex items-center justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90">
                 <Plus class="w-4 h-4 mr-2" />
                 Add Device
+            </button>
+        </div>
+
+        <!-- PLACEMENT FILTER -->
+        <div class="mb-3 flex flex-wrap gap-2">
+            <button v-for="key in (['in_rack', 'out_temporary', 'removed', 'all'] as const)" :key="key" type="button"
+                @click="placementFilter = key" :class="[
+                    'rounded-lg px-3 py-1.5 text-sm font-medium transition',
+                    placementFilter === key ? 'bg-primary text-primary-foreground' : 'border text-muted-foreground hover:bg-muted',
+                ]">
+                {{ key === 'all' ? 'Semua di DC' : PLACEMENT_LABELS[key] }}
+                <span v-if="key !== 'all'" class="ml-1 text-xs opacity-80">({{ placementCounts[key] }})</span>
             </button>
         </div>
 
@@ -514,6 +589,14 @@ const refreshSelectedDevice = () => {
                                     {{ device.code }}
                                 </span>
 
+                                <span :class="['mt-1 w-fit rounded-full px-2 py-0.5 text-[10px] font-semibold', placementClass(device.placement_status)]">
+                                    {{ PLACEMENT_LABELS[(device.placement_status ?? 'in_rack') as Placement] }}
+                                </span>
+
+                                <span v-if="device.placement_status === 'removed'" class="text-[11px] text-muted-foreground">
+                                    Keluar {{ formatDateTime(device.removed_at) }}
+                                </span>
+
                             </div>
 
                         </td>
@@ -590,20 +673,52 @@ const refreshSelectedDevice = () => {
                         <!-- ACTION -->
                         <td class="px-4 py-3">
 
-                            <div class="flex justify-end gap-2">
+                            <div class="flex flex-wrap justify-end gap-1">
 
-                                <button type="button" @click="openManagePorts(device)"
-                                    class="rounded-lg p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30"
-                                    title="Manage Ports">
-                                    <Network class="w-4 h-4" />
-                                </button>
+                                <!-- keluar-masuk -->
+                                <template v-if="device.placement_status !== 'removed'">
+                                    <button v-if="(device.placement_status ?? 'in_rack') === 'in_rack'" type="button"
+                                        @click="openMovement('temp_out', device)" title="Keluar Sementara"
+                                        class="rounded-lg p-2 text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/40">
+                                        <LogOut class="w-4 h-4" />
+                                    </button>
 
-                                <button @click="openEditModal(device)" class="rounded-lg p-2 hover:bg-muted">
-                                    <Pencil class="w-4 h-4" />
-                                </button>
+                                    <button v-if="device.placement_status === 'out_temporary'" type="button"
+                                        @click="openMovement('return_in', device)" title="Kembalikan ke Rack"
+                                        class="rounded-lg p-2 text-teal-600 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-950/40">
+                                        <LogIn class="w-4 h-4" />
+                                    </button>
 
-                                <button type="button" @click="deleteDevice(device.id)"
-                                    class="rounded-lg p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/40">
+                                    <button v-if="(device.placement_status ?? 'in_rack') === 'in_rack'" type="button"
+                                        @click="openMovement('relocate', device)" title="Pindah Rack / Unit"
+                                        class="rounded-lg p-2 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950/40">
+                                        <ArrowRightLeft class="w-4 h-4" />
+                                    </button>
+
+                                    <button type="button" @click="openMovement('check_out', device)" title="Keluarkan Permanen"
+                                        class="rounded-lg p-2 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40">
+                                        <PackageX class="w-4 h-4" />
+                                    </button>
+
+                                    <button type="button" @click="openManagePorts(device)"
+                                        class="rounded-lg p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                                        title="Manage Ports">
+                                        <Network class="w-4 h-4" />
+                                    </button>
+
+                                    <button @click="openEditModal(device)" class="rounded-lg p-2 hover:bg-muted" title="Edit">
+                                        <Pencil class="w-4 h-4" />
+                                    </button>
+                                </template>
+
+                                <Link :href="`/admin/devices/${device.id}/history`" title="Riwayat Keluar-Masuk"
+                                    class="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground">
+                                    <History class="w-4 h-4" />
+                                </Link>
+
+                                <button v-if="device.placement_status !== 'removed'" type="button" @click="deleteDevice(device.id)"
+                                    title="Hapus (salah input)"
+                                    class="rounded-lg p-2 text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/40">
                                     <Trash2 class="w-4 h-4" />
                                 </button>
 
@@ -623,7 +738,7 @@ const refreshSelectedDevice = () => {
         <div v-if="openAddDevice"
             class="absolute md:fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
 
-            <div class="w-full max-w-3xl rounded-2xl bg-card shadow-xl">
+            <div class="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-card shadow-xl">
 
                 <!-- HEADER -->
                 <div class="flex items-center justify-between border-b p-5">
@@ -773,6 +888,15 @@ const refreshSelectedDevice = () => {
 
                         <input v-model="deviceForm.total_unit" type="number"
                             class="w-full rounded-xl border px-4 py-3 text-sm" required placeholder="2" />
+                    </div>
+
+                    <!-- KELUAR-MASUK: data masuk -->
+                    <div class="md:col-span-2 rounded-xl border bg-muted/30 p-4">
+                        <p class="mb-3 text-xs text-muted-foreground">
+                            Tercatat otomatis sebagai <strong class="text-foreground">Masuk</strong> di riwayat keluar-masuk device.
+                            Data pembawa &amp; dokumen bersifat opsional.
+                        </p>
+                        <MovementCarrierFields :form="deviceForm" :visitors="todayVisitors" />
                     </div>
 
                     <!-- FOOTER -->
@@ -1626,5 +1750,9 @@ const refreshSelectedDevice = () => {
         </div>
     </div>
 
+
+    <!-- KELUAR-MASUK DEVICE -->
+    <DeviceMovementModal :action="movementAction" :device="movementDevice" :rack-options="clientRackOptions"
+        :visitors="todayVisitors" @close="closeMovement" />
 
 </template>

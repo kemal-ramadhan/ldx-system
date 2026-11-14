@@ -314,6 +314,17 @@ class InvoiceController extends Controller
     {
         $this->activateServiceOnFirstPayment($invoice);
 
+        self::sendPaymentReceivedEmail($invoice);
+    }
+
+    /**
+     * =========================================
+     * PAYMENT RECEIVED E-MAIL (PDF "Lunas")
+     * =========================================
+     * Also used by "Kirim Ulang" in Riwayat Email.
+     */
+    public static function sendPaymentReceivedEmail(Invoice $invoice): void
+    {
         /**
          * =========================================
          * GENERATE PDF FOR PAYMENT RECEIVED
@@ -379,14 +390,15 @@ class InvoiceController extends Controller
          * =========================================
          */
         if ($invoice->client && $invoice->client->company_email) {
-            \Illuminate\Support\Facades\Mail::to(
+            // recorded in Riwayat Email (failed sends are marked there)
+            \App\Services\MailLogger::guard(fn () => \Illuminate\Support\Facades\Mail::to(
                 $invoice->client->company_email
             )->send(
                 new \App\Mail\PaymentReceivedMail(
                     $invoice,
                     $filePath
                 )
-            );
+            ));
         }
     }
 
@@ -453,6 +465,14 @@ class InvoiceController extends Controller
             'title' => 'Invoice Detail',
             'invoice' => $invoice,
             'can_edit' => self::isEditable($invoice),
+
+            // last e-mails about this invoice (Riwayat Email)
+            'emailLogs' => \App\Models\EmailLog::query()
+                ->where('related_type', Invoice::class)
+                ->where('related_id', $invoice->id)
+                ->latest('id')
+                ->limit(5)
+                ->get(['id', 'type', 'subject', 'to', 'status', 'created_at', 'sent_at', 'context']),
         ]);
     }
 
@@ -829,14 +849,15 @@ class InvoiceController extends Controller
          * SEND EMAIL
          * =========================================
          */
-        Mail::to(
+        // recorded in Riwayat Email (failed sends are marked there)
+        \App\Services\MailLogger::guard(fn () => Mail::to(
             $invoice->client->company_email
         )->send(
             new InvoiceMail(
                 $invoice,
                 $filePath
             )
-        );
+        ));
 
         /**
          * =========================================

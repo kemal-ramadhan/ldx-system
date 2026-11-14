@@ -27,6 +27,7 @@ defineOptions({
 interface Interconnection {
     id: number
     request_number: string
+    my_role?: 'requester' | 'destination'
     status: string
     progress: number
     interconnection_type: string
@@ -119,7 +120,21 @@ const statusOptions = [
         value: 'completed',
         label: 'Completed',
     },
+    {
+        value: 'rejected',
+        label: 'Rejected',
+    },
+    {
+        value: 'cancelled',
+        label: 'Cancelled',
+    },
 ]
+
+// requests the client submitted vs requests targeting its ports (created by the LDX team)
+const roleBadge = (role?: string) =>
+    role === 'destination'
+        ? { label: 'Tujuan', class: 'bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300' }
+        : { label: 'Pengaju', class: 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300' }
 
 function submitFilter() {
     router.get(
@@ -318,6 +333,10 @@ function getDestinationPort(item: Interconnection) {
                                 {{ formatDate(item.requested_at) }}
                             </div>
 
+                            <span :class="['mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold', roleBadge(item.my_role).class]">
+                                {{ roleBadge(item.my_role).label }}
+                            </span>
+
                         </td>
 
 
@@ -470,6 +489,10 @@ function getDestinationPort(item: Interconnection) {
                         <div class="font-medium">
                             {{ item.request_number }}
                         </div>
+
+                        <span :class="['mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold', roleBadge(item.my_role).class]">
+                            {{ roleBadge(item.my_role).label }}
+                        </span>
 
                         <div class="mt-1 text-xs text-muted-foreground">
                             {{ formatDate(item.requested_at) }}

@@ -28,6 +28,12 @@ import {
     Pencil,
 } from 'lucide-vue-next';
 import DeleteInvoiceDialog from '@/components/vanila/invoice/DeleteInvoiceDialog.vue';
+import {
+    type EmailLog,
+    STATUS_LABELS as EMAIL_STATUS_LABELS,
+    formatDateTime as formatEmailTime,
+    statusClass as emailStatusClass,
+} from '@/lib/emailLog';
 
 /**
  * =========================================
@@ -38,6 +44,7 @@ const props = defineProps<{
     title: string;
     invoice: any;
     can_edit?: boolean;
+    emailLogs?: EmailLog[];
 }>();
 
 /**
@@ -492,6 +499,31 @@ const sendInvoice = () => {
                     </tbody>
                 </table>
             </div>
+        </div>
+
+        <!-- Riwayat Email invoice ini -->
+        <div class="overflow-hidden rounded-2xl border bg-card shadow-sm dark:bg-transparent">
+            <div class="flex items-center justify-between border-b px-5 py-4">
+                <h2 class="flex items-center gap-2 font-semibold">
+                    <Mail class="h-4 w-4" /> Riwayat Email
+                </h2>
+                <Link :href="`/admin/email-logs?related=invoice:${invoice.id}`" class="text-sm font-medium text-primary hover:underline">
+                    Lihat semua →
+                </Link>
+            </div>
+            <p v-if="!emailLogs?.length" class="px-5 py-6 text-sm text-muted-foreground">Belum ada email tercatat untuk invoice ini.</p>
+            <ul v-else class="divide-y divide-border">
+                <li v-for="mail in emailLogs" :key="mail.id">
+                    <Link :href="`/admin/email-logs/${mail.id}`" class="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm hover:bg-muted/50">
+                        <span class="min-w-0 flex-1 truncate">{{ mail.subject }}</span>
+                        <span class="text-xs text-muted-foreground">{{ (mail.to ?? []).join(', ') }}</span>
+                        <span class="text-xs text-muted-foreground">{{ formatEmailTime(mail.sent_at ?? mail.created_at) }}</span>
+                        <span :class="['rounded-full px-2 py-0.5 text-xs font-semibold', emailStatusClass(mail.display_status)]">
+                            {{ EMAIL_STATUS_LABELS[mail.display_status] }}
+                        </span>
+                    </Link>
+                </li>
+            </ul>
         </div>
 
     </div>

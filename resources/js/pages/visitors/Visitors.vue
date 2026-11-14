@@ -16,7 +16,8 @@ const props = defineProps<{
 const search = ref(props.filters.search || '');
 const status = ref(props.filters.status || '');
 
-watch([search, location], () => {
+// was watching window.location (always the same) instead of the status filter
+watch([search, status], () => {
     router.get(
         '/admin/visitors',
         {
