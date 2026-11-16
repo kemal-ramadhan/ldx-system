@@ -56,7 +56,8 @@ class DeviceMovement extends Model
 
     public function getTypeLabelAttribute(): string
     {
-        return self::TYPES[$this->type] ?? $this->type;
+        // relations may be loaded with a column subset (no `type`)
+        return self::TYPES[$this->type ?? ''] ?? (string) $this->type;
     }
 
     public function device(): BelongsTo

@@ -181,7 +181,7 @@ class VisitorController extends Controller
      */
     public function show(string $id)
     {
-        $visitor = Visitor::with(['visitorAttemps', 'visitRequest:id,request_number'])->findOrFail($id);
+        $visitor = Visitor::with(['visitorAttemps', 'visitRequest:id,request_number,status,visit_date,type_of_visit'])->findOrFail($id);
         return Inertia::render('visitors/VisitorShow', [
             'title' => 'Visitor Details',
             'visitor' => $visitor,

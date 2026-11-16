@@ -124,8 +124,13 @@ class VisitRequest extends Model
      */
     public function getStageAttribute(): string
     {
+        // relations may be loaded with a column subset (e.g. only id, request_number)
+        if (! array_key_exists('status', $this->attributes)) {
+            return '';
+        }
+
         if ($this->status !== 'approved') {
-            return $this->status;
+            return (string) $this->status;
         }
 
         $members = $this->relationLoaded('members') ? $this->members : $this->members()->get();
@@ -148,12 +153,12 @@ class VisitRequest extends Model
 
     public function getStageLabelAttribute(): string
     {
-        return self::STAGE_LABELS[$this->stage] ?? $this->stage;
+        return self::STAGE_LABELS[$this->stage] ?? (string) $this->stage;
     }
 
     public function getTypeLabelAttribute(): string
     {
-        return self::TYPES[$this->type_of_visit] ?? (string) $this->type_of_visit;
+        return self::TYPES[$this->type_of_visit ?? ''] ?? (string) $this->type_of_visit;
     }
 
     /**
