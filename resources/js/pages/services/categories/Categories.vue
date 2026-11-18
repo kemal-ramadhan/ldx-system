@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DataTablePagination from '@/components/DataTablePagination.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { Search, Plus, Pencil, Eye, Trash2 } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
@@ -120,26 +121,6 @@ defineOptions({
         </table>
     </div>
     <!-- pagination -->
-    <div class="flex items-center justify-between border-t py-3">
-        <div class="text-sm text-muted-foreground">
-            Showing <span class="font-medium">{{ props.categories.from }}</span> to <span class="font-medium">{{ props.categories.to }}</span> of <span class="font-medium">{{ props.categories.total }}</span> results
-        </div>
-        <div class="flex gap-2">
-            <Link
-                v-if="props.categories.prev_page_url"
-                :href="props.categories.prev_page_url"
-                class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-            >
-                Previous
-            </Link>
-            <Link
-                v-if="props.categories.next_page_url"
-                :href="props.categories.next_page_url"
-                class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-            >
-                Next
-            </Link>
-        </div>
-    </div>
+    <DataTablePagination :paginator="props.categories" />
     </div>
 </template>

@@ -32,7 +32,7 @@ class ClientController extends Controller
             })
 
             ->latest()
-            ->paginate(10)
+            ->paginate(\App\Support\PerPage::from())
             ->withQueryString();
 
         return Inertia::render('clients/Clients', [
@@ -114,7 +114,7 @@ class ClientController extends Controller
         $invoices = \App\Models\Invoice::with(['service'])
             ->where('client_id', $id)
             ->latest()
-            ->paginate(10)
+            ->paginate(\App\Support\PerPage::from())
             ->withQueryString();
 
         $interconnections = InterconnectionRequest::with([

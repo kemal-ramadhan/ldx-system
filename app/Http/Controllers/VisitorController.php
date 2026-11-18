@@ -28,7 +28,7 @@ class VisitorController extends Controller
                 $query->where('status', $status);
             })
             ->latest()
-            ->paginate(10)
+            ->paginate(\App\Support\PerPage::from())
             ->withQueryString();
 
         return Inertia::render('visitors/Visitors', [

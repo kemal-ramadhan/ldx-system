@@ -62,7 +62,7 @@ class EmailLogController extends Controller
 
         return Inertia::render('email-logs/Index', [
             'title' => 'Riwayat Email',
-            'logs' => $query->paginate(20)->withQueryString(),
+            'logs' => $query->paginate(\App\Support\PerPage::from())->withQueryString(),
             'summary' => [
                 'sent_today' => EmailLog::where('status', 'sent')->whereDate('sent_at', today())->count(),
                 'sent' => EmailLog::where('status', 'sent')->count(),

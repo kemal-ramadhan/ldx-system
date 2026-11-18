@@ -28,7 +28,7 @@ class LocationController extends Controller
 
         $locations = $locationsQuery
             ->latest()
-            ->paginate(10)
+            ->paginate(\App\Support\PerPage::from())
             ->withQueryString();
 
         return Inertia::render('locations/Locations', [

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DataTablePagination from '@/components/DataTablePagination.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 
 import {
@@ -290,33 +291,7 @@ defineOptions({
         </div>
 
         <!-- Pagination -->
-        <div class="flex items-center justify-between">
-
-            <div class="text-sm text-muted-foreground">
-                Showing
-                {{ tickets.from }}
-                to
-                {{ tickets.to }}
-                of
-                {{ tickets.total }}
-                results
-            </div>
-
-            <div class="flex gap-2">
-
-                <Link v-if="tickets.prev_page_url" :href="tickets.prev_page_url"
-                    class="rounded-lg border px-4 py-2 text-sm hover:bg-muted">
-                    Previous
-                </Link>
-
-                <Link v-if="tickets.next_page_url" :href="tickets.next_page_url"
-                    class="rounded-lg border px-4 py-2 text-sm hover:bg-muted">
-                    Next
-                </Link>
-
-            </div>
-
-        </div>
+        <DataTablePagination :paginator="tickets" />
 
     </div>
 </template>

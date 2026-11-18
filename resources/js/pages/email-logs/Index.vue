@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DataTablePagination from '@/components/DataTablePagination.vue'
 import { reactive, ref } from 'vue'
 import { Head, Link, router, useForm } from '@inertiajs/vue3'
 import { AlertTriangle, Eye, Info, MailCheck, MailX, Paperclip, Plus, Save, Search, Send, Settings2, X } from 'lucide-vue-next'
@@ -316,17 +317,6 @@ const inputClass = 'rounded-xl border border-input bg-background px-3 py-2.5 tex
             </table>
         </div>
 
-        <div v-if="logs.links.length > 3" class="flex flex-wrap items-center justify-between gap-3">
-            <p class="text-sm text-muted-foreground">{{ logs.from ?? 0 }}–{{ logs.to ?? 0 }} dari {{ logs.total }}</p>
-            <div class="flex flex-wrap gap-1">
-                <template v-for="link in logs.links" :key="link.label">
-                    <Link v-if="link.url" :href="link.url" preserve-scroll :class="[
-                        'rounded-lg border px-3 py-1.5 text-sm',
-                        link.active ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-muted',
-                    ]"><span v-html="link.label" /></Link>
-                    <span v-else class="rounded-lg border px-3 py-1.5 text-sm text-muted-foreground opacity-50" v-html="link.label" />
-                </template>
-            </div>
-        </div>
+        <DataTablePagination :paginator="logs" />
     </div>
 </template>

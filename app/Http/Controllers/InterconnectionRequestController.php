@@ -31,7 +31,8 @@ class InterconnectionRequestController extends Controller
             'destinationPort.device.rack',
         ])
             ->latest()
-            ->paginate(15);
+            ->paginate(\App\Support\PerPage::from())
+            ->withQueryString();
 
         return Inertia::render('interconnections/Index', [
             'title' => 'Interconnections',

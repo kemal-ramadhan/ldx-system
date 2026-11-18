@@ -69,7 +69,7 @@ class DeviceMovementController extends Controller
 
         return Inertia::render('device-movements/Index', [
             'title' => 'Keluar-Masuk Device',
-            'movements' => $query->paginate(20)->withQueryString(),
+            'movements' => $query->paginate(\App\Support\PerPage::from())->withQueryString(),
             'summary' => [
                 'in_rack' => (int) ($placement['in_rack'] ?? 0),
                 'out_temporary' => (int) ($placement['out_temporary'] ?? 0),

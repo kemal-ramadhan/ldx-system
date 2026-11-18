@@ -52,7 +52,7 @@ class RackController extends Controller
             })
 
             ->latest()
-            ->paginate(10)
+            ->paginate(\App\Support\PerPage::from())
             ->withQueryString();
 
         return Inertia::render('racks/Racks', [
@@ -538,7 +538,7 @@ class RackController extends Controller
                 $q->where('rack_id', $id);
             })
             ->latest()
-            ->paginate(10)
+            ->paginate(\App\Support\PerPage::from())
             ->withQueryString();
 
         $interconnections = \App\Models\InterconnectionRequest::with([

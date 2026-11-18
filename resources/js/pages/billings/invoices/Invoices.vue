@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DataTablePagination from '@/components/DataTablePagination.vue';
 import { formatRupiah as formatMoneyRp } from '@/lib/money';
 import { Head, Link, router } from '@inertiajs/vue3';
 
@@ -406,43 +407,7 @@ defineOptions({
         </div>
 
         <!-- Pagination -->
-        <div
-            class="flex items-center justify-between"
-        >
-
-            <div
-                class="text-sm text-muted-foreground"
-            >
-                Showing
-                {{ invoices.from }}
-                to
-                {{ invoices.to }}
-                of
-                {{ invoices.total }}
-                results
-            </div>
-
-            <div class="flex gap-2">
-
-                <Link
-                    v-if="invoices.prev_page_url"
-                    :href="invoices.prev_page_url"
-                    class="rounded-lg border px-4 py-2 text-sm hover:bg-muted"
-                >
-                    Previous
-                </Link>
-
-                <Link
-                    v-if="invoices.next_page_url"
-                    :href="invoices.next_page_url"
-                    class="rounded-lg border px-4 py-2 text-sm hover:bg-muted"
-                >
-                    Next
-                </Link>
-
-            </div>
-
-        </div>
+        <DataTablePagination :paginator="invoices" />
 
     </div>
 

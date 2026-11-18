@@ -107,7 +107,7 @@ class CrossConnectController extends Controller
         */
 
         $crossConnects = $query
-            ->paginate(15)
+            ->paginate(\App\Support\PerPage::from())
             ->withQueryString();
 
         /*

@@ -29,7 +29,7 @@ class TicketPriorityController extends Controller
 
         $ticketPriorites = $ticketPrioritesQuery
             ->latest()
-            ->paginate(10)
+            ->paginate(\App\Support\PerPage::from())
             ->withQueryString();
 
         return Inertia::render('support/setting/ticket-priorities/Priorities', [

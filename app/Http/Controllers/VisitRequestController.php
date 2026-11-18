@@ -47,7 +47,7 @@ class VisitRequestController extends Controller
             ->orderByRaw("CASE WHEN status = 'pending' THEN 0 ELSE 1 END")
             ->orderBy('visit_date', 'desc')
             ->orderByDesc('id')
-            ->paginate(15)
+            ->paginate(\App\Support\PerPage::from())
             ->withQueryString();
 
         return Inertia::render('visit-requests/Index', [

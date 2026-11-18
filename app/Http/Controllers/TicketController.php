@@ -63,7 +63,7 @@ class TicketController extends Controller
             })
 
             ->latest()
-            ->paginate(10)
+            ->paginate(\App\Support\PerPage::from())
             ->withQueryString();
 
         return Inertia::render('support/tickets/Ticket', [

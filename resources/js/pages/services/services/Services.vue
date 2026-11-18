@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DataTablePagination from '@/components/DataTablePagination.vue';
 import { formatNumber as formatMoney } from '@/lib/money';
 import { Head, Link, router } from '@inertiajs/vue3';
 import {
@@ -213,42 +214,7 @@ defineOptions({
         </div>
 
         <!-- Pagination -->
-        <div class="flex items-center justify-between border-t py-3">
-
-            <div class="text-sm text-muted-foreground">
-                Showing
-                <span class="font-medium">
-                    {{ services.from }}
-                </span>
-
-                to
-
-                <span class="font-medium">
-                    {{ services.to }}
-                </span>
-
-                of
-
-                <span class="font-medium">
-                    {{ services.total }}
-                </span>
-
-                results
-            </div>
-
-            <div class="flex gap-2">
-
-                <Link v-if="services.prev_page_url" :href="services.prev_page_url"
-                    class="inline-flex items-center rounded-md border bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
-                    Previous
-                </Link>
-
-                <Link v-if="services.next_page_url" :href="services.next_page_url"
-                    class="inline-flex items-center rounded-md border bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
-                    Next
-                </Link>
-            </div>
-        </div>
+        <DataTablePagination :paginator="services" />
     </div>
 
     <DeleteServiceDialog v-model:open="openDeleteDialog" :service="deleteTarget" />

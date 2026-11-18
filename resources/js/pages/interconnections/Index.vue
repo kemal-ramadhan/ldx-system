@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DataTablePagination from '@/components/DataTablePagination.vue'
 
 import { Head, Link } from '@inertiajs/vue3'
 import {
@@ -310,6 +311,8 @@ const formatStatus = (status: string) => {
             </table>
 
         </div>
+
+        <DataTablePagination :paginator="props.interconnections" />
 
     </div>
 

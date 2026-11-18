@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DataTablePagination from '@/components/DataTablePagination.vue'
 import { computed, ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { Search, Cable, CheckCircle2, Clock3, Ban, XCircle } from 'lucide-vue-next'
@@ -154,21 +155,6 @@ const changeStatus = (status: string) => {
 const clearSearch = () => {
     search.value = ''
     submitFilter()
-}
-
-const goToPage = (url: string | null) => {
-    if (!url) {
-        return
-    }
-
-    router.get(
-        url,
-        {},
-        {
-            preserveState: true,
-            preserveScroll: true,
-        }
-    )
 }
 
 const statusClass = (status: string) => {
@@ -685,33 +671,8 @@ defineOptions({
             </div>
 
             <!-- PAGINATION -->
-            <div v-if="crossConnects.last_page > 1"
-                class="flex flex-col gap-3 border-t border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-                <p class="text-sm text-muted-foreground">
-                    Showing
-                    <span class="font-medium text-foreground">
-                        {{ crossConnects.from }}
-                    </span>
-                    to
-                    <span class="font-medium text-foreground">
-                        {{ crossConnects.to }}
-                    </span>
-                    of
-                    <span class="font-medium text-foreground">
-                        {{ crossConnects.total }}
-                    </span>
-                    results
-                </p>
-
-                <div class="flex items-center gap-1">
-                    <button v-for="(link, index) in crossConnects.links" :key="index" type="button"
-                        :disabled="!link.url" class="min-w-9 rounded-lg px-3 py-1.5 text-sm transition" :class="link.active
-                                ? 'bg-primary text-primary-foreground'
-                                : link.url
-                                    ? 'border border-border hover:bg-muted'
-                                    : 'cursor-not-allowed text-muted-foreground/50'
-                            " @click="goToPage(link.url)" v-html="link.label" />
-                </div>
+            <div class="border-t border-border px-5">
+                <DataTablePagination :paginator="crossConnects" />
             </div>
         </div>
     </div>

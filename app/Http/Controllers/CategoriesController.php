@@ -28,7 +28,7 @@ class CategoriesController extends Controller
 
         $categories = $categoriesQuery
             ->latest()
-            ->paginate(10)
+            ->paginate(\App\Support\PerPage::from())
             ->withQueryString();
 
         return Inertia::render('services/categories/Categories', [
