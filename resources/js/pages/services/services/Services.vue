@@ -8,6 +8,7 @@ import {
     Pencil,
     Eye,
     Trash2,
+    AlertTriangle,
 } from 'lucide-vue-next';
 
 import { ref, watch } from 'vue';
@@ -19,7 +20,9 @@ const props = defineProps<{
     filters: {
         search: string;
         status: string;
+        attention?: boolean;
     };
+    attentionCount?: number;
 }>();
 
 const deleteTarget = ref<any>(null);
@@ -32,13 +35,16 @@ const deleteService = (service: any) => {
 
 const search = ref(props.filters.search || '');
 const status = ref(props.filters.status || '');
+// "Perlu dicek": next due date already passed -> not invoiced automatically
+const attention = ref(!!props.filters.attention);
 
-watch([search, status], () => {
+watch([search, status, attention], () => {
     router.get(
         '/admin/services',
         {
             search: search.value,
             status: status.value,
+            attention: attention.value ? 1 : undefined,
         },
         {
             preserveState: true,
@@ -92,6 +98,23 @@ defineOptions({
         </div>
 
         <!-- Filters -->
+        <!-- services whose next due date passed: not invoiced automatically -->
+        <div v-if="attentionCount || attention"
+            class="mt-5 flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-start gap-3">
+                <AlertTriangle class="mt-0.5 h-4 w-4 shrink-0" />
+                <p>
+                    <strong>{{ attentionCount }} service perlu dicek:</strong>
+                    Next Due Date-nya sudah lewat, sehingga invoice <strong>tidak dibuat otomatis</strong> dan tidak ada email ke client.
+                    Buka service-nya, lalu <em>Generate Invoice</em> jika periode itu memang belum ditagih, atau perbarui Next Due Date jika sudah.
+                </p>
+            </div>
+            <button type="button" @click="attention = !attention"
+                class="shrink-0 rounded-lg border border-amber-300 px-3 py-1.5 font-medium hover:bg-amber-100 dark:border-amber-800 dark:hover:bg-amber-900/40">
+                {{ attention ? 'Tampilkan semua' : 'Tampilkan yang perlu dicek' }}
+            </button>
+        </div>
+
         <div class="flex flex-col mt-5 mb-2 gap-2 sm:flex-row sm:items-center">
 
             <!-- Search -->
@@ -164,7 +187,14 @@ defineOptions({
 
                         <!-- Due -->
                         <td class="px-4 py-3">
-                            {{ service.next_due_date || '-' }}
+                            <div>{{ service.next_due_date || '-' }}</div>
+                            <span v-if="service.schedule_overdue"
+                                class="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+                                <AlertTriangle class="h-3 w-3" /> Perlu dicek
+                            </span>
+                            <div v-else-if="service.auto_invoice_date" class="mt-0.5 text-[11px] text-muted-foreground">
+                                Invoice otomatis {{ service.auto_invoice_date }}
+                            </div>
                         </td>
 
                         <!-- Status -->

@@ -92,6 +92,7 @@ export const navigation = {
                 {
                     title: 'Services',
                     href: '/admin/services',
+                    badgeKey: 'services_attention',
                 },
             ],
         },

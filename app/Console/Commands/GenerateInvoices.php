@@ -44,14 +44,28 @@ class GenerateInvoices extends Command
          * ACTIVE SERVICES DUE WITHIN 7 DAYS
          * =========================================
          */
+        /*
+         * Only due dates from TODAY up to H+7 are invoiced automatically.
+         * A due date that has already passed is NOT invoiced (no e-mail to
+         * the client): it usually means a wrong "Next Due Date" or a period
+         * that was billed outside the system. Those services are flagged
+         * "Perlu dicek" in the admin so someone decides what to do.
+         */
         $services = Service::with(['client', 'serviceItems.product'])
             ->where('status', 'active')
+            ->whereDate('next_due_date', '>=', today()->toDateString())
             ->whereDate(
                 'next_due_date',
                 '<=',
-                now()->addDays(self::DAYS_BEFORE_DUE)->toDateString()
+                today()->addDays(self::DAYS_BEFORE_DUE)->toDateString()
             )
             ->get();
+
+        $overdueSchedules = Service::scheduleOverdue()->get(['id', 'code', 'next_due_date']);
+
+        foreach ($overdueSchedules as $service) {
+            $this->warn("Skipped {$service->code}: next due date {$service->next_due_date} has passed — needs admin check.");
+        }
 
         if ($services->isEmpty()) {
             $this->warn('No services due.');

@@ -50,6 +50,8 @@ class HandleInertiaRequests extends Middleware
                     'visit_requests' => \App\Models\VisitRequest::where('status', 'pending')->count(),
                     // failed e-mails not yet fixed by a successful "Kirim Ulang"
                     'email_failed' => \App\Models\EmailLog::unresolvedFailures()->count(),
+                    // services whose next due date passed (not invoiced automatically)
+                    'services_attention' => \App\Models\Service::scheduleOverdue()->count(),
                 ]
                 : [],
             'flash' => [

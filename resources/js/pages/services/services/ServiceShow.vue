@@ -22,6 +22,7 @@ import {
     Receipt,
     CheckCircle2,
     Mail,
+    AlertTriangle,
 } from 'lucide-vue-next';
 
 const props = defineProps<{
@@ -175,6 +176,23 @@ defineOptions({
             </div>
         </div>
 
+        <!-- Next due date passed: not invoiced automatically -->
+        <div v-if="service.schedule_overdue"
+            class="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300">
+            <AlertTriangle class="mt-0.5 h-5 w-5 shrink-0" />
+            <div>
+                <p class="font-semibold">Perlu dicek: Next Due Date ({{ service.next_due_date }}) sudah lewat</p>
+                <p class="mt-1">
+                    Sistem <strong>tidak membuat invoice otomatis</strong> untuk tanggal yang sudah lewat, dan tidak mengirim email ke client.
+                    Pilih salah satu:
+                </p>
+                <ul class="mt-1 list-disc space-y-0.5 pl-5">
+                    <li>Periode ini <strong>belum pernah ditagih</strong> → klik <strong>Generate Invoice</strong>.</li>
+                    <li>Periode ini <strong>sudah ditagih / dibayar</strong> (termasuk di luar sistem) → <strong>Edit</strong> service dan isi Next Due Date dengan jatuh tempo periode berikutnya.</li>
+                </ul>
+            </div>
+        </div>
+
         <!-- Grid -->
         <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
 
@@ -237,6 +255,12 @@ defineOptions({
 
                             <p class="font-medium">
                                 {{ service.next_due_date }}
+                            </p>
+                            <p v-if="service.auto_invoice_date" class="mt-0.5 text-xs text-muted-foreground">
+                                Invoice dibuat otomatis {{ service.auto_invoice_date }}
+                            </p>
+                            <p v-else-if="service.schedule_overdue" class="mt-0.5 text-xs font-medium text-amber-600 dark:text-amber-400">
+                                Sudah lewat — tidak ditagih otomatis
                             </p>
                         </div>
                     </div>

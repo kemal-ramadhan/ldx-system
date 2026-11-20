@@ -51,6 +51,9 @@ class ServiceController extends Controller
                 $query->where('status', $status);
             })
 
+            // "Perlu dicek": active services whose next due date already passed
+            ->when($request->boolean('attention'), fn ($query) => $query->scheduleOverdue())
+
             ->latest()
 
             ->paginate(\App\Support\PerPage::from())
@@ -66,7 +69,10 @@ class ServiceController extends Controller
             'filters' => [
                 'search' => $search,
                 'status' => $status,
+                'attention' => $request->boolean('attention'),
             ],
+
+            'attentionCount' => Service::scheduleOverdue()->count(),
         ]);
     }
 
@@ -478,6 +484,14 @@ class ServiceController extends Controller
      */
     public function generateInvoice(Service $service)
     {
+        // never bill the same month twice
+        if ($existing = ServiceInvoiceGenerator::periodInvoice($service)) {
+            return back()->withErrors([
+                'error' => "Invoice untuk periode jatuh tempo {$service->next_due_date} sudah ada ({$existing->invoice_number}). "
+                    . 'Jika periode ini memang sudah ditagih, perbarui Next Due Date service ke periode berikutnya.',
+            ]);
+        }
+
         try {
             $invoice = ServiceInvoiceGenerator::generate($service);
         } catch (\Throwable $th) {

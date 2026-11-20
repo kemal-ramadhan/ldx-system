@@ -9,6 +9,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { computed, ref } from 'vue';
 
 import InputError from '@/components/InputError.vue';
+import NextDueDateHint from '@/components/NextDueDateHint.vue';
 import ItemTaxFields from '@/components/ItemTaxFields.vue';
 import SearchSelect from '@/components/SearchSelect.vue';
 import { defaultItemTax, taxSummary } from '@/lib/tax';
@@ -306,6 +307,8 @@ defineOptions({
                         </Label>
 
                         <Input v-model="form.next_due_date" type="date" />
+
+                        <NextDueDateHint :next-due-date="form.next_due_date" :status="form.status" />
 
                         <InputError :message="form.errors.next_due_date" />
                     </div>

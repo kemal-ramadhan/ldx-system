@@ -97,9 +97,22 @@ class ServiceInvoiceGenerator
      */
     public static function periodInvoiceExists(Service $service): bool
     {
+        return self::periodInvoice($service) !== null;
+    }
+
+    /**
+     * Invoice of this service already due in the same month as next_due_date
+     * (matched per month, so an invoice whose due date was edited still counts).
+     */
+    public static function periodInvoice(Service $service): ?Invoice
+    {
+        $due = Carbon::parse($service->next_due_date);
+
         return Invoice::where('service_id', $service->id)
-            ->whereDate('due_date', Carbon::parse($service->next_due_date)->toDateString())
-            ->exists();
+            ->whereYear('due_date', $due->year)
+            ->whereMonth('due_date', $due->month)
+            ->latest('id')
+            ->first();
     }
 
     private static function nextDueDate(Service $service): Carbon
