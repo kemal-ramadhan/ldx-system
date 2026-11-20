@@ -59,7 +59,7 @@ defineOptions({
     <div
         class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4"
     >
-    <div class="flex flex-nowrap justify-between items-center">
+    <div class="flex flex-col gap-3 sm:flex-row sm:flex-nowrap sm:items-center sm:justify-between sm:gap-0">
         <div class="flex flex-col gap-2">
             <div class="flex gap-2">
                 <h1 class="text-xl font-bold">{{ props.title }}</h1>
@@ -79,7 +79,7 @@ defineOptions({
     </div>
 
     <!-- filter -->
-     <div class="flex items-center mt-5 mb-2 gap-2">
+     <div class="flex flex-col mt-5 mb-2 gap-2 sm:flex-row sm:items-center">
         <div class="relative w-full">
             <input
                 v-model="search"
@@ -92,7 +92,7 @@ defineOptions({
         <select
             v-if="type !== 'client'"
             v-model="role"
-            class="rounded-xl border bg-white px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:bg-transparent"
+            class="w-full sm:w-auto rounded-xl border bg-white px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:bg-transparent"
         >
             <option value="">All Roles</option>
 

@@ -476,7 +476,7 @@ const verifyPayment = () => {
 
             <!-- Modal -->
             <div class="flex min-h-full items-center justify-center p-4">
-                <div class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-gray-900">
+                <div class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-gray-900 max-h-[90dvh] overflow-y-auto sm:max-h-none sm:overflow-visible">
                     <!-- Close button -->
                     <button @click="closeRejectionModal"
                         class="absolute right-4 top-4 rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800">

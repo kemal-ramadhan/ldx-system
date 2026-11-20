@@ -317,7 +317,7 @@ defineOptions({
         </div>
 
         <!-- Pagination -->
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
 
             <div class="text-sm text-muted-foreground">
                 Showing

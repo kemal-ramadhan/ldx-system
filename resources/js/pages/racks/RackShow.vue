@@ -372,7 +372,7 @@ const formatSeconds = (sec: number) => {
 <template>
     <Head :title="title" />
 
-    <div class="flex flex-nowrap justify-between items-center p-4">
+    <div class="flex flex-col gap-3 p-4 sm:flex-row sm:flex-nowrap sm:items-center sm:justify-between sm:gap-0">
         <div class="flex items-start gap-3">
             <div class="flex flex-col">
                 <div class="flex items-center gap-2">

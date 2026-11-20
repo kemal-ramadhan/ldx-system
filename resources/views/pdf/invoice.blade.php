@@ -462,10 +462,13 @@
         </div>
         <div class="info-box signature-box">
           <div class="box-title">Authorized Signature</div>
-              @if(in_array(strtolower($invoice->status), ['paid']))
-                <div class="stamp stamp-paid">Lunas</div>
-              @else
-                  <div class="stamp stamp-unpaid">Belum Lunas</div>
+              {{-- hidden only for the admin download; e-mails / client downloads keep it --}}
+              @if($showPaymentStamp ?? true)
+                @if(in_array(strtolower($invoice->status), ['paid']))
+                  <div class="stamp stamp-paid">Lunas</div>
+                @else
+                    <div class="stamp stamp-unpaid">Belum Lunas</div>
+                @endif
               @endif
         </div>
       </td>

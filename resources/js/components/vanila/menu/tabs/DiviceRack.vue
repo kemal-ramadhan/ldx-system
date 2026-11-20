@@ -472,7 +472,7 @@ const refreshSelectedDevice = () => {
     <div class="p-4">
 
         <!-- HEADER -->
-        <div class="flex items-center justify-between mb-6">
+        <div class="flex flex-col gap-3 mb-6 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
 
             <div>
                 <h2 class="text-lg font-semibold">
@@ -929,7 +929,7 @@ const refreshSelectedDevice = () => {
     <!-- UPDATE MODAL -->
     <div v-if="openEdit" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
 
-        <div class="w-full max-w-2xl rounded-2xl bg-card p-6 shadow-xl">
+        <div class="w-full max-w-2xl rounded-2xl bg-card p-6 shadow-xl max-h-[90dvh] overflow-y-auto sm:max-h-none sm:overflow-visible">
 
             <!-- HEADER -->
             <div class="mb-6 flex items-center justify-between">
@@ -1107,7 +1107,7 @@ const refreshSelectedDevice = () => {
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="openPorts = false"></div>
 
         <!-- Modal -->
-        <div class="relative w-full max-w-4xl overflow-hidden rounded-2xl bg-card shadow-2xl">
+        <div class="relative w-full max-w-4xl rounded-2xl bg-card shadow-2xl max-h-[90dvh] overflow-y-auto sm:max-h-none sm:overflow-hidden">
 
             <!-- Header -->
             <div class="flex items-center justify-between border-b px-6 py-5">
@@ -1138,7 +1138,7 @@ const refreshSelectedDevice = () => {
 
             <!-- Summary -->
             <div class="border-b bg-muted/50 px-6 py-4">
-                <div class="flex items-center justify-between">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
 
                     <div class="flex items-center gap-6">
 
@@ -1232,8 +1232,8 @@ const refreshSelectedDevice = () => {
                 </div>
 
                 <!-- Table -->
-                <div v-else class="overflow-hidden rounded-xl border">
-                    <table class="w-full text-sm">
+                <div v-else class="overflow-x-auto sm:overflow-hidden rounded-xl border">
+                    <table class="w-full text-sm min-w-[640px] sm:min-w-0">
 
                         <thead class="bg-muted/50">
                             <tr>
@@ -1363,7 +1363,7 @@ const refreshSelectedDevice = () => {
     <div v-if="openGeneratePorts" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="openGeneratePorts = false"></div>
 
-        <div class="relative w-full max-w-md rounded-2xl bg-card shadow-2xl">
+        <div class="relative w-full max-w-md rounded-2xl bg-card shadow-2xl max-h-[90dvh] overflow-y-auto sm:max-h-none sm:overflow-visible">
 
             <div class="flex items-center justify-between border-b px-6 py-5">
 
@@ -1478,7 +1478,7 @@ const refreshSelectedDevice = () => {
     <div v-if="openAddPort" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="openAddPort = false"></div>
 
-        <div class="relative w-full max-w-md rounded-2xl bg-card shadow-2xl">
+        <div class="relative w-full max-w-md rounded-2xl bg-card shadow-2xl max-h-[90dvh] overflow-y-auto sm:max-h-none sm:overflow-visible">
 
             <div class="flex items-center justify-between border-b px-6 py-5">
 
@@ -1615,7 +1615,7 @@ const refreshSelectedDevice = () => {
     <div v-if="openEditPort" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="openEditPort = false"></div>
 
-        <div class="relative w-full max-w-md rounded-2xl bg-card shadow-2xl">
+        <div class="relative w-full max-w-md rounded-2xl bg-card shadow-2xl max-h-[90dvh] overflow-y-auto sm:max-h-none sm:overflow-visible">
 
             <div class="flex items-center justify-between border-b px-6 py-5">
 

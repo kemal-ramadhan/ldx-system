@@ -60,14 +60,14 @@ defineOptions({
         </div>
 
         <!-- filter -->
-        <div class="flex items-center mt-5 mb-2 gap-2">
+        <div class="flex flex-col mt-5 mb-2 gap-2 sm:flex-row sm:items-center">
             <div class="relative w-full">
                 <input v-model="search" type="text" placeholder="Search visitors..."
                     class="w-full rounded-md border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none dark:text-gray-900" />
                 <Search class="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             </div>
             <select v-model="status"
-                class="rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none dark:text-gray-900 dark:bg-white">
+                class="w-full sm:w-auto rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none dark:text-gray-900 dark:bg-white">
                 <option value="">All status</option>
 
                 <option value="checkin">

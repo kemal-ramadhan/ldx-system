@@ -234,7 +234,7 @@ const statusError = computed(() => (approveForm.errors as Record<string, string>
     <!-- APPROVE / REJECT MODAL -->
     <div v-if="modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 text-foreground dark:scheme-dark"
         @click.self="modal = null">
-        <div class="w-full max-w-lg rounded-2xl border bg-card shadow-xl">
+        <div class="w-full max-w-lg rounded-2xl border bg-card shadow-xl max-h-[90dvh] overflow-y-auto sm:max-h-none sm:overflow-visible">
             <div class="flex items-start justify-between border-b px-6 py-5">
                 <div>
                     <h3 class="text-lg font-semibold">{{ modal === 'approve' ? 'Setujui Pengajuan' : 'Tolak Pengajuan' }}</h3>

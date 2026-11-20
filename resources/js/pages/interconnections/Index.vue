@@ -60,7 +60,7 @@ const formatStatus = (status: string) => {
 
         <!-- HEADER -->
 
-        <div class="mb-6 flex items-center justify-between">
+        <div class="flex flex-col gap-3 mb-6 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
 
             <div>
 
@@ -109,7 +109,7 @@ const formatStatus = (status: string) => {
 
         <!-- TABLE -->
 
-        <div v-else class="overflow-hidden rounded-2xl border bg-card shadow-sm dark:bg-transparent">
+        <div v-else class="overflow-x-auto sm:overflow-hidden rounded-2xl border bg-card shadow-sm dark:bg-transparent">
 
             <table class="min-w-full divide-y divide-border">
 

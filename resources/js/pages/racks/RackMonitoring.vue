@@ -681,7 +681,7 @@ const openRackDetail = (item: RackMonitoringItem) => {
             class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
             @click.self="showThresholdModal = false"
         >
-            <div class="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+            <div class="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900 max-h-[90dvh] overflow-y-auto sm:max-h-none sm:overflow-visible">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
                     <div class="flex items-center gap-2">
                         <SlidersHorizontal class="h-5 w-5 text-blue-600" />
@@ -748,7 +748,7 @@ const openRackDetail = (item: RackMonitoringItem) => {
             class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
             @click.self="selectedRackModal = null"
         >
-            <div class="w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+            <div class="w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900 max-h-[90dvh] overflow-y-auto sm:max-h-none sm:overflow-visible">
                 <div class="flex items-start justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
                     <div>
                         <div class="flex items-center gap-2">

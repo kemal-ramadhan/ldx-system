@@ -124,7 +124,7 @@ defineOptions({
 
         <!-- Header -->
         <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-            <div class="flex flex-nowrap justify-between items-center">
+            <div class="flex flex-col gap-3 sm:flex-row sm:flex-nowrap sm:items-center sm:justify-between sm:gap-0">
                 <div class="flex flex-col gap-2">
                     <div class="flex gap-2">
                         <h1 class="text-xl font-bold">{{ title }}</h1>

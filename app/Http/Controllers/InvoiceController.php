@@ -987,6 +987,9 @@ class InvoiceController extends Controller
                     'invoice' => $invoice,
                     'logoSrc' => $logoSrc,
                     'logoLdxSrc' => $logoLdxSrc,
+                    // admin download: no "Lunas / Belum Lunas" stamp
+                    // (e-mail attachments and client downloads keep it)
+                    'showPaymentStamp' => false,
                 ]
             );
 

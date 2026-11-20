@@ -49,7 +49,7 @@ defineOptions({
     <Head :title="title" />
 
     <div class="flex flex-col gap-6 p-6 w-full">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
             <div>
                 <h1 class="text-2xl font-bold tracking-tight">Detail User</h1>
                 <p class="text-muted-foreground mt-1">Manage and view user information.</p>

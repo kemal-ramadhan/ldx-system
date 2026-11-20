@@ -134,7 +134,7 @@ defineOptions({
                 />
                 <InputError :message="errors.company_npwp" />
             </div>
-            <div class="grid col-span-2 gap-3 w-full">
+            <div class="grid md:col-span-2 gap-3 w-full">
                 <Label for="company_address">Company Address <span class="text-red-500">*</span></Label>
                 <textarea
                     id="company_address"
@@ -149,7 +149,7 @@ defineOptions({
                 ></textarea>
                 <InputError :message="errors.company_address" />
             </div>
-            <div class="grid col-span-2 grid-cols-3 gap-3 w-full">
+            <div class="grid md:col-span-2 grid-cols-1 sm:grid-cols-3 gap-3 w-full">
                 <div class="grid gap-3 w-full">
                     <Label for="company_city">Company City <span class="text-red-500">*</span></Label>
                     <Input

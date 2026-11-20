@@ -370,7 +370,7 @@ defineOptions({
 
             <div class="rounded-2xl border p-5">
 
-                <div class="mb-4 flex items-center justify-between">
+                <div class="flex flex-col gap-3 mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
 
                     <div>
                         <h2 class="text-lg font-semibold">

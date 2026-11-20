@@ -262,7 +262,7 @@ function formatDateTime(date: string | null) {
                         <h2 class="font-semibold mt-4">Visitor Information</h2>
                     </div>
 
-                    <div v-if="visitor.visitor_attemps?.length" class="grid grid-cols-4 gap-4">
+                    <div v-if="visitor.visitor_attemps?.length" class="grid grid-cols-2 gap-4 sm:grid-cols-4">
                         <div v-for="img in visitor.visitor_attemps" :key="img.id">
                             <img :src="'/storage/' + img.file" class="w-full" />
                             <span class="text-xs text-gray-500">{{ formatDateTime(img.created_at) }}</span>

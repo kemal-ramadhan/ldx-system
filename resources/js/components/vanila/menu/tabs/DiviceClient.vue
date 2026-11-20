@@ -16,8 +16,8 @@ const badgeClass = (status: string) => {
 </script>
 
 <template>
-    <div class="overflow-hidden rounded-xl border dark:border-gray-700">
-        <table class="w-full text-sm">
+    <div class="overflow-x-auto sm:overflow-hidden rounded-xl border dark:border-gray-700">
+        <table class="w-full text-sm min-w-[640px] sm:min-w-0">
             <thead class="bg-gray-50 dark:bg-gray-800 dark:text-gray-100">
                 <tr>
                     <th class="px-4 py-3 text-left">Code</th>

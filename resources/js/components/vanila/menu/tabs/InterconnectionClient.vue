@@ -30,8 +30,8 @@ const formatStatus = (status: string) => {
 </script>
 
 <template>
-    <div class="overflow-hidden rounded-xl border">
-        <table class="w-full text-sm divide-y divide-border">
+    <div class="overflow-x-auto sm:overflow-hidden rounded-xl border">
+        <table class="w-full text-sm divide-y divide-border min-w-[640px] sm:min-w-0">
             <thead class="bg-muted/50">
                 <tr class="text-left text-xs font-semibold text-muted-foreground">
                     <th class="px-5 py-4">Request</th>

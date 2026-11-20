@@ -68,7 +68,7 @@ defineOptions({
 
                     <InputError :message="errors.color" />
                 </div>
-                <div class="grid col-span-2 gap-3 w-full">
+                <div class="grid md:col-span-2 gap-3 w-full">
                     <Label for="description">Description <span class="text-red-500">*</span></Label>
                     <textarea id="description" v-model="form.description" required autofocus :tabindex="3"
                         autocomplete="description" name="description" placeholder="description"

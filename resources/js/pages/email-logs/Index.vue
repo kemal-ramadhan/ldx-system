@@ -245,7 +245,7 @@ const inputClass = 'rounded-xl border border-input bg-background px-3 py-2.5 tex
                 <option value="all">Semua jenis</option>
                 <option v-for="(label, key) in types" :key="key" :value="key">{{ label }}</option>
             </select>
-            <div class="flex items-center gap-2 md:col-span-2">
+            <div class="flex flex-wrap items-center gap-2 md:col-span-2">
                 <input v-model="filters.date_from" type="date" :class="[inputClass, 'min-w-0 flex-1']" />
                 <span class="text-xs text-muted-foreground">s/d</span>
                 <input v-model="filters.date_to" type="date" :class="[inputClass, 'min-w-0 flex-1']" />

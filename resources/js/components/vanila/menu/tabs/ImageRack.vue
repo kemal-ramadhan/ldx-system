@@ -166,7 +166,7 @@ onBeforeUnmount(clearEditPreview)
     <div class="p-4">
         <div class="w-full">
 
-            <div class="flex justify-between items-center">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
                 <!-- Header -->
                 <div class="mb-8">
                     <h2 class="text-lg font-medium">

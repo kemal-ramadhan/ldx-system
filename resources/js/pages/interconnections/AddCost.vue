@@ -119,7 +119,7 @@ const submit = () => {
 
     <div class="add-cost-page p-4 text-foreground dark:scheme-dark">
         <!-- HEADER -->
-        <div class="mb-6 flex items-start justify-between">
+        <div class="flex flex-col gap-3 mb-6 sm:flex-row sm:items-start sm:justify-between sm:gap-0">
             <div class="flex items-start gap-3">
                 <Link :href="`/admin/interconnections/${interconnection.id}`" class="rounded-xl border p-2 text-muted-foreground hover:bg-muted">
                     <ArrowLeft class="h-4 w-4" />

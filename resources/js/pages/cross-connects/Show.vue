@@ -1032,7 +1032,7 @@ defineOptions({
 
         <div v-if="terminateModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
             @click.self="closeTerminateModal">
-            <div class="w-full max-w-lg rounded-xl border border-border bg-background shadow-xl">
+            <div class="w-full max-w-lg rounded-xl border border-border bg-background shadow-xl max-h-[90dvh] overflow-y-auto sm:max-h-none sm:overflow-visible">
 
                 <div class="flex items-start justify-between border-b border-border px-5 py-4">
                     <div>

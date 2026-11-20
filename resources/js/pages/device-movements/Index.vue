@@ -113,7 +113,7 @@ const inputClass = 'rounded-xl border border-input bg-background px-3 py-2.5 tex
                 </button>
                 <button type="button" @click="reset" class="rounded-xl border px-3 py-2.5 text-sm hover:bg-muted">Reset</button>
             </div>
-            <div class="flex items-center gap-2 md:col-span-3">
+            <div class="flex flex-wrap items-center gap-2 md:col-span-3">
                 <span class="text-xs text-muted-foreground">Dari</span>
                 <input v-model="filters.date_from" type="date" :class="[inputClass, 'flex-1']" />
                 <span class="text-xs text-muted-foreground">s/d</span>

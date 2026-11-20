@@ -66,7 +66,7 @@ defineOptions({
     <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
 
         <!-- Header -->
-        <div class="flex flex-nowrap items-center justify-between">
+        <div class="flex flex-col gap-3 sm:flex-row sm:flex-nowrap sm:items-center sm:justify-between sm:gap-0">
 
             <div class="flex flex-col gap-2">
                 <div class="flex gap-2">
@@ -92,7 +92,7 @@ defineOptions({
         </div>
 
         <!-- Filters -->
-        <div class="mt-5 mb-2 flex items-center gap-2">
+        <div class="flex flex-col mt-5 mb-2 gap-2 sm:flex-row sm:items-center">
 
             <!-- Search -->
             <div class="relative w-full">
@@ -104,7 +104,7 @@ defineOptions({
 
             <!-- Status -->
             <select v-model="status"
-                class="rounded-xl border bg-white px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:bg-transparent">
+                class="w-full sm:w-auto rounded-xl border bg-white px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:bg-transparent">
                 <option value="">All Status</option>
                 <option value="active">Active</option>
                 <option value="pending">Pending</option>

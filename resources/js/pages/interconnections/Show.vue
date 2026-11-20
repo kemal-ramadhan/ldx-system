@@ -405,7 +405,7 @@ const isFailedStatus = computed(() => {
 
         <!-- HEADER -->
 
-        <div class="mb-6 flex items-start justify-between">
+        <div class="flex flex-col gap-3 mb-6 sm:flex-row sm:items-start sm:justify-between sm:gap-0">
 
             <div class="flex items-start gap-3">
 
@@ -899,7 +899,7 @@ const isFailedStatus = computed(() => {
 
 
     <div v-if="rejectModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 text-foreground dark:scheme-dark dark:bg-black/60">
-        <div class="w-full max-w-lg rounded-2xl border bg-card shadow-xl">
+        <div class="w-full max-w-lg rounded-2xl border bg-card shadow-xl max-h-[90dvh] overflow-y-auto sm:max-h-none sm:overflow-visible">
             <div class="border-b border-border px-6 py-5">
                 <h3 class="text-lg font-semibold text-foreground">
                     Reject Interconnection

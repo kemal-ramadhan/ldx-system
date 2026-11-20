@@ -2,7 +2,7 @@
   <div class="rounded-2xl overflow-hidden">
 
     <!-- Tab Bar -->
-    <div class="flex items-center gap-1 bg-gray-50 dark:bg-gray-800/50 rounded-xl m-3 p-1.5">
+    <div class="flex items-center gap-1 overflow-x-auto bg-gray-50 dark:bg-gray-800/50 rounded-xl m-3 p-1.5">
       <button
         v-for="tab in tabs"
         :key="tab.key"

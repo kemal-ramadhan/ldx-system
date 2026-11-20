@@ -29,7 +29,7 @@ defineOptions({
     <div class="flex flex-col gap-4 p-4">
 
         <!-- Header -->
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
             <div>
                 <h1 class="text-2xl font-bold">
                     Product Detail

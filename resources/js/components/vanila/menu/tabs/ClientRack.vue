@@ -400,7 +400,7 @@ const updateOwner = () => {
 
     <div v-if="openEditOwner" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
 
-        <div class="w-full max-w-2xl rounded-2xl bg-card shadow-xl p-6 border">
+        <div class="w-full max-w-2xl rounded-2xl bg-card shadow-xl p-6 border max-h-[90dvh] overflow-y-auto sm:max-h-none sm:overflow-visible">
 
             <!-- HEADER -->
             <div class="mb-6 flex items-center justify-between">

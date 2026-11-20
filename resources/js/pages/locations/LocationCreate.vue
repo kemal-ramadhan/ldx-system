@@ -75,7 +75,7 @@ defineOptions({
                 />
                 <InputError :message="errors.name" />
             </div>
-            <div class="grid col-span-2 gap-3 w-full">
+            <div class="grid md:col-span-2 gap-3 w-full">
                 <Label for="address">Location Address <span class="text-red-500">*</span></Label>
                 <textarea
                     id="address"
